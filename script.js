@@ -2,6 +2,28 @@
    Wedding Carnival™ — demo interactions
    ============================================================ */
 
+/* ---------- Mobile menu toggle ---------- */
+const navToggle = document.getElementById('navToggle');
+const navLinks = document.getElementById('navLinks');
+if (navToggle && navLinks) {
+  const closeMenu = () => {
+    navLinks.classList.remove('open');
+    navToggle.setAttribute('aria-expanded', 'false');
+    navToggle.setAttribute('aria-label', 'Open menu');
+  };
+  navToggle.addEventListener('click', () => {
+    const open = navLinks.classList.toggle('open');
+    navToggle.setAttribute('aria-expanded', String(open));
+    navToggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  });
+  // close when a link is tapped
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', closeMenu));
+  // close when tapping outside
+  document.addEventListener('click', (e) => {
+    if (!navLinks.contains(e.target) && !navToggle.contains(e.target)) closeMenu();
+  });
+}
+
 /* ---------- Scroll reveal ---------- */
 const io = new IntersectionObserver((entries) => {
   entries.forEach((e, i) => {

@@ -51,10 +51,17 @@ img{max-width:100%;display:block}
 .brand-text{font-size:1.25rem}
 .brand-text em{font-style:normal;color:var(--pink-deep);font-weight:700}
 .nav-links{display:flex;align-items:center;gap:6px}
-.nav-links a{padding:9px 15px;border-radius:999px;font-weight:500;transition:.2s;color:var(--ink-soft)}
+.nav-links a{padding:9px 15px;border-radius:999px;font-weight:500;transition:.2s;color:var(--ink-soft);white-space:nowrap}
 .nav-links a:hover{background:rgba(251,79,168,.12);color:var(--pink-deep)}
 .nav-cta{background:var(--pink)!important;color:#fff!important;box-shadow:var(--shadow)}
 .nav-cta:hover{transform:translateY(-2px)}
+
+/* hamburger toggle (hidden on desktop) */
+.nav-toggle{display:none;flex-direction:column;gap:5px;background:none;border:0;cursor:pointer;padding:9px;border-radius:12px}
+.nav-toggle span{width:26px;height:3px;background:var(--pink-deep);border-radius:3px;transition:transform .3s, opacity .2s}
+.nav-toggle[aria-expanded="true"] span:nth-child(1){transform:translateY(8px) rotate(45deg)}
+.nav-toggle[aria-expanded="true"] span:nth-child(2){opacity:0}
+.nav-toggle[aria-expanded="true"] span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
 
 /* ---------- buttons ---------- */
 .btn{
@@ -284,8 +291,22 @@ img{max-width:100%;display:block}
   .hero-sub{margin-left:auto;margin-right:auto}
   .hero-actions,.hero-stats{justify-content:center}
   .hero-phone{margin-top:20px}
-  .nav-links a:not(.nav-cta){display:none}
+
+  /* mobile menu */
+  .nav-toggle{display:flex}
+  .nav-links{
+    position:absolute;top:calc(100% + 8px);right:clamp(14px,5vw,40px);left:clamp(14px,5vw,40px);
+    flex-direction:column;align-items:stretch;gap:6px;
+    background:#fff;border-radius:20px;padding:12px;
+    box-shadow:0 24px 50px -20px rgba(214,46,126,.55);
+    border:1px solid rgba(251,79,168,.14);
+    display:none;
+  }
+  .nav-links.open{display:flex;animation:dropdown .25s ease both}
+  .nav-links a{padding:14px 16px;text-align:center;font-size:1.05rem}
+  .nav-cta{margin-top:4px}
 }
+@keyframes dropdown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
 @media (max-width:480px){
   body{font-size:16px}
   .hero-stats{gap:22px}
