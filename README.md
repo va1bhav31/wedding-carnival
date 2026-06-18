@@ -42,12 +42,15 @@ Typography mixes an elegant serif (**Playfair Display**) for the "Wedding" feel 
 
 ```
 wedding-carnival/
-├── index.html      # Page structure & content
-├── styles.css      # Styling + animations
-├── script.js       # Interactive demos (vote, wheel, leaderboard, scratch)
-├── logo.jpeg       # Brand logo
+├── apps/web/        # Next.js 16 app — the real product (frontend + backend)
+├── supabase/        # DB migrations + (later) Edge Functions
+├── packages/shared/ # (later) shared TS types
+├── docs/            # the static landing/demo site (GitHub Pages)
+├── SETUP.md         # developer setup guide
 └── README.md
 ```
+
+See **[SETUP.md](SETUP.md)** to run the app and connect Supabase.
 
 ---
 

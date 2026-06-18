@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Env / secrets — never commit
+.env
+.env.*
+!.env.local.example
+**/.env
+**/.env.*
+!**/.env.local.example
+
+# Next.js build output
+.next/
+**/.next/
+out/
+**/out/
+
+# Logs & OS cruft
+*.log
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
