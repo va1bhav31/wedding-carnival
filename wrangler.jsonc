@@ -1,0 +1,12 @@
+{
+  // Cloudflare Worker config — serves the static coming-soon site in docs/
+  // as a "Workers Static Assets" deployment (no server code needed yet).
+  //
+  // IMPORTANT: "name" must match the Worker you created in the Cloudflare
+  // dashboard. If your Worker is named differently, change it here.
+  "name": "wedding-carnival",
+  "compatibility_date": "2025-01-01",
+  "assets": {
+    "directory": "./docs"
+  }
+}
