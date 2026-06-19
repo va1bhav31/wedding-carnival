@@ -77,6 +77,31 @@
 
     .foot{position:relative;z-index:2;padding-top:18px;font-size:.85rem;opacity:.8}
 
+    /* fit everything within one mobile viewport (no scroll) */
+    @media (max-width:600px){
+      body{padding:18px 16px}
+      .wrap{gap:13px}
+      .logo{width:74px;height:74px;border-radius:19px}
+      .badge{font-size:.78rem;padding:6px 13px;gap:7px}
+      .wordmark{font-size:2.35rem;line-height:1.02}
+      .headline{font-size:1.3rem}
+      .sub{font-size:.92rem;line-height:1.45;max-width:30rem}
+      .chips{gap:7px}
+      .chip{font-size:.78rem;padding:6px 11px}
+      .cta{gap:9px;width:100%}
+      .btn{padding:12px 20px;font-size:.92rem}
+      .foot{padding-top:12px;font-size:.76rem}
+    }
+    /* extra squeeze for very small / short phones */
+    @media (max-width:380px), (max-height:680px){
+      .wrap{gap:10px}
+      .logo{width:62px;height:62px;border-radius:16px}
+      .wordmark{font-size:2.05rem}
+      .headline{font-size:1.15rem}
+      .sub{font-size:.86rem;line-height:1.4}
+      .btn{padding:11px 18px}
+    }
+
     @media (prefers-reduced-motion:reduce){*{animation:none!important}}
   </style>
 </head>
