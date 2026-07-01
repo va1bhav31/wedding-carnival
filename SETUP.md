@@ -32,9 +32,23 @@ wedding-carnival/
    > `.env.local` is gitignored — keys never get committed.
 
 ### 2. Create the database schema
-1. Supabase Dashboard → **SQL Editor → New query**.
-2. Paste the contents of **`supabase/migrations/0001_init.sql`** and click **Run**.
-3. This creates the `weddings` + `guests` tables, RLS policies, and seeds a demo wedding (`aanya-vihaan`).
+Run each migration in order in **SQL Editor → New query → Run**:
+
+| # | File | What it adds |
+|---|------|--------------|
+| 1 | `0001_init.sql` | `weddings` + `guests`, RLS, demo wedding seed |
+| 2 | `0002_grants.sql` | Data API grants for weddings/guests |
+| 3 | `0003_games_config.sql` | extends `weddings`; game catalog + content: `wedding_games`, `questions`, `photo_hunt_tasks`, `scratch_prizes`, `dares` |
+| 4 | `0004_gameplay_and_garden.sql` | gameplay + Memory Garden: `question_responses`, `photo_submissions`, `scratch_results`, `game_scores`, `garden_flowers`, `garden_milestones` |
+
+> Migrations are idempotent (safe to re-run). Each file adds its own GRANTs
+> because "auto-expose new tables" is OFF — RLS policies alone won't make a
+> table reachable by the Data API.
+
+**Security notes baked into the schema:**
+- `questions.correct_answer` is **not** granted to guests (column-level GRANT) — answer checking must run server-side (Edge Function + secret key). The client must select explicit columns, never `select *`.
+- `garden_milestones` (hidden surprises) are **not** readable by guests — revealed server-side once the flower count is reached.
+- `photo_submissions` shows only `approved` rows to guests; hosts moderate.
 
 ### 3. Run the app
 ```bash
