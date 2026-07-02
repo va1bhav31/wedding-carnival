@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(start index.html)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'Coming-soon: fix footer overlap, lighten heading/bold weights *)",
+      "Bash(git push *)",
+      "Bash(git remote *)"
     ]
   }
 }

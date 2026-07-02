@@ -70,10 +70,42 @@ After that, every `git push` updates both the demo (from `docs/`) and the codeba
 
 ---
 
+## Admin panel (`/admin`) — super-admin provisioning
+
+The admin panel is where **you** create events (weddings) and customize branding.
+It uses the Supabase **secret key** server-side (bypasses RLS) and is gated behind
+Supabase Auth + an email allowlist.
+
+### One-time setup
+1. **Add server env vars** to `apps/web/.env.local`:
+   ```
+   SUPABASE_SECRET_KEY=sb_secret_...        # Dashboard -> Settings -> API (secret key)
+   ADMIN_EMAILS=you@example.com             # comma-separated allowlist
+   ```
+2. **Create your admin user** in Supabase → **Authentication → Users → Add user**
+   (email + password). Use an email that is in `ADMIN_EMAILS`.
+3. Make sure migrations `0003` and `0004` have been run (adds `weddings.status`,
+   `bride_name`, etc. that the admin forms rely on).
+4. Restart `npm run dev`.
+
+### Using it
+- Go to **http://localhost:3000/admin** → you'll be sent to `/admin/login`.
+- Sign in with the admin user → the **Events** dashboard.
+- **+ New event** → generate a wedding (bride/groom, optional slug, welcome message).
+- Click an event → **customize** details, status, branding colors, logo, garden goal.
+
+How it's built:
+- `proxy.ts` (Next 16 middleware) protects `/admin/*` and refreshes the session.
+- `(panel)/layout.tsx` enforces the admin-email allowlist (`requireAdmin`).
+- Writes go through Server Actions in `lib/actions/events.ts` using the
+  service-role client — each action re-verifies admin (actions are POST-reachable).
+
+---
+
 ## What's next (backend build order)
-1. **Guest join flow** — create a player profile (writes to `guests`).
-2. **Game schema** — `games`, `questions`, `answers`, `responses` tables.
-3. **Scoring** — points on correct/fast answers (Edge Function or Postgres function).
+1. **Admin: games & content management** — enable games per event, add questions/tasks/prizes.
+2. **Guest join flow** — create a player profile (writes to `guests`).
+3. **Scoring** — points on correct/fast answers (Edge Function; correct answers stay server-side).
 4. **Leaderboard** — read rankings (later: Upstash Redis sorted sets for live speed).
-5. **Realtime** — live vote tallies, leaderboard, guest wall via Supabase Realtime.
-6. **Admin panel** — branding, questions, lucky draw controls.
+5. **Realtime** — live vote tallies, leaderboard, Memory Garden via Supabase Realtime.
+6. **Host panel** — couples control game timing, lucky draw, moderation.
