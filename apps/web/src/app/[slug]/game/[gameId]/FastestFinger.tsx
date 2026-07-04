@@ -1,0 +1,193 @@
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
+
+type Colors = { primary: string; accent: string; secondary: string; logo?: string };
+type LiveState = { active_question_id?: string; started_at?: string; duration_ms?: number };
+type Question = { id: string; prompt: string; options: string[] };
+type Result = { correct: boolean; points: number; correct_answer: string };
+
+export default function FastestFinger({
+  slug,
+  gameId,
+  guestId,
+  title,
+  colors,
+  initialLiveState,
+}: {
+  slug: string;
+  gameId: string;
+  guestId: string;
+  title: string;
+  colors: Colors;
+  initialLiveState: LiveState;
+}) {
+  const [live, setLive] = useState<LiveState>(initialLiveState);
+  const [question, setQuestion] = useState<Question | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [result, setResult] = useState<Result | null>(null);
+  const [answered, setAnswered] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [earned, setEarned] = useState(0);
+  const loadedFor = useRef<string | null>(null);
+
+  const bg = { background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` };
+
+  // Subscribe to live_state changes pushed by the host.
+  useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+      .channel(`wg-${gameId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'wedding_games', filter: `id=eq.${gameId}` },
+        (payload) => setLive((payload.new as { live_state: LiveState }).live_state ?? {})
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gameId]);
+
+  // When a new question is launched, load it and reset round state.
+  useEffect(() => {
+    const qid = live.active_question_id;
+    if (!qid) {
+      setQuestion(null);
+      loadedFor.current = null;
+      return;
+    }
+    if (loadedFor.current === qid) return;
+    loadedFor.current = qid;
+    setSelected(null);
+    setResult(null);
+    setAnswered(false);
+
+    const supabase = createClient();
+    (async () => {
+      const { data: q } = await supabase
+        .from('questions')
+        .select('id, prompt, options')
+        .eq('id', qid)
+        .maybeSingle();
+      if (q) setQuestion(q as Question);
+      // If the guest already answered this one (e.g. refresh), lock it.
+      const { data: prev } = await supabase
+        .from('question_responses')
+        .select('id')
+        .eq('guest_id', guestId)
+        .eq('question_id', qid)
+        .maybeSingle();
+      if (prev) setAnswered(true);
+    })();
+  }, [live.active_question_id, guestId]);
+
+  // Countdown timer.
+  useEffect(() => {
+    if (!live.active_question_id || !live.started_at) return;
+    const deadline = new Date(live.started_at).getTime() + (live.duration_ms ?? 12000);
+    const tick = () => setTimeLeft(Math.max(0, deadline - Date.now()));
+    tick();
+    const id = setInterval(tick, 100);
+    return () => clearInterval(id);
+  }, [live.active_question_id, live.started_at, live.duration_ms]);
+
+  const answer = useCallback(
+    async (option: string) => {
+      if (answered || result || !question || !live.started_at || timeLeft <= 0) return;
+      setSelected(option);
+      setAnswered(true);
+      const responseMs = Date.now() - new Date(live.started_at).getTime();
+
+      const supabase = createClient();
+      const { data, error } = await supabase.rpc('submit_quiz_answer', {
+        p_guest_id: guestId,
+        p_question_id: question.id,
+        p_answer: option,
+        p_response_ms: responseMs,
+      });
+      if (!error && data) {
+        const r = data as Result;
+        setResult(r);
+        if (r.points > 0) setEarned((e) => e + r.points);
+      }
+    },
+    [answered, result, question, live.started_at, timeLeft, guestId]
+  );
+
+  const secs = Math.ceil(timeLeft / 1000);
+  const timeUp = Boolean(question) && timeLeft <= 0;
+
+  return (
+    <main style={bg} className="flex min-h-dvh flex-col items-center justify-center gap-5 px-5 py-10 text-center text-white">
+      <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+        <span className="h-2 w-2 animate-pulse rounded-full" style={{ background: colors.accent }} />
+        ⚡ {title}
+      </div>
+
+      {!question ? (
+        <div className="max-w-sm">
+          <div className="mb-3 text-5xl">⏳</div>
+          <p className="text-lg text-white/90">Waiting for the host to launch the next question…</p>
+          <p className="mt-1 text-sm text-white/60">Get ready — be fast! 🏃</p>
+        </div>
+      ) : (
+        <div className="w-full max-w-md">
+          {/* timer */}
+          <div className="mb-3 text-center">
+            <span
+              className="inline-grid h-14 w-14 place-items-center rounded-full text-2xl font-bold text-gray-900"
+              style={{ background: timeUp ? '#e5e7eb' : colors.accent }}
+            >
+              {timeUp ? '⏰' : secs}
+            </span>
+          </div>
+
+          <div className="rounded-3xl bg-white p-6 text-gray-900 shadow-2xl">
+            <h2 className="mb-5 text-xl font-semibold">{question.prompt}</h2>
+            <div className="grid gap-3">
+              {question.options.map((opt) => {
+                const isChosen = selected === opt;
+                const isCorrect = result && opt === result.correct_answer;
+                const isWrong = result && isChosen && !result.correct;
+                let cls = 'border-gray-200 bg-white';
+                if (isCorrect) cls = 'border-green-500 bg-green-50 text-green-800';
+                else if (isWrong) cls = 'border-red-400 bg-red-50 text-red-700';
+                else if (answered || timeUp) cls = 'border-gray-200 bg-white opacity-60';
+                else cls = 'border-gray-200 bg-white hover:border-fuchsia-300';
+                return (
+                  <button
+                    key={opt}
+                    disabled={answered || timeUp}
+                    onClick={() => answer(opt)}
+                    className={`rounded-2xl border-2 px-4 py-3.5 text-left font-medium transition ${cls}`}
+                  >
+                    {isCorrect ? '✓ ' : isWrong ? '✕ ' : ''}
+                    {opt}
+                  </button>
+                );
+              })}
+            </div>
+
+            {result && (
+              <p className="mt-4 font-semibold" style={{ color: result.correct ? '#16a34a' : '#6b7280' }}>
+                {result.correct ? `🎉 +${result.points} points!` : 'Not this time 😅'}
+              </p>
+            )}
+            {answered && !result && (
+              <p className="mt-4 text-sm text-gray-500">Answer locked in ⏳</p>
+            )}
+            {timeUp && !answered && <p className="mt-4 text-sm text-gray-500">Time&apos;s up! ⏰</p>}
+          </div>
+        </div>
+      )}
+
+      <div className="text-sm text-white/70">Your points this round: {earned}</div>
+      <Link href={`/${slug}/leaderboard`} className="rounded-full bg-white/20 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur">
+        🏆 Leaderboard
+      </Link>
+    </main>
+  );
+}

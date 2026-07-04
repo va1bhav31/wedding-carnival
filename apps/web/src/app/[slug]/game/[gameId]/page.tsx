@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getWeddingBySlug, themeColors } from '@/lib/weddings';
 import { guestCookieName } from '@/lib/guest-cookie';
 import TriviaGame from './TriviaGame';
+import FastestFinger from './FastestFinger';
 
 export type TriviaQuestion = {
   id: string;
@@ -32,7 +33,7 @@ export default async function GamePage({
 
   const { data: game } = await supabase
     .from('wedding_games')
-    .select('id, wedding_id, game_type, title, status')
+    .select('id, wedding_id, game_type, title, status, live_state')
     .eq('id', gameId)
     .maybeSingle();
   if (!game || game.wedding_id !== w.id) notFound();
@@ -79,6 +80,19 @@ export default async function GamePage({
           </Link>
         </div>
       </main>
+    );
+  }
+
+  if (game.game_type === 'fastest_finger') {
+    return (
+      <FastestFinger
+        slug={slug}
+        gameId={gameId}
+        guestId={guestId}
+        title={game.title || 'Fastest Finger First'}
+        colors={colors}
+        initialLiveState={(game.live_state ?? {}) as { active_question_id?: string }}
+      />
     );
   }
 

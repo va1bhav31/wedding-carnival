@@ -9,6 +9,8 @@ import {
   addScratchPrize,
   addDare,
   deleteContent,
+  launchQuestion,
+  clearQuestion,
 } from '@/lib/actions/games';
 
 const input =
@@ -26,7 +28,7 @@ export default async function GameEditor({
 
   const { data: game } = await supabase
     .from('wedding_games')
-    .select('id, wedding_id, game_type, title, status')
+    .select('id, wedding_id, game_type, title, status, live_state')
     .eq('id', gameId)
     .maybeSingle();
   if (!game || game.wedding_id !== id) notFound();
@@ -86,6 +88,82 @@ export default async function GameEditor({
           This is an arcade game — there&apos;s no content to author. It uses the couple&apos;s
           branding and works out of the box once set to <strong>Live</strong>.
         </div>
+      )}
+
+      {game.game_type === 'fastest_finger' && (
+        <FastestFingerControl
+          supabase={supabase}
+          gameId={gameId}
+          liveState={(game.live_state ?? {}) as { active_question_id?: string }}
+          hidden={hidden}
+        />
+      )}
+    </div>
+  );
+}
+
+async function FastestFingerControl({
+  supabase,
+  gameId,
+  liveState,
+  hidden,
+}: {
+  supabase: any;
+  gameId: string;
+  liveState: { active_question_id?: string };
+  hidden: React.ReactNode;
+}) {
+  const { data: questions } = await supabase
+    .from('questions')
+    .select('id, prompt')
+    .eq('wedding_game_id', gameId)
+    .order('created_at');
+  const activeId = liveState?.active_question_id ?? null;
+  const list = (questions ?? []) as Array<{ id: string; prompt: string }>;
+
+  return (
+    <div className={`${card} mt-6 grid gap-4`}>
+      <div className="flex items-center justify-between">
+        <h2 className="font-semibold text-gray-900">🔴 Live control</h2>
+        {activeId && (
+          <form action={clearQuestion}>
+            {hidden}
+            <button className="rounded-full bg-gray-800 px-4 py-1.5 text-sm font-semibold text-white hover:bg-black">
+              End question
+            </button>
+          </form>
+        )}
+      </div>
+      <p className="text-sm text-gray-500">
+        Set the game to <strong>Live</strong> above, then launch questions one at a time. Every
+        guest&apos;s phone updates instantly and a ~12s timer starts.
+      </p>
+      {list.length === 0 ? (
+        <p className="text-sm text-gray-400">Add questions above first.</p>
+      ) : (
+        <ul className="grid gap-2">
+          {list.map((q, i) => {
+            const isActive = activeId === q.id;
+            return (
+              <li key={q.id} className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3 py-2">
+                <span className="text-sm text-gray-800">
+                  {i + 1}. {q.prompt}
+                </span>
+                <form action={launchQuestion}>
+                  {hidden}
+                  <input type="hidden" name="question_id" value={q.id} />
+                  <button
+                    className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
+                      isActive ? 'bg-green-600 text-white' : 'bg-fuchsia-600 text-white hover:bg-fuchsia-700'
+                    }`}
+                  >
+                    {isActive ? '● Live now' : 'Launch'}
+                  </button>
+                </form>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

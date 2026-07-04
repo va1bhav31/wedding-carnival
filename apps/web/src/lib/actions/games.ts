@@ -197,6 +197,46 @@ const DELETABLE: Record<string, string> = {
   dare: 'dares',
 };
 
+/* ---------------- Fastest Finger live control ---------------- */
+
+const FF_DURATION_MS = 12000; // guests have ~12s to answer once launched
+
+/** Host launches a question → all guests' screens show it (via realtime). */
+export async function launchQuestion(formData: FormData) {
+  await requireAdmin();
+  const weddingId = str(formData.get('wedding_id'));
+  const gameId = str(formData.get('game_id'));
+  const questionId = str(formData.get('question_id'));
+  if (!gameId || !questionId) throw new Error('Missing game or question.');
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from('wedding_games')
+    .update({
+      live_state: {
+        active_question_id: questionId,
+        started_at: new Date().toISOString(),
+        duration_ms: FF_DURATION_MS,
+      },
+    })
+    .eq('id', gameId);
+  if (error) throw new Error(error.message);
+  revalidatePath(gamePath(weddingId, gameId));
+}
+
+/** Host ends the current question (clears the live state). */
+export async function clearQuestion(formData: FormData) {
+  await requireAdmin();
+  const weddingId = str(formData.get('wedding_id'));
+  const gameId = str(formData.get('game_id'));
+  if (!gameId) throw new Error('Missing game.');
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from('wedding_games').update({ live_state: {} }).eq('id', gameId);
+  if (error) throw new Error(error.message);
+  revalidatePath(gamePath(weddingId, gameId));
+}
+
 export async function deleteContent(formData: FormData) {
   await requireAdmin();
   const weddingId = str(formData.get('wedding_id'));
