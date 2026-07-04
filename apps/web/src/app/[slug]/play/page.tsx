@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
@@ -17,6 +18,9 @@ const GAME_META: Record<string, { emoji: string; label: string }> = {
 };
 
 const TEAM_LABEL: Record<string, string> = { bride: '👰 Bride Side', groom: '🤵 Groom Side' };
+
+// Game types with a playable screen built so far.
+const PLAYABLE = new Set(['couple_trivia', 'fastest_finger']);
 
 export default async function PlayHub({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -76,6 +80,14 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
           </div>
         </div>
 
+        {/* Leaderboard link */}
+        <Link
+          href={`/${slug}/leaderboard`}
+          className="mb-6 flex items-center justify-center gap-2 rounded-2xl bg-white/15 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/25"
+        >
+          🏆 View Leaderboard
+        </Link>
+
         {/* Games */}
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/70">Games</h2>
 
@@ -87,23 +99,33 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
           <ul className="grid gap-3">
             {gameList.map((g) => {
               const meta = GAME_META[g.game_type] ?? { emoji: '🎮', label: g.game_type };
-              const isLive = g.status === 'live';
-              return (
-                <li
-                  key={g.id}
-                  className="flex items-center justify-between rounded-2xl bg-white p-4 text-gray-900 shadow-lg"
-                >
+              const canPlay = g.status === 'live' && PLAYABLE.has(g.game_type);
+              const rowCls =
+                'flex items-center justify-between rounded-2xl bg-white p-4 text-gray-900 shadow-lg';
+              const inner = (
+                <>
                   <span className="flex items-center gap-3 font-semibold">
                     <span className="text-2xl">{meta.emoji}</span>
                     {g.title || meta.label}
                   </span>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      isLive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                      canPlay ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
                     }`}
                   >
-                    {isLive ? 'Play' : 'Soon'}
+                    {canPlay ? 'Play' : 'Soon'}
                   </span>
+                </>
+              );
+              return (
+                <li key={g.id}>
+                  {canPlay ? (
+                    <Link href={`/${slug}/game/${g.id}`} className={`${rowCls} transition hover:-translate-y-0.5`}>
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div className={rowCls}>{inner}</div>
+                  )}
                 </li>
               );
             })}
