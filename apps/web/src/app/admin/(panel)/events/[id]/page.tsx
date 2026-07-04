@@ -98,10 +98,13 @@ export default async function EditEvent({ params }: { params: Promise<{ id: stri
           />
         </section>
 
-        <div className="flex justify-end gap-3">
-          <span className="self-center text-xs text-gray-400">
-            Games &amp; content management — coming next
-          </span>
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href={`/admin/events/${w.id}/games`}
+            className="rounded-full border border-fuchsia-200 bg-fuchsia-50 px-5 py-2.5 font-semibold text-fuchsia-700 transition hover:bg-fuchsia-100"
+          >
+            🎮 Manage games &amp; content
+          </Link>
           <button className="rounded-full bg-fuchsia-600 px-6 py-2.5 font-semibold text-white transition hover:bg-fuchsia-700">
             Save changes
           </button>
