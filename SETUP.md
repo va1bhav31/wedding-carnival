@@ -40,6 +40,7 @@ Run each migration in order in **SQL Editor → New query → Run**:
 | 2 | `0002_grants.sql` | Data API grants for weddings/guests |
 | 3 | `0003_games_config.sql` | extends `weddings`; game catalog + content: `wedding_games`, `questions`, `photo_hunt_tasks`, `scratch_prizes`, `dares` |
 | 4 | `0004_gameplay_and_garden.sql` | gameplay + Memory Garden: `question_responses`, `photo_submissions`, `scratch_results`, `game_scores`, `garden_flowers`, `garden_milestones` |
+| 5 | `0005_service_role_grants.sql` | grants `service_role` (the admin secret key) full access — required because "auto-expose" is OFF, so even service_role needs explicit grants |
 
 > Migrations are idempotent (safe to re-run). Each file adds its own GRANTs
 > because "auto-expose new tables" is OFF — RLS policies alone won't make a
