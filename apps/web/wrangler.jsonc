@@ -1,0 +1,13 @@
+{
+  // Cloudflare Worker that runs the Next.js app (guest pages, admin, host)
+  // via the OpenNext adapter. Separate from the root wrangler.jsonc, which
+  // serves the static coming-soon site.
+  "name": "wedding-carnival-app",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-25",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  }
+}

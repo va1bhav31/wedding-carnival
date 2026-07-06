@@ -2,12 +2,11 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Next 16 "proxy" (formerly middleware). Refreshes the Supabase auth session
- * on every /admin request and redirects unauthenticated users to the login
- * page. The stricter admin-email allowlist check happens in the admin layout
- * (Node runtime), so this only enforces "is logged in".
+ * Edge middleware. In Next 16 the `proxy.ts` convention is Node-only, which
+ * Cloudflare/OpenNext can't run — so we use `middleware.ts`, which keeps the
+ * Edge runtime. Refreshes the Supabase session and guards /admin and /host.
  */
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -34,7 +33,6 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  // Which portal is this request for?
   const base = pathname.startsWith('/host') ? '/host' : '/admin';
   const isLogin = pathname === `${base}/login`;
 

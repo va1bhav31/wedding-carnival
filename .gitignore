@@ -16,6 +16,12 @@ node_modules/
 out/
 **/out/
 
+# OpenNext / Cloudflare build output
+.open-next/
+**/.open-next/
+.wrangler/
+**/.wrangler/
+
 # Logs & OS cruft
 *.log
 .DS_Store
