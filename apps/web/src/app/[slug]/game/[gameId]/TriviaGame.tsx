@@ -9,14 +9,14 @@ type Colors = { primary: string; accent: string; secondary: string; logo?: strin
 type Result = { correct: boolean; points: number; correct_answer: string };
 
 export default function TriviaGame({
-  slug,
+  base,
   guestId,
   title,
   questions,
   answeredIds,
   colors,
 }: {
-  slug: string;
+  base: string;
   gameId: string;
   guestId: string;
   title: string;
@@ -75,7 +75,7 @@ export default function TriviaGame({
     return (
       <Shell bg={bg}>
         <p className="text-lg">No questions yet — check back soon! 🎪</p>
-        <BackLink slug={slug} />
+        <BackLink base={base} />
       </Shell>
     );
   }
@@ -90,10 +90,10 @@ export default function TriviaGame({
           this round.
         </p>
         <div className="mt-2 flex gap-3">
-          <Link href={`/${slug}/leaderboard`} className="rounded-full bg-white px-6 py-3 font-semibold" style={{ color: colors.secondary }}>
+          <Link href={`${base}/leaderboard`} className="rounded-full bg-white px-6 py-3 font-semibold" style={{ color: colors.secondary }}>
             🏆 Leaderboard
           </Link>
-          <Link href={`/${slug}/play`} className="rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
+          <Link href={`${base}/play`} className="rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
             More games
           </Link>
         </div>
@@ -174,9 +174,9 @@ function Shell({ bg, children }: { bg: React.CSSProperties; children: React.Reac
   );
 }
 
-function BackLink({ slug }: { slug: string }) {
+function BackLink({ base }: { base: string }) {
   return (
-    <Link href={`/${slug}/play`} className="mt-4 inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
+    <Link href={`${base}/play`} className="mt-4 inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
       ← Back to games
     </Link>
   );

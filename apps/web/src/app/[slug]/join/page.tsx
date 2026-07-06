@@ -4,16 +4,18 @@ import { cookies } from 'next/headers';
 import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
 import { joinWedding } from '@/lib/actions/guests';
 import { guestCookieName } from '@/lib/guest-cookie';
+import { guestBase, guestHome } from '@/lib/guest-nav';
 
 export default async function JoinPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const w = await getWeddingBySlug(slug);
   if (!w) notFound();
-  if (w.status !== 'live') redirect(`/${slug}`);
+  const base = await guestBase(slug);
+  if (w.status !== 'live') redirect(guestHome(base));
 
   // Already joined on this device? Go straight to the hub.
   const cookieStore = await cookies();
-  if (cookieStore.get(guestCookieName(w.id))) redirect(`/${slug}/play`);
+  if (cookieStore.get(guestCookieName(w.id))) redirect(`${base}/play`);
 
   const { bride, groom } = coupleNames(w);
   const { primary, accent, secondary } = themeColors(w);

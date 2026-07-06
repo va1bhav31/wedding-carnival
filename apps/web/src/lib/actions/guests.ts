@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { getWeddingBySlug } from '@/lib/weddings';
 import { guestCookieName } from '@/lib/guest-cookie';
+import { guestBase, guestHome } from '@/lib/guest-nav';
 
 const TEAMS = ['bride', 'groom'] as const;
 
@@ -22,7 +23,8 @@ export async function joinWedding(formData: FormData) {
   if (!slug) throw new Error('Missing wedding.');
   const wedding = await getWeddingBySlug(slug);
   if (!wedding) throw new Error('Wedding not found.');
-  if (wedding.status !== 'live') redirect(`/${slug}`);
+  const base = await guestBase(slug);
+  if (wedding.status !== 'live') redirect(guestHome(base));
   if (!name) throw new Error('Please enter your name.');
 
   const teamValue = (TEAMS as readonly string[]).includes(team) ? team : null;
@@ -49,5 +51,5 @@ export async function joinWedding(formData: FormData) {
     sameSite: 'lax',
   });
 
-  redirect(`/${slug}/play`);
+  redirect(`${base}/play`);
 }

@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
 import { guestCookieName } from '@/lib/guest-cookie';
+import { guestBase } from '@/lib/guest-nav';
 
 const GAME_META: Record<string, { emoji: string; label: string }> = {
   bride_groom_showdown: { emoji: '🎭', label: 'Bride vs Groom Showdown' },
@@ -27,9 +28,10 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
   const w = await getWeddingBySlug(slug);
   if (!w) notFound();
 
+  const base = await guestBase(slug);
   const cookieStore = await cookies();
   const guestId = cookieStore.get(guestCookieName(w.id))?.value;
-  if (!guestId) redirect(`/${slug}/join`);
+  if (!guestId) redirect(`${base}/join`);
 
   const supabase = await createClient();
   const { data: guest } = await supabase
@@ -82,7 +84,7 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
 
         {/* Leaderboard link */}
         <Link
-          href={`/${slug}/leaderboard`}
+          href={`${base}/leaderboard`}
           className="mb-6 flex items-center justify-center gap-2 rounded-2xl bg-white/15 py-3 font-semibold text-white backdrop-blur transition hover:bg-white/25"
         >
           🏆 View Leaderboard
@@ -120,7 +122,7 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
               return (
                 <li key={g.id}>
                   {canPlay ? (
-                    <Link href={`/${slug}/game/${g.id}`} className={`${rowCls} transition hover:-translate-y-0.5`}>
+                    <Link href={`${base}/game/${g.id}`} className={`${rowCls} transition hover:-translate-y-0.5`}>
                       {inner}
                     </Link>
                   ) : (

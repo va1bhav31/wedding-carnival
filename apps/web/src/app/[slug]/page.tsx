@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
+import { guestBase } from '@/lib/guest-nav';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -19,6 +20,7 @@ export default async function GuestHome({ params }: { params: Promise<{ slug: st
   const { bride, groom } = coupleNames(w);
   const { primary, accent, secondary, logo } = themeColors(w);
   const isLive = w.status === 'live';
+  const base = await guestBase(slug);
 
   const style = {
     background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
@@ -63,7 +65,7 @@ export default async function GuestHome({ params }: { params: Promise<{ slug: st
         {isLive ? (
           <>
             <Link
-              href={`/${slug}/join`}
+              href={`${base}/join`}
               className="mt-2 rounded-full bg-white px-8 py-4 text-lg font-semibold shadow-xl transition hover:-translate-y-0.5"
               style={{ color: secondary }}
             >

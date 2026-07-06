@@ -10,14 +10,14 @@ type Question = { id: string; prompt: string; options: string[] };
 type Result = { correct: boolean; points: number; correct_answer: string };
 
 export default function FastestFinger({
-  slug,
+  base,
   gameId,
   guestId,
   title,
   colors,
   initialLiveState,
 }: {
-  slug: string;
+  base: string;
   gameId: string;
   guestId: string;
   title: string;
@@ -185,7 +185,7 @@ export default function FastestFinger({
       )}
 
       <div className="text-sm text-white/70">Your points this round: {earned}</div>
-      <Link href={`/${slug}/leaderboard`} className="rounded-full bg-white/20 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur">
+      <Link href={`${base}/leaderboard`} className="rounded-full bg-white/20 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur">
         🏆 Leaderboard
       </Link>
     </main>

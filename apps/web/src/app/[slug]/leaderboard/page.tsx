@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
 import { guestCookieName } from '@/lib/guest-cookie';
+import { guestBase } from '@/lib/guest-nav';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 const TEAM = { bride: '👰', groom: '🤵' } as Record<string, string>;
@@ -14,9 +15,10 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
   const w = await getWeddingBySlug(slug);
   if (!w) notFound();
 
+  const base = await guestBase(slug);
   const cookieStore = await cookies();
   const guestId = cookieStore.get(guestCookieName(w.id))?.value;
-  if (!guestId) redirect(`/${slug}/join`);
+  if (!guestId) redirect(`${base}/join`);
 
   const supabase = await createClient();
   const { data: players } = await supabase
@@ -70,7 +72,7 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
         )}
 
         <div className="mt-8 text-center">
-          <Link href={`/${slug}/play`} className="rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
+          <Link href={`${base}/play`} className="rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
             ← Back to games
           </Link>
         </div>

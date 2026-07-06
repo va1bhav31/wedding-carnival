@@ -2,11 +2,27 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Edge middleware. In Next 16 the `proxy.ts` convention is Node-only, which
- * Cloudflare/OpenNext can't run — so we use `middleware.ts`, which keeps the
- * Edge runtime. Refreshes the Supabase session and guards /admin and /host.
+ * Edge middleware (Next 16 `proxy` is Node-only; Cloudflare needs Edge).
+ *
+ * Two jobs:
+ *  1. Wedding subdomains — `<slug>.weddingcarnival.live` is rewritten to the
+ *     `/[slug]` routes, and we tag the request with `x-wc-subdomain` so pages
+ *     know to build root-relative links.
+ *  2. /admin and /host — refresh the Supabase session and gate access.
  */
-export async function middleware(request: NextRequest) {
+
+const ROOT_DOMAIN = 'weddingcarnival.live';
+const RESERVED_SUBS = new Set(['www', 'app', 'admin', 'api', 'host']);
+
+function weddingSlugFromHost(host: string): string | null {
+  const h = host.split(':')[0].toLowerCase();
+  if (!h.endsWith(`.${ROOT_DOMAIN}`)) return null; // apex, localhost, *.workers.dev
+  const sub = h.slice(0, h.length - ROOT_DOMAIN.length - 1);
+  if (!sub || sub.includes('.') || RESERVED_SUBS.has(sub)) return null;
+  return sub;
+}
+
+async function guardPortal(request: NextRequest) {
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -50,6 +66,28 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Portals are auth-gated (on any host).
+  if (pathname.startsWith('/admin') || pathname.startsWith('/host')) {
+    return guardPortal(request);
+  }
+
+  // Wedding subdomain → serve the /[slug] routes with clean root paths.
+  const slug = weddingSlugFromHost(request.headers.get('host') ?? '');
+  if (slug) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${slug}${pathname === '/' ? '' : pathname}`;
+    const headers = new Headers(request.headers);
+    headers.set('x-wc-subdomain', slug);
+    return NextResponse.rewrite(url, { request: { headers } });
+  }
+
+  return NextResponse.next();
+}
+
 export const config = {
-  matcher: ['/admin/:path*', '/host/:path*'],
+  // Run on everything except static assets / files with an extension.
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)'],
 };

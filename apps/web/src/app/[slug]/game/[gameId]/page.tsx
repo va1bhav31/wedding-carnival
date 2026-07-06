@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
 import { getWeddingBySlug, themeColors } from '@/lib/weddings';
 import { guestCookieName } from '@/lib/guest-cookie';
+import { guestBase } from '@/lib/guest-nav';
 import TriviaGame from './TriviaGame';
 import FastestFinger from './FastestFinger';
 
@@ -25,9 +26,10 @@ export default async function GamePage({
   const w = await getWeddingBySlug(slug);
   if (!w) notFound();
 
+  const base = await guestBase(slug);
   const cookieStore = await cookies();
   const guestId = cookieStore.get(guestCookieName(w.id))?.value;
-  if (!guestId) redirect(`/${slug}/join`);
+  if (!guestId) redirect(`${base}/join`);
 
   const supabase = await createClient();
 
@@ -49,7 +51,7 @@ export default async function GamePage({
       >
         <div>
           <p className="text-lg">🎪 This game isn&apos;t open yet.</p>
-          <Link href={`/${slug}/play`} className="mt-4 inline-block rounded-full bg-white px-6 py-3 font-semibold text-gray-900">
+          <Link href={`${base}/play`} className="mt-4 inline-block rounded-full bg-white px-6 py-3 font-semibold text-gray-900">
             ← Back to games
           </Link>
         </div>
@@ -75,7 +77,7 @@ export default async function GamePage({
       <main className="grid min-h-dvh place-items-center px-6 text-center">
         <div>
           <p className="text-gray-600">This game type isn&apos;t playable yet.</p>
-          <Link href={`/${slug}/play`} className="mt-4 inline-block text-fuchsia-600 hover:underline">
+          <Link href={`${base}/play`} className="mt-4 inline-block text-fuchsia-600 hover:underline">
             ← Back to games
           </Link>
         </div>
@@ -86,7 +88,7 @@ export default async function GamePage({
   if (game.game_type === 'fastest_finger') {
     return (
       <FastestFinger
-        slug={slug}
+        base={base}
         gameId={gameId}
         guestId={guestId}
         title={game.title || 'Fastest Finger First'}
@@ -98,7 +100,7 @@ export default async function GamePage({
 
   return (
     <TriviaGame
-      slug={slug}
+      base={base}
       gameId={gameId}
       guestId={guestId}
       title={game.title || 'Couple Trivia'}
