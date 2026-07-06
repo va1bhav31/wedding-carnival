@@ -34,16 +34,18 @@ export async function proxy(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isLogin = pathname.startsWith('/admin/login');
+  // Which portal is this request for?
+  const base = pathname.startsWith('/host') ? '/host' : '/admin';
+  const isLogin = pathname === `${base}/login`;
 
   if (!user && !isLogin) {
     const url = request.nextUrl.clone();
-    url.pathname = '/admin/login';
+    url.pathname = `${base}/login`;
     return NextResponse.redirect(url);
   }
   if (user && isLogin) {
     const url = request.nextUrl.clone();
-    url.pathname = '/admin';
+    url.pathname = base;
     return NextResponse.redirect(url);
   }
 
@@ -51,5 +53,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*'],
+  matcher: ['/admin/:path*', '/host/:path*'],
 };

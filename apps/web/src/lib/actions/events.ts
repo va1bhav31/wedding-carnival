@@ -2,11 +2,25 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin, assertCanManage } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { slugify } from '@/lib/slug';
 
 const STATUSES = ['draft', 'ready', 'live', 'ended'] as const;
+
+/** Start/pause the whole event. Allowed for the host (or super-admin). */
+export async function setWeddingStatus(formData: FormData) {
+  const id = typeof formData.get('id') === 'string' ? (formData.get('id') as string).trim() : '';
+  const status = typeof formData.get('status') === 'string' ? (formData.get('status') as string).trim() : '';
+  await assertCanManage(id);
+  if (!STATUSES.includes(status as (typeof STATUSES)[number])) throw new Error('Invalid status.');
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from('weddings').update({ status }).eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/host/events/${id}`);
+  revalidatePath(`/admin/events/${id}`);
+}
 
 function str(v: FormDataEntryValue | null): string {
   return typeof v === 'string' ? v.trim() : '';

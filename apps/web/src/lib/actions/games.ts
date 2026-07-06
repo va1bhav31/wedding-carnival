@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { requireAdmin } from '@/lib/auth';
+import { assertCanManage } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { GAME_BY_TYPE } from '@/lib/games-catalog';
 
@@ -23,8 +23,8 @@ function gamePath(weddingId: string, gameId: string) {
 
 /** Enable or disable a game for an event (upserts the wedding_games row). */
 export async function setGameEnabled(formData: FormData) {
-  await requireAdmin();
   const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
   const gameType = str(formData.get('game_type'));
   const enabled = str(formData.get('enabled')) === 'true';
 
@@ -48,8 +48,8 @@ export async function setGameEnabled(formData: FormData) {
 
 /** Update a game's title + status. */
 export async function updateGameSettings(formData: FormData) {
-  await requireAdmin();
   const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
   const gameId = str(formData.get('game_id'));
   const title = str(formData.get('title'));
   const status = str(formData.get('status'));
@@ -65,11 +65,27 @@ export async function updateGameSettings(formData: FormData) {
   revalidatePath(gamePath(weddingId, gameId));
 }
 
+/** Quick start/pause of a single game (host control panel). */
+export async function setGameStatus(formData: FormData) {
+  const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
+  const gameId = str(formData.get('game_id'));
+  const status = str(formData.get('status'));
+  if (!gameId) throw new Error('Missing game.');
+  if (!STATUSES.includes(status as (typeof STATUSES)[number])) throw new Error('Invalid status.');
+
+  const supabase = createAdminClient();
+  const { error } = await supabase.from('wedding_games').update({ status }).eq('id', gameId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/host/events/${weddingId}`);
+  revalidatePath(gamesPath(weddingId));
+}
+
 /* ---------------- Questions (MCQ + binary-side) ---------------- */
 
 export async function addQuestion(formData: FormData) {
-  await requireAdmin();
   const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
   const gameId = str(formData.get('game_id'));
   const gameType = str(formData.get('game_type'));
   const prompt = str(formData.get('prompt'));
@@ -124,8 +140,8 @@ export async function addQuestion(formData: FormData) {
 /* ---------------- Photo Hunt tasks ---------------- */
 
 export async function addPhotoTask(formData: FormData) {
-  await requireAdmin();
   const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
   const gameId = str(formData.get('game_id'));
   const label = str(formData.get('label'));
   if (!gameId || !label) throw new Error('Task text is required.');
@@ -144,8 +160,8 @@ export async function addPhotoTask(formData: FormData) {
 /* ---------------- Scratch & Win prizes ---------------- */
 
 export async function addScratchPrize(formData: FormData) {
-  await requireAdmin();
   const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
   const gameId = str(formData.get('game_id'));
   const label = str(formData.get('label'));
   if (!gameId || !label) throw new Error('Prize label is required.');
@@ -170,8 +186,8 @@ export async function addScratchPrize(formData: FormData) {
 /* ---------------- Spin-the-Wheel dares ---------------- */
 
 export async function addDare(formData: FormData) {
-  await requireAdmin();
   const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
   const gameId = str(formData.get('game_id'));
   const title = str(formData.get('title'));
   if (!gameId || !title) throw new Error('Dare title is required.');
@@ -203,8 +219,8 @@ const FF_DURATION_MS = 12000; // guests have ~12s to answer once launched
 
 /** Host launches a question → all guests' screens show it (via realtime). */
 export async function launchQuestion(formData: FormData) {
-  await requireAdmin();
   const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
   const gameId = str(formData.get('game_id'));
   const questionId = str(formData.get('question_id'));
   if (!gameId || !questionId) throw new Error('Missing game or question.');
@@ -226,8 +242,8 @@ export async function launchQuestion(formData: FormData) {
 
 /** Host ends the current question (clears the live state). */
 export async function clearQuestion(formData: FormData) {
-  await requireAdmin();
   const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
   const gameId = str(formData.get('game_id'));
   if (!gameId) throw new Error('Missing game.');
 
@@ -238,8 +254,8 @@ export async function clearQuestion(formData: FormData) {
 }
 
 export async function deleteContent(formData: FormData) {
-  await requireAdmin();
   const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
   const gameId = str(formData.get('game_id'));
   const id = str(formData.get('id'));
   const table = DELETABLE[str(formData.get('kind'))];
