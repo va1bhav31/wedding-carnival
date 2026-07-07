@@ -9,6 +9,8 @@ node_modules/
 **/.env
 **/.env.*
 !**/.env.local.example
+# Public, browser-safe build values (NEXT_PUBLIC_* only — NEVER put secrets here)
+!**/.env.production
 
 # Next.js build output
 .next/
