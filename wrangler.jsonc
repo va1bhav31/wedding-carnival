@@ -4,7 +4,7 @@
   //
   // IMPORTANT: "name" must match the Worker you created in the Cloudflare
   // dashboard. If your Worker is named differently, change it here.
-  "name": "wedding-carnival",
+  "name": "wedding-carnival-routing",
   "compatibility_date": "2025-01-01",
   "assets": {
     "directory": "./docs"
