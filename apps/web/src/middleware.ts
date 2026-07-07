@@ -52,14 +52,14 @@ async function guardPortal(request: NextRequest) {
   const base = pathname.startsWith('/host') ? '/host' : '/admin';
   const isLogin = pathname === `${base}/login`;
 
+  // Only enforce "must be signed in". Whether a signed-in user is actually
+  // authorized (admin allowlist / wedding owner) is decided by the page
+  // layouts. We deliberately do NOT redirect signed-in users away from the
+  // login page here — doing so can create a redirect loop when the session
+  // exists but isn't authorized for that portal.
   if (!user && !isLogin) {
     const url = request.nextUrl.clone();
     url.pathname = `${base}/login`;
-    return NextResponse.redirect(url);
-  }
-  if (user && isLogin) {
-    const url = request.nextUrl.clone();
-    url.pathname = base;
     return NextResponse.redirect(url);
   }
 
