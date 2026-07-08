@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { updateEvent, setHostByEmail, unlinkHost, HOST_PW_COOKIE } from '@/lib/actions/events';
+import { updateEvent, setHostByEmail, unlinkHost } from '@/lib/actions/events';
+import { HOST_PW_COOKIE } from '@/lib/host-cookie';
 
 type Theme = { primary?: string; accent?: string; secondary?: string; logo?: string };
 

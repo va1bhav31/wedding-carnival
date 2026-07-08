@@ -6,11 +6,9 @@ import { cookies } from 'next/headers';
 import { requireAdmin, assertCanManage } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { slugify } from '@/lib/slug';
+import { HOST_PW_COOKIE } from '@/lib/host-cookie';
 
 const STATUSES = ['draft', 'ready', 'live', 'ended'] as const;
-
-/** Cookie the admin page reads once to show a newly-created host's temp password. */
-export const HOST_PW_COOKIE = 'wc_host_pw';
 
 function generatePassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
