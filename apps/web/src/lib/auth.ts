@@ -26,8 +26,18 @@ export async function getSessionUser(): Promise<User | null> {
 /* ---------------- Super-admin (us) ---------------- */
 
 export async function getAdminUser(): Promise<User | null> {
-  const user = await getSessionUser();
-  return isSuperAdmin(user) ? user : null;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!isSuperAdmin(user)) return null;
+
+  // If the admin has enrolled an authenticator, require the 2FA step-up to
+  // be completed (session must be AAL2). Admins without a factor pass through.
+  const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') return null;
+
+  return user;
 }
 
 export async function requireAdmin(): Promise<User> {

@@ -12,6 +12,9 @@ export default async function PanelLayout({ children }: { children: React.ReactN
           🎪 Wedding Carnival · Admin
         </Link>
         <div className="flex items-center gap-4 text-sm">
+          <Link href="/admin/security" className="font-medium text-gray-600 hover:text-fuchsia-600">
+            🔐 Security
+          </Link>
           <span className="text-gray-500">{user.email}</span>
           <form action={signOut}>
             <button className="rounded-full border border-gray-200 px-4 py-1.5 font-medium text-gray-700 transition hover:bg-gray-100">
