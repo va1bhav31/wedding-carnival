@@ -1,12 +1,20 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { updateEvent } from '@/lib/actions/events';
+import { updateEvent, setHostByEmail, unlinkHost, HOST_PW_COOKIE } from '@/lib/actions/events';
 
 type Theme = { primary?: string; accent?: string; secondary?: string; logo?: string };
 
-export default async function EditEvent({ params }: { params: Promise<{ id: string }> }) {
+export default async function EditEvent({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ host?: string }>;
+}) {
   const { id } = await params;
+  const sp = await searchParams;
   const supabase = createAdminClient();
   const { data: w } = await supabase.from('weddings').select('*').eq('id', id).single();
   if (!w) notFound();
@@ -14,6 +22,18 @@ export default async function EditEvent({ params }: { params: Promise<{ id: stri
   const theme = (w.theme ?? {}) as Theme;
   const bride = w.bride_name || w.couple_name_1 || '';
   const groom = w.groom_name || w.couple_name_2 || '';
+
+  // Current host (if linked) + one-time temp password after creating one.
+  let hostEmail: string | null = null;
+  if (w.host_user_id) {
+    const { data: hostUser } = await supabase.auth.admin.getUserById(w.host_user_id);
+    hostEmail = hostUser?.user?.email ?? null;
+  }
+  let tempPassword: string | null = null;
+  if (sp.host === 'created') {
+    const cookieStore = await cookies();
+    tempPassword = cookieStore.get(HOST_PW_COOKIE)?.value ?? null;
+  }
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -110,6 +130,63 @@ export default async function EditEvent({ params }: { params: Promise<{ id: stri
           </button>
         </div>
       </form>
+
+      {/* Host access */}
+      <section className="mt-6 rounded-2xl border border-gray-200 bg-white p-6">
+        <h2 className="font-semibold text-gray-900">Host access</h2>
+        <p className="mb-4 text-sm text-gray-500">
+          Give the couple their own portal at{' '}
+          <code className="rounded bg-gray-100 px-1">app.weddingcarnival.live/host</code>. Entering a
+          new email creates their login automatically.
+        </p>
+
+        {sp.host === 'linked' && (
+          <div className="mb-4 rounded-xl bg-green-50 p-3 text-sm text-green-700">Host linked ✓</div>
+        )}
+        {sp.host === 'cleared' && (
+          <div className="mb-4 rounded-xl bg-gray-100 p-3 text-sm text-gray-600">Host unlinked.</div>
+        )}
+        {sp.host === 'created' && (
+          <div className="mb-4 rounded-xl bg-green-50 p-4 text-sm text-green-800">
+            <p className="font-semibold">Host account created ✓</p>
+            {tempPassword ? (
+              <p className="mt-1">
+                Temporary password:{' '}
+                <code className="rounded bg-white px-2 py-0.5 font-mono">{tempPassword}</code>
+                <br />
+                Share it securely with the couple — they can change it after signing in.{' '}
+                <em>(Shown once.)</em>
+              </p>
+            ) : (
+              <p className="mt-1">Share their login details with the couple.</p>
+            )}
+          </div>
+        )}
+
+        {hostEmail ? (
+          <div className="flex items-center justify-between rounded-xl bg-gray-50 px-4 py-3">
+            <span className="text-gray-900">🔑 {hostEmail}</span>
+            <form action={unlinkHost}>
+              <input type="hidden" name="id" value={w.id} />
+              <button className="text-sm text-gray-500 hover:text-red-500">Unlink</button>
+            </form>
+          </div>
+        ) : (
+          <form action={setHostByEmail} className="flex gap-3">
+            <input type="hidden" name="id" value={w.id} />
+            <input
+              name="host_email"
+              type="email"
+              required
+              placeholder="couple@example.com"
+              className="flex-1 rounded-xl border border-gray-200 px-4 py-2.5 text-gray-900 outline-none focus:border-fuchsia-400"
+            />
+            <button className="rounded-full bg-fuchsia-600 px-5 py-2.5 font-semibold text-white hover:bg-fuchsia-700">
+              Link host
+            </button>
+          </form>
+        )}
+      </section>
     </div>
   );
 }
