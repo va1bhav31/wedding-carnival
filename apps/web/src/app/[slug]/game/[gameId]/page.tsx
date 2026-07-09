@@ -7,6 +7,9 @@ import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase } from '@/lib/guest-nav';
 import TriviaGame from './TriviaGame';
 import FastestFinger from './FastestFinger';
+import ShowdownGame from './ShowdownGame';
+
+const PLAYABLE_TYPES = ['couple_trivia', 'fastest_finger', 'bride_groom_showdown'];
 
 export type TriviaQuestion = {
   id: string;
@@ -72,7 +75,7 @@ export default async function GamePage({
     .eq('guest_id', guestId);
   const answeredIds = (answered ?? []).map((r) => r.question_id as string);
 
-  if (game.game_type !== 'couple_trivia' && game.game_type !== 'fastest_finger') {
+  if (!PLAYABLE_TYPES.includes(game.game_type)) {
     return (
       <main className="grid min-h-dvh place-items-center px-6 text-center">
         <div>
@@ -94,6 +97,20 @@ export default async function GamePage({
         title={game.title || 'Fastest Finger First'}
         colors={colors}
         initialLiveState={(game.live_state ?? {}) as { active_question_id?: string }}
+      />
+    );
+  }
+
+  if (game.game_type === 'bride_groom_showdown') {
+    return (
+      <ShowdownGame
+        base={base}
+        gameId={gameId}
+        guestId={guestId}
+        title={game.title || 'Bride vs Groom Showdown'}
+        questions={(questions ?? []) as TriviaQuestion[]}
+        answeredIds={answeredIds}
+        colors={colors}
       />
     );
   }
