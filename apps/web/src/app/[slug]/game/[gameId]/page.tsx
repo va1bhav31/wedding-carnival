@@ -8,8 +8,9 @@ import { guestBase } from '@/lib/guest-nav';
 import TriviaGame from './TriviaGame';
 import FastestFinger from './FastestFinger';
 import ShowdownGame from './ShowdownGame';
+import ScratchGame from './ScratchGame';
 
-const PLAYABLE_TYPES = ['couple_trivia', 'fastest_finger', 'bride_groom_showdown'];
+const PLAYABLE_TYPES = ['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'scratch_win'];
 
 export type TriviaQuestion = {
   id: string;
@@ -97,6 +98,18 @@ export default async function GamePage({
         title={game.title || 'Fastest Finger First'}
         colors={colors}
         initialLiveState={(game.live_state ?? {}) as { active_question_id?: string }}
+      />
+    );
+  }
+
+  if (game.game_type === 'scratch_win') {
+    return (
+      <ScratchGame
+        base={base}
+        gameId={gameId}
+        guestId={guestId}
+        title={game.title || 'Scratch & Win'}
+        colors={colors}
       />
     );
   }
