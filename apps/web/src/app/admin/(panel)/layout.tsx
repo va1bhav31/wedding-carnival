@@ -1,6 +1,11 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { requireAdmin } from '@/lib/auth';
 import { signOut } from '@/lib/actions/auth';
+
+export const metadata: Metadata = {
+  title: 'Wedding Carnival Admin Panel',
+};
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdmin();
@@ -8,8 +13,10 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-dvh bg-gray-50">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/80 px-6 py-3 backdrop-blur">
-        <Link href="/admin" className="text-lg font-semibold text-fuchsia-700">
-          🎪 Wedding Carnival · Admin
+        <Link href="/admin" className="flex items-center gap-2 text-lg font-semibold text-fuchsia-700">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/wc-logo.jpg" alt="" className="h-7 w-7 rounded" />
+          Wedding Carnival · Admin
         </Link>
         <div className="flex items-center gap-4 text-sm">
           <Link href="/admin/security" className="font-medium text-gray-600 hover:text-fuchsia-600">
