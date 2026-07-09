@@ -15,6 +15,37 @@ export default function SecurityPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Change password
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwDone, setPwDone] = useState(false);
+  const [pwBusy, setPwBusy] = useState(false);
+
+  async function changePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPw.length < 8) {
+      setPwError('Use at least 8 characters.');
+      return;
+    }
+    if (newPw !== confirmPw) {
+      setPwError('Passwords do not match.');
+      return;
+    }
+    setPwBusy(true);
+    setPwError(null);
+    const supabase = createClient();
+    const { error } = await supabase.auth.updateUser({ password: newPw });
+    setPwBusy(false);
+    if (error) {
+      setPwError(error.message);
+      return;
+    }
+    setPwDone(true);
+    setNewPw('');
+    setConfirmPw('');
+  }
+
   const load = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase.auth.mfa.listFactors();
@@ -74,10 +105,49 @@ export default function SecurityPage() {
       <Link href="/admin" className="text-sm text-gray-500 hover:text-fuchsia-600">
         ← Back to admin
       </Link>
-      <h1 className="mb-1 mt-3 text-2xl font-semibold text-gray-900">Security · Two-factor auth</h1>
-      <p className="mb-6 text-sm text-gray-500">
-        Protect your admin login with an authenticator app (Google Authenticator, Authy, 1Password…).
-        Once enabled, you&apos;ll enter a 6-digit code after your password.
+      <h1 className="mb-6 mt-3 text-2xl font-semibold text-gray-900">Security</h1>
+
+      {/* Change password */}
+      <section className="mb-6 rounded-2xl border border-gray-200 bg-white p-6">
+        <h2 className="mb-1 font-semibold text-gray-900">Password</h2>
+        <p className="mb-4 text-sm text-gray-500">Change the password for this account.</p>
+        {pwDone ? (
+          <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">Password updated ✓</p>
+        ) : (
+          <form onSubmit={changePassword} className="grid gap-3">
+            <input
+              type="password"
+              required
+              value={newPw}
+              onChange={(e) => setNewPw(e.target.value)}
+              placeholder="New password"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-900 outline-none focus:border-fuchsia-400"
+            />
+            <input
+              type="password"
+              required
+              value={confirmPw}
+              onChange={(e) => setConfirmPw(e.target.value)}
+              placeholder="Confirm new password"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-900 outline-none focus:border-fuchsia-400"
+            />
+            {pwError && <p className="text-sm text-red-600">{pwError}</p>}
+            <div>
+              <button
+                disabled={pwBusy}
+                className="rounded-full bg-fuchsia-600 px-5 py-2.5 font-semibold text-white hover:bg-fuchsia-700 disabled:opacity-60"
+              >
+                {pwBusy ? 'Updating…' : 'Update password'}
+              </button>
+            </div>
+          </form>
+        )}
+      </section>
+
+      <h2 className="mb-1 text-lg font-semibold text-gray-900">Two-factor authentication</h2>
+      <p className="mb-4 text-sm text-gray-500">
+        Protect your login with an authenticator app (Google Authenticator, Authy, 1Password…). Once
+        enabled, you&apos;ll enter a 6-digit code after your password.
       </p>
 
       {loading ? (
