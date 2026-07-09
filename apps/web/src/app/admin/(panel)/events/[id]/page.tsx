@@ -41,8 +41,8 @@ export default async function EditEvent({
       <Link href="/admin" className="text-sm text-gray-500 hover:text-fuchsia-600">
         ← Back to events
       </Link>
-      <div className="mb-6 mt-3 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">
+      <div className="mb-6 mt-3 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="min-w-0 truncate text-2xl font-semibold">
           {bride} &amp; {groom}
         </h1>
         <a
