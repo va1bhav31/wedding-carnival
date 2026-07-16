@@ -87,7 +87,7 @@ export default function FastestFinger({
   // Countdown timer.
   useEffect(() => {
     if (!live.active_question_id || !live.started_at) return;
-    const deadline = new Date(live.started_at).getTime() + (live.duration_ms ?? 12000);
+    const deadline = new Date(live.started_at).getTime() + (live.duration_ms ?? 10000);
     const tick = () => setTimeLeft(Math.max(0, deadline - Date.now()));
     tick();
     const id = setInterval(tick, 100);

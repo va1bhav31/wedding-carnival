@@ -7,6 +7,7 @@ import { requireAdmin, assertCanManage } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { slugify } from '@/lib/slug';
 import { HOST_PW_COOKIE } from '@/lib/host-cookie';
+import { seedDefaultContent } from '@/lib/default-content';
 
 const STATUSES = ['draft', 'ready', 'live', 'ended'] as const;
 
@@ -126,6 +127,10 @@ export async function createEvent(formData: FormData) {
     if (error.code === '23505') throw new Error(`The slug "${slug}" is already taken.`);
     throw new Error(error.message);
   }
+
+  // Pre-load the event with all 8 games + the default content from the
+  // product doc (games start locked; content is editable per wedding).
+  await seedDefaultContent(supabase, data.id);
 
   revalidatePath('/admin');
   redirect(`/admin/events/${data.id}`);

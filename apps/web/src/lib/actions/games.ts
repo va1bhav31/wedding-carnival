@@ -215,7 +215,7 @@ const DELETABLE: Record<string, string> = {
 
 /* ---------------- Fastest Finger live control ---------------- */
 
-const FF_DURATION_MS = 12000; // guests have ~12s to answer once launched
+const FF_DURATION_MS = 10000; // guests have 10s to answer once launched (per product doc)
 
 /** Host launches a question → all guests' screens show it (via realtime). */
 export async function launchQuestion(formData: FormData) {
