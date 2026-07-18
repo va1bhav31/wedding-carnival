@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { GAME_CATALOG } from '@/lib/games-catalog';
-import { setGameEnabled } from '@/lib/actions/games';
+import { setGameEnabled, loadDefaultContent } from '@/lib/actions/games';
 
 type GameRow = { id: string; game_type: string; status: string; is_enabled: boolean; title: string | null };
 
@@ -38,9 +38,23 @@ export default async function GamesList({ params }: { params: Promise<{ id: stri
         ← Back to event
       </Link>
       <h1 className="mb-1 mt-3 text-2xl font-semibold text-gray-900">Games</h1>
-      <p className="mb-6 text-sm text-gray-500">
+      <p className="mb-4 text-sm text-gray-500">
         {bride} &amp; {groom} — enable the games this wedding gets, then add their content.
       </p>
+
+      <form
+        action={loadDefaultContent}
+        className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-fuchsia-100 bg-fuchsia-50/60 p-4"
+      >
+        <input type="hidden" name="wedding_id" value={id} />
+        <p className="min-w-0 text-sm text-gray-600">
+          Pre-fill every game with the default questions &amp; content. Safe to run — it
+          only fills in games that are still empty.
+        </p>
+        <button className="shrink-0 rounded-full bg-fuchsia-600 px-5 py-2 text-sm font-semibold text-white hover:bg-fuchsia-700">
+          Load default content
+        </button>
+      </form>
 
       <ul className="grid gap-3">
         {GAME_CATALOG.map((g) => {

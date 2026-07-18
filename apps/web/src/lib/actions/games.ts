@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { assertCanManage } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { GAME_BY_TYPE } from '@/lib/games-catalog';
+import { seedDefaultContent } from '@/lib/default-content';
 
 const STATUSES = ['locked', 'live', 'ended'] as const;
 
@@ -43,6 +44,17 @@ export async function setGameEnabled(formData: FormData) {
     { onConflict: 'wedding_id,game_type' }
   );
   if (error) throw new Error(error.message);
+  revalidatePath(gamesPath(weddingId));
+}
+
+/** Seed this event with the default games + content (idempotent, non-destructive). */
+export async function loadDefaultContent(formData: FormData) {
+  const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
+  if (!weddingId) throw new Error('Missing event.');
+
+  const supabase = createAdminClient();
+  await seedDefaultContent(supabase, weddingId);
   revalidatePath(gamesPath(weddingId));
 }
 

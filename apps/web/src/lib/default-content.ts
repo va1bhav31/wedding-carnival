@@ -101,111 +101,151 @@ const DARES: Array<{ title: string; description: string; round: number }> = [
 ];
 
 /**
- * Seed a freshly created wedding with all 8 games (enabled, locked) and the
- * default content above. Runs with the service-role client.
+ * Seed a wedding with all 8 games (enabled, locked) and the default content
+ * above. Idempotent and non-destructive: games already present are left as-is,
+ * and a game's content is only seeded when that game currently has none — so
+ * running this on an existing event never duplicates or overwrites anything.
+ * Runs with the service-role client.
  */
 export async function seedDefaultContent(
   supabase: SupabaseClient,
   weddingId: string
 ): Promise<void> {
-  // 1. One wedding_games row per catalog game.
-  const { data: games, error: gamesErr } = await supabase
+  // 1. Ensure one wedding_games row per catalog game (skip any that exist).
+  const { error: upsertErr } = await supabase
     .from('wedding_games')
-    .insert(
+    .upsert(
       GAME_CATALOG.map((g) => ({
         wedding_id: weddingId,
         game_type: g.type,
         is_enabled: true,
         is_leaderboard: g.leaderboard,
         display_order: g.order,
-      }))
-    )
-    .select('id, game_type');
-  if (gamesErr) throw new Error(`Seeding games failed: ${gamesErr.message}`);
+      })),
+      { onConflict: 'wedding_id,game_type', ignoreDuplicates: true }
+    );
+  if (upsertErr) throw new Error(`Seeding games failed: ${upsertErr.message}`);
+
+  const { data: games, error: gamesErr } = await supabase
+    .from('wedding_games')
+    .select('id, game_type')
+    .eq('wedding_id', weddingId);
+  if (gamesErr) throw new Error(`Reading games failed: ${gamesErr.message}`);
 
   const idOf = (type: string) => games!.find((g) => g.game_type === type)?.id as string;
 
+  // Which games already have authored content — so we don't duplicate on re-run.
+  const hasContent = async (table: string, gameId: string) => {
+    const { count } = await supabase
+      .from(table)
+      .select('id', { count: 'exact', head: true })
+      .eq('wedding_game_id', gameId);
+    return (count ?? 0) > 0;
+  };
+  const [showdownHas, triviaHas, ffHas, photoHas, scratchHas, dareHas] = await Promise.all([
+    hasContent('questions', idOf('bride_groom_showdown')),
+    hasContent('questions', idOf('couple_trivia')),
+    hasContent('questions', idOf('fastest_finger')),
+    hasContent('photo_hunt_tasks', idOf('photo_hunt')),
+    hasContent('scratch_prizes', idOf('scratch_win')),
+    hasContent('dares', idOf('spin_wheel_dare')),
+  ]);
+
   // 2. Questions (Showdown binary + Trivia placeholders + Fastest Finger bank).
   const questions = [
-    ...SHOWDOWN_QUESTIONS.map((prompt, i) => ({
-      wedding_id: weddingId,
-      wedding_game_id: idOf('bride_groom_showdown'),
-      question_type: 'binary_side',
-      prompt,
-      options: ['bride', 'groom'],
-      correct_answer: 'bride', // couple-specific — operator flips per wedding
-      points: 100,
-      display_order: i,
-    })),
-    ...TRIVIA_PROMPTS.map((prompt, i) => ({
-      wedding_id: weddingId,
-      wedding_game_id: idOf('couple_trivia'),
-      question_type: 'mcq',
-      prompt,
-      options: TRIVIA_PLACEHOLDER_OPTIONS,
-      correct_answer: TRIVIA_PLACEHOLDER_OPTIONS[0], // placeholder — replace with real answers
-      points: 100,
-      display_order: i,
-    })),
-    ...FF_QUESTIONS.map((q, i) => ({
-      wedding_id: weddingId,
-      wedding_game_id: idOf('fastest_finger'),
-      question_type: 'mcq',
-      prompt: q.prompt,
-      options: q.options,
-      correct_answer: q.correct,
-      points: 100,
-      is_double: q.is_double ?? false,
-      category: q.category,
-      display_order: i,
-    })),
+    ...(showdownHas
+      ? []
+      : SHOWDOWN_QUESTIONS.map((prompt, i) => ({
+          wedding_id: weddingId,
+          wedding_game_id: idOf('bride_groom_showdown'),
+          question_type: 'binary_side',
+          prompt,
+          options: ['bride', 'groom'],
+          correct_answer: 'bride', // couple-specific — operator flips per wedding
+          points: 100,
+          display_order: i,
+        }))),
+    ...(triviaHas
+      ? []
+      : TRIVIA_PROMPTS.map((prompt, i) => ({
+          wedding_id: weddingId,
+          wedding_game_id: idOf('couple_trivia'),
+          question_type: 'mcq',
+          prompt,
+          options: TRIVIA_PLACEHOLDER_OPTIONS,
+          correct_answer: TRIVIA_PLACEHOLDER_OPTIONS[0], // placeholder — replace with real answers
+          points: 100,
+          display_order: i,
+        }))),
+    ...(ffHas
+      ? []
+      : FF_QUESTIONS.map((q, i) => ({
+          wedding_id: weddingId,
+          wedding_game_id: idOf('fastest_finger'),
+          question_type: 'mcq',
+          prompt: q.prompt,
+          options: q.options,
+          correct_answer: q.correct,
+          points: 100,
+          is_double: q.is_double ?? false,
+          category: q.category,
+          display_order: i,
+        }))),
   ];
-  const { error: qErr } = await supabase.from('questions').insert(questions);
-  if (qErr) throw new Error(`Seeding questions failed: ${qErr.message}`);
+  if (questions.length) {
+    const { error: qErr } = await supabase.from('questions').insert(questions);
+    if (qErr) throw new Error(`Seeding questions failed: ${qErr.message}`);
+  }
 
   // 3. Photo Hunt tasks.
-  const { error: tErr } = await supabase.from('photo_hunt_tasks').insert(
-    PHOTO_TASKS.map((label, i) => ({
-      wedding_id: weddingId,
-      wedding_game_id: idOf('photo_hunt'),
-      label,
-      points: 50,
-      display_order: i,
-    }))
-  );
-  if (tErr) throw new Error(`Seeding photo tasks failed: ${tErr.message}`);
+  if (!photoHas) {
+    const { error: tErr } = await supabase.from('photo_hunt_tasks').insert(
+      PHOTO_TASKS.map((label, i) => ({
+        wedding_id: weddingId,
+        wedding_game_id: idOf('photo_hunt'),
+        label,
+        points: 50,
+        display_order: i,
+      }))
+    );
+    if (tErr) throw new Error(`Seeding photo tasks failed: ${tErr.message}`);
+  }
 
   // 4. Scratch & Win pool.
-  const { error: sErr } = await supabase.from('scratch_prizes').insert([
-    ...SCRATCH_WINNERS.map((w, i) => ({
-      wedding_id: weddingId,
-      wedding_game_id: idOf('scratch_win'),
-      label: w.label,
-      is_winner: true,
-      quantity: w.quantity,
-      display_order: i,
-    })),
-    ...SCRATCH_BLESSINGS.map((label, i) => ({
-      wedding_id: weddingId,
-      wedding_game_id: idOf('scratch_win'),
-      label,
-      is_winner: false,
-      quantity: null,
-      display_order: SCRATCH_WINNERS.length + i,
-    })),
-  ]);
-  if (sErr) throw new Error(`Seeding scratch cards failed: ${sErr.message}`);
+  if (!scratchHas) {
+    const { error: sErr } = await supabase.from('scratch_prizes').insert([
+      ...SCRATCH_WINNERS.map((w, i) => ({
+        wedding_id: weddingId,
+        wedding_game_id: idOf('scratch_win'),
+        label: w.label,
+        is_winner: true,
+        quantity: w.quantity,
+        display_order: i,
+      })),
+      ...SCRATCH_BLESSINGS.map((label, i) => ({
+        wedding_id: weddingId,
+        wedding_game_id: idOf('scratch_win'),
+        label,
+        is_winner: false,
+        quantity: null,
+        display_order: SCRATCH_WINNERS.length + i,
+      })),
+    ]);
+    if (sErr) throw new Error(`Seeding scratch cards failed: ${sErr.message}`);
+  }
 
   // 5. Spin the Wheel dares.
-  const { error: dErr } = await supabase.from('dares').insert(
-    DARES.map((d, i) => ({
-      wedding_id: weddingId,
-      wedding_game_id: idOf('spin_wheel_dare'),
-      title: d.title,
-      description: d.description,
-      round: d.round,
-      display_order: i,
-    }))
-  );
-  if (dErr) throw new Error(`Seeding dares failed: ${dErr.message}`);
+  if (!dareHas) {
+    const { error: dErr } = await supabase.from('dares').insert(
+      DARES.map((d, i) => ({
+        wedding_id: weddingId,
+        wedding_game_id: idOf('spin_wheel_dare'),
+        title: d.title,
+        description: d.description,
+        round: d.round,
+        display_order: i,
+      }))
+    );
+    if (dErr) throw new Error(`Seeding dares failed: ${dErr.message}`);
+  }
 }
