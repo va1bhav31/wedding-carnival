@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { normalizeImageUrl } from '@/lib/image-url';
 
 export type Theme = { primary?: string; accent?: string; secondary?: string; logo?: string };
 
@@ -38,6 +39,6 @@ export function themeColors(w: Wedding) {
     primary: t.primary || '#FB4FA8',
     accent: t.accent || '#F4D71E',
     secondary: t.secondary || '#8B3FB0',
-    logo: t.logo,
+    logo: normalizeImageUrl(t.logo),
   };
 }

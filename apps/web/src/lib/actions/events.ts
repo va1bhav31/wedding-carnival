@@ -8,6 +8,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { slugify } from '@/lib/slug';
 import { HOST_PW_COOKIE } from '@/lib/host-cookie';
 import { seedDefaultContent } from '@/lib/default-content';
+import { normalizeImageUrl } from '@/lib/image-url';
 
 const STATUSES = ['draft', 'ready', 'live', 'ended'] as const;
 
@@ -154,7 +155,7 @@ export async function updateEvent(formData: FormData) {
   const primary = str(formData.get('primary')) || '#FB4FA8';
   const accent = str(formData.get('accent')) || '#F4D71E';
   const secondary = str(formData.get('secondary')) || '#8B3FB0';
-  const logoUrl = str(formData.get('logo_url'));
+  const logoUrl = normalizeImageUrl(str(formData.get('logo_url'))) ?? '';
 
   if (!bride || !groom) throw new Error('Bride and groom names are required.');
   if (!slug) throw new Error('A valid slug is required.');
