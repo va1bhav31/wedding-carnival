@@ -73,6 +73,7 @@ export default async function GameContentEditor({
       </form>
 
       {kind === 'questions_mcq' && <McqEditor supabase={supabase} gameId={gameId} gameType={game.game_type} hidden={hidden} />}
+      {kind === 'questions_order' && <OrderEditor supabase={supabase} gameId={gameId} gameType={game.game_type} hidden={hidden} />}
       {kind === 'questions_binary' && <BinaryEditor supabase={supabase} gameId={gameId} gameType={game.game_type} hidden={hidden} />}
       {kind === 'photo_tasks' && <PhotoTaskEditor supabase={supabase} gameId={gameId} hidden={hidden} />}
       {kind === 'scratch' && <ScratchEditor supabase={supabase} gameId={gameId} hidden={hidden} />}
@@ -146,7 +147,59 @@ async function McqEditor({ supabase, gameId, gameType, hidden }: EditorProps) {
           <button className={btn}>Add question</button>
         </div>
       </form>
-      <QuestionList questions={questions ?? []} binary={false} hidden={hidden} />
+      <QuestionList questions={questions ?? []} mode="mcq" hidden={hidden} />
+    </div>
+  );
+}
+
+async function OrderEditor({ supabase, gameId, gameType, hidden }: EditorProps) {
+  const { data: questions } = await supabase
+    .from('questions')
+    .select('id, prompt, options, correct_answer, points, category, is_double')
+    .eq('wedding_game_id', gameId)
+    .order('created_at');
+
+  return (
+    <div className="grid gap-6">
+      <form action={addQuestion} className={`${card} grid gap-4`}>
+        <h2 className="font-semibold text-gray-900">Add an “arrange in order” question</h2>
+        <p className="-mt-2 text-sm text-gray-500">
+          Type the options in the <strong>correct order</strong> (top = first). Guests see them
+          shuffled and race to tap them back into order — fastest correct arrangement wins.
+        </p>
+        {hidden}
+        <input type="hidden" name="game_type" value={gameType} />
+        <input
+          name="prompt"
+          required
+          placeholder="e.g. Arrange these wedding events in the order they happen"
+          className={input}
+        />
+        <div className="grid gap-2">
+          {(['1', '2', '3', '4'] as const).map((n) => (
+            <div key={n} className="flex items-center gap-2">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-fuchsia-100 text-sm font-semibold text-fuchsia-700">
+                {n}
+              </span>
+              <input name={`opt_${n}`} placeholder={`Item in position ${n}`} className={input} />
+            </div>
+          ))}
+          <p className="text-xs text-gray-400">
+            Fill at least 3 in the right order (leave the 4th blank for a 3-item question).
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <input name="category" placeholder="Category (optional)" className={input} />
+          <input name="points" type="number" defaultValue={100} className={input} />
+          <label className="flex items-center gap-2 text-sm text-gray-700">
+            <input type="checkbox" name="is_double" className="accent-fuchsia-600" /> Double points
+          </label>
+        </div>
+        <div>
+          <button className={btn}>Add question</button>
+        </div>
+      </form>
+      <QuestionList questions={questions ?? []} mode="order" hidden={hidden} />
     </div>
   );
 }
@@ -178,18 +231,18 @@ async function BinaryEditor({ supabase, gameId, gameType, hidden }: EditorProps)
           <button className={btn}>Add question</button>
         </div>
       </form>
-      <QuestionList questions={questions ?? []} binary hidden={hidden} />
+      <QuestionList questions={questions ?? []} mode="binary" hidden={hidden} />
     </div>
   );
 }
 
 function QuestionList({
   questions,
-  binary,
+  mode,
   hidden,
 }: {
-  questions: Array<{ id: string; prompt: string; options: string[]; correct_answer: string; points: number; category: string | null; is_double: boolean }>;
-  binary: boolean;
+  questions: Array<{ id: string; prompt: string; options: string[]; correct_answer: string | string[]; points: number; category: string | null; is_double: boolean }>;
+  mode: 'mcq' | 'order' | 'binary';
   hidden: React.ReactNode;
 }) {
   if (questions.length === 0) return <p className="text-center text-sm text-gray-400">No questions yet.</p>;
@@ -202,8 +255,17 @@ function QuestionList({
               {i + 1}. {q.prompt}
             </div>
             <div className="mt-1 text-sm text-gray-500">
-              {binary ? (
+              {mode === 'binary' ? (
                 <>Answer: {q.correct_answer === 'bride' ? '👰 Bride' : '🤵 Groom'}</>
+              ) : mode === 'order' ? (
+                <span className="font-medium text-green-600">
+                  {(Array.isArray(q.correct_answer) ? q.correct_answer : []).map((o, idx, arr) => (
+                    <span key={o}>
+                      {o}
+                      {idx < arr.length - 1 ? ' → ' : ''}
+                    </span>
+                  ))}
+                </span>
               ) : (
                 <>
                   {q.options.map((o) => (
@@ -381,7 +443,8 @@ async function FastestFingerControl({
       </div>
       <p className="text-sm text-gray-500">
         Set the game to <strong>Live</strong> above, then launch questions one at a time. Every
-        guest&apos;s phone updates instantly and a ~12s timer starts.
+        guest&apos;s phone shows the shuffled options instantly and a 10s timer starts — the
+        fastest correct arrangement scores the biggest bonus.
       </p>
       {list.length === 0 ? (
         <p className="text-sm text-gray-400">Add questions above first.</p>

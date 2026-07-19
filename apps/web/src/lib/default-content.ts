@@ -37,24 +37,23 @@ const TRIVIA_PROMPTS = [
 ];
 const TRIVIA_PLACEHOLDER_OPTIONS = ['Option 1', 'Option 2', 'Option 3', 'Option 4'];
 
-/* Fastest Finger First — ready-to-play question bank. */
-const FF_QUESTIONS: Array<{
+/* Fastest Finger First — KBC "arrange in correct order" questions.
+   `order` is the correct sequence; `shuffled` is what guests see (stored in
+   the options column, which guests can read — so it must not reveal order).
+   These are placeholder examples; the couple's real questions replace them. */
+const FF_ORDER_QUESTIONS: Array<{
   prompt: string;
-  options: string[];
-  correct: string;
+  order: string[];
+  shuffled: string[];
   category: string;
   is_double?: boolean;
 }> = [
-  { prompt: 'Which is the capital of Australia?', options: ['Sydney', 'Melbourne', 'Canberra', 'Perth'], correct: 'Canberra', category: 'General Knowledge' },
-  { prompt: 'How many colors are there in a rainbow?', options: ['5', '6', '7', '8'], correct: '7', category: 'General Knowledge' },
-  { prompt: 'Which planet is known as the Red Planet?', options: ['Venus', 'Jupiter', 'Mars', 'Saturn'], correct: 'Mars', category: 'General Knowledge' },
-  { prompt: 'How many continents are there?', options: ['5', '6', '7', '8'], correct: '7', category: 'General Knowledge' },
-  { prompt: 'Which animal is called the King of the Jungle?', options: ['Tiger', 'Lion', 'Leopard', 'Elephant'], correct: 'Lion', category: 'General Knowledge', is_double: true },
-  { prompt: 'What flower is traditionally associated with love?', options: ['Lily', 'Tulip', 'Rose', 'Daisy'], correct: 'Rose', category: 'Wedding Special' },
-  { prompt: 'How many vows are taken in a traditional Hindu wedding?', options: ['5', '6', '7', '8'], correct: '7', category: 'Wedding Special' },
-  { prompt: 'Which side traditionally arrives as the Baraat?', options: ['Bride', 'Groom', 'Both', 'Neither'], correct: 'Groom', category: 'Wedding Special' },
-  { prompt: 'Which instrument is most commonly seen in a Baraat?', options: ['Guitar', 'Piano', 'Dhol', 'Violin'], correct: 'Dhol', category: 'Bollywood' },
-  { prompt: 'What color is most associated with Indian brides?', options: ['Blue', 'Green', 'Red', 'Purple'], correct: 'Red', category: 'Bollywood', is_double: true },
+  {
+    prompt: 'Arrange these wedding events in the order they happen',
+    order: ['Haldi', 'Sangeet', 'Wedding', 'Reception'],
+    shuffled: ['Reception', 'Haldi', 'Wedding', 'Sangeet'],
+    category: 'Wedding',
+  },
 ];
 
 /* Photo Hunt — photograph tasks. */
@@ -179,13 +178,13 @@ export async function seedDefaultContent(
         }))),
     ...(ffHas
       ? []
-      : FF_QUESTIONS.map((q, i) => ({
+      : FF_ORDER_QUESTIONS.map((q, i) => ({
           wedding_id: weddingId,
           wedding_game_id: idOf('fastest_finger'),
-          question_type: 'mcq',
+          question_type: 'arrange_order',
           prompt: q.prompt,
-          options: q.options,
-          correct_answer: q.correct,
+          options: q.shuffled, // guests see the shuffled order
+          correct_answer: q.order, // correct sequence, hidden from guests
           points: 100,
           is_double: q.is_double ?? false,
           category: q.category,

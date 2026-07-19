@@ -108,7 +108,9 @@ export async function addQuestion(formData: FormData) {
 
   let questionType: string;
   let options: string[];
-  let correct: string;
+  // correct_answer is jsonb: a single option string, or an ordered array for
+  // "arrange in order" questions.
+  let correct: string | string[];
   let category: string | null = null;
   let isDouble = false;
 
@@ -117,6 +119,16 @@ export async function addQuestion(formData: FormData) {
     options = ['bride', 'groom'];
     correct = str(formData.get('correct'));
     if (!options.includes(correct)) throw new Error('Choose whether the answer is bride or groom.');
+  } else if (kind === 'questions_order') {
+    // KBC Fastest Finger: the admin types the options already in correct order.
+    questionType = 'arrange_order';
+    const ordered = ['1', '2', '3', '4'].map((n) => str(formData.get(`opt_${n}`))).filter(Boolean);
+    if (ordered.length < 3) throw new Error('Add at least three options to arrange.');
+    if (new Set(ordered).size !== ordered.length) throw new Error('Options must be unique.');
+    correct = ordered; // the correct sequence (hidden from guests)
+    options = shuffle(ordered); // stored shuffled so guests never see the order
+    category = str(formData.get('category')) || null;
+    isDouble = str(formData.get('is_double')) === 'on';
   } else {
     questionType = 'mcq';
     const map: Record<string, string> = {
@@ -147,6 +159,18 @@ export async function addQuestion(formData: FormData) {
   });
   if (error) throw new Error(error.message);
   revalidatePath(gamePath(weddingId, gameId));
+}
+
+/** Fisher–Yates shuffle (returns a new array). */
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  // Guard against the shuffle coincidentally matching the original order.
+  if (a.length > 1 && a.every((v, i) => v === arr[i])) return shuffle(arr);
+  return a;
 }
 
 /* ---------------- Photo Hunt tasks ---------------- */

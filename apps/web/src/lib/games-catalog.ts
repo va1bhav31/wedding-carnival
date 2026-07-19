@@ -2,7 +2,8 @@
 // sees; `leaderboard` is the default for whether the game feeds the scoreboard.
 
 export type ContentKind =
-  | 'questions_mcq' // 4-option quiz (Fastest Finger, Couple Trivia)
+  | 'questions_mcq' // 4-option quiz (Couple Trivia)
+  | 'questions_order' // arrange options in correct order, KBC-style (Fastest Finger)
   | 'questions_binary' // bride-or-groom guess (Showdown)
   | 'photo_tasks' // Photo Hunt
   | 'scratch' // Scratch & Win
@@ -20,7 +21,7 @@ export type GameCatalogEntry = {
 };
 
 export const GAME_CATALOG: GameCatalogEntry[] = [
-  { type: 'fastest_finger', emoji: '⚡', label: 'Fastest Finger First', description: 'KBC-style live quiz', content: 'questions_mcq', leaderboard: true, order: 1 },
+  { type: 'fastest_finger', emoji: '⚡', label: 'Fastest Finger First', description: 'KBC-style — arrange in correct order', content: 'questions_order', leaderboard: true, order: 1 },
   { type: 'bride_groom_showdown', emoji: '🎭', label: 'Bride vs Groom Showdown', description: '“Who’s most likely to?” guessing', content: 'questions_binary', leaderboard: true, order: 2 },
   { type: 'couple_trivia', emoji: '🎯', label: 'Couple Trivia', description: 'Multiple-choice about the couple', content: 'questions_mcq', leaderboard: true, order: 3 },
   { type: 'photo_hunt', emoji: '📸', label: 'Photo Hunt', description: 'Photograph tasks, scored', content: 'photo_tasks', leaderboard: true, order: 4 },
