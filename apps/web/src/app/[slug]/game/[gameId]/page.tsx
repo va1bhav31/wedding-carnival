@@ -94,7 +94,6 @@ export default async function GamePage({
       <FastestFinger
         base={base}
         gameId={gameId}
-        guestId={guestId}
         title={game.title || 'Fastest Finger First'}
         colors={colors}
         initialLiveState={(game.live_state ?? {}) as { active_question_id?: string }}

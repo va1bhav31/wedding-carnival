@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 import GuestBackdrop from '@/components/GuestBackdrop';
 
 type Colors = { primary: string; accent: string; secondary: string; logo?: string };
@@ -13,14 +12,12 @@ type Result = { correct: boolean; points: number; correct_answer: string[] };
 export default function FastestFinger({
   base,
   gameId,
-  guestId,
   title,
   colors,
   initialLiveState,
 }: {
   base: string;
   gameId: string;
-  guestId: string;
   title: string;
   colors: Colors;
   initialLiveState: LiveState;
@@ -36,44 +33,42 @@ export default function FastestFinger({
 
   const bg = { backgroundImage: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.primary})` };
 
-  // Subscribe to live_state changes pushed by the host (instant when it works).
+  // Poll our OWN server for the live question. The server does the Supabase
+  // read/write, so the phone never depends on a realtime WebSocket or a direct
+  // Supabase connection — both are unreliable on mobile (sockets get suspended,
+  // some networks are flaky). Same-origin + no-store, so nothing is cached.
   useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`wg-${gameId}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'wedding_games', filter: `id=eq.${gameId}` },
-        (payload) => setLive((payload.new as { live_state: LiveState }).live_state ?? {})
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [gameId]);
-
-  // Fallback polling. Realtime WebSockets get suspended on mobile browsers
-  // (iOS power-saving, backgrounded tabs) or blocked by some networks, so the
-  // pushed question may never arrive. Poll the live state every few seconds and
-  // refetch the moment the tab regains focus so the phone always catches up.
-  useEffect(() => {
-    const supabase = createClient();
     let cancelled = false;
+    const url = `${base}/game/${gameId}/live`;
     const pull = async () => {
-      const { data } = await supabase
-        .from('wedding_games')
-        .select('live_state')
-        .eq('id', gameId)
-        .maybeSingle();
-      if (cancelled || !data) return;
-      const next = (data.live_state ?? {}) as LiveState;
-      setLive((prev) =>
-        prev.active_question_id === next.active_question_id && prev.started_at === next.started_at
-          ? prev // unchanged — avoid needless re-render / round reset
-          : next
-      );
+      try {
+        const res = await fetch(url, { cache: 'no-store' });
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as {
+          live_state: LiveState;
+          question: Question | null;
+          answered: boolean;
+        };
+        const next = data.live_state ?? {};
+        setLive((prev) =>
+          prev.active_question_id === next.active_question_id && prev.started_at === next.started_at
+            ? prev
+            : next
+        );
+        const qid = next.active_question_id ?? null;
+        if (qid !== loadedFor.current) {
+          // New question (or cleared) — reset the round for it.
+          loadedFor.current = qid;
+          setOrder([]);
+          setResult(null);
+          setAnswered(data.answered);
+          setQuestion(qid ? data.question : null);
+        }
+      } catch {
+        /* transient network error — the next poll retries */
+      }
     };
-    const id = setInterval(pull, 3000);
+    const id = setInterval(pull, 2500);
     const onVisible = () => {
       if (document.visibilityState === 'visible') pull();
     };
@@ -86,40 +81,7 @@ export default function FastestFinger({
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', pull);
     };
-  }, [gameId]);
-
-  // When a new question is launched, load it and reset round state.
-  useEffect(() => {
-    const qid = live.active_question_id;
-    if (!qid) {
-      setQuestion(null);
-      loadedFor.current = null;
-      return;
-    }
-    if (loadedFor.current === qid) return;
-    loadedFor.current = qid;
-    setOrder([]);
-    setResult(null);
-    setAnswered(false);
-
-    const supabase = createClient();
-    (async () => {
-      const { data: q } = await supabase
-        .from('questions')
-        .select('id, prompt, options')
-        .eq('id', qid)
-        .maybeSingle();
-      if (q) setQuestion(q as Question);
-      // If the guest already answered this one (e.g. refresh), lock it.
-      const { data: prev } = await supabase
-        .from('question_responses')
-        .select('id')
-        .eq('guest_id', guestId)
-        .eq('question_id', qid)
-        .maybeSingle();
-      if (prev) setAnswered(true);
-    })();
-  }, [live.active_question_id, guestId]);
+  }, [base, gameId]);
 
   // Countdown timer.
   useEffect(() => {
@@ -136,21 +98,23 @@ export default function FastestFinger({
       if (answered || result || !question || !live.started_at) return;
       setAnswered(true);
       const responseMs = Date.now() - new Date(live.started_at).getTime();
-
-      const supabase = createClient();
-      const { data, error } = await supabase.rpc('submit_order_answer', {
-        p_guest_id: guestId,
-        p_question_id: question.id,
-        p_answer: finalOrder,
-        p_response_ms: responseMs,
-      });
-      if (!error && data) {
-        const r = data as Result;
-        setResult(r);
-        if (r.points > 0) setEarned((e) => e + r.points);
+      try {
+        const res = await fetch(`${base}/game/${gameId}/live`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ questionId: question.id, order: finalOrder, responseMs }),
+        });
+        const data = await res.json();
+        if (res.ok && data && typeof data.correct === 'boolean') {
+          const r = data as Result;
+          setResult(r);
+          if (r.points > 0) setEarned((e) => e + r.points);
+        }
+      } catch {
+        /* leave locked as answered; the host will move on */
       }
     },
-    [answered, result, question, live.started_at, guestId]
+    [answered, result, question, live.started_at, base, gameId]
   );
 
   // Tap an option to append it to the sequence; auto-submit once all are placed.
