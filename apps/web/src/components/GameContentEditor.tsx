@@ -443,7 +443,7 @@ async function FastestFingerControl({
       </div>
       <p className="text-sm text-gray-500">
         Set the game to <strong>Live</strong> above, then launch questions one at a time. Every
-        guest&apos;s phone shows the shuffled options instantly and a 10s timer starts — the
+        guest&apos;s phone shows the shuffled options instantly and a 20s timer starts — the
         fastest correct arrangement scores the biggest bonus.
       </p>
       {list.length === 0 ? (

@@ -38,23 +38,51 @@ const TRIVIA_PROMPTS = [
 const TRIVIA_PLACEHOLDER_OPTIONS = ['Option 1', 'Option 2', 'Option 3', 'Option 4'];
 
 /* Fastest Finger First — KBC "arrange in correct order" questions.
-   `order` is the correct sequence; `shuffled` is what guests see (stored in
-   the options column, which guests can read — so it must not reveal order).
-   These are placeholder examples; the couple's real questions replace them. */
+   `order` is the correct sequence (stored hidden in correct_answer); guests
+   see the same items shuffled and race to tap them back into order. */
 const FF_ORDER_QUESTIONS: Array<{
   prompt: string;
   order: string[];
-  shuffled: string[];
   category: string;
   is_double?: boolean;
 }> = [
-  {
-    prompt: 'Arrange these wedding events in the order they happen',
-    order: ['Haldi', 'Sangeet', 'Wedding', 'Reception'],
-    shuffled: ['Reception', 'Haldi', 'Wedding', 'Sangeet'],
-    category: 'Wedding',
-  },
+  // ---- General Knowledge ----
+  { category: 'General Knowledge', prompt: 'Arrange these Indian festivals in the order they usually occur during the year.', order: ['Holi', 'Raksha Bandhan', 'Dussehra', 'Diwali'] },
+  { category: 'General Knowledge', prompt: 'Arrange these life stages from youngest to oldest.', order: ['Baby', 'Child', 'Teenager', 'Adult'] },
+  { category: 'General Knowledge', prompt: 'Arrange these months in calendar order.', order: ['January', 'March', 'August', 'December'] },
+  { category: 'General Knowledge', prompt: 'Arrange these traffic lights in their normal sequence.', order: ['Red', 'Yellow', 'Green'] },
+  { category: 'General Knowledge', prompt: 'Arrange these planets from closest to the Sun to farthest.', order: ['Mercury', 'Venus', 'Earth', 'Mars'] },
+  // ---- Fun Bollywood ----
+  { category: 'Bollywood', prompt: 'Arrange these Shah Rukh Khan films by release year (earliest to latest).', order: ['Dilwale Dulhania Le Jayenge', 'Om Shanti Om', 'Chennai Express', 'Pathaan'] },
+  { category: 'Bollywood', prompt: 'Arrange these Bollywood actors by age (oldest to youngest).', order: ['Salman Khan', 'Shah Rukh Khan', 'Ranveer Singh', 'Ranbir Kapoor'] },
+  { category: 'Bollywood', prompt: 'Arrange these Bollywood dance songs by release year (earliest to latest).', order: ['Badtameez Dil', 'London Thumakda', 'Kala Chashma', 'What Jhumka?'] },
+  { category: 'Bollywood', prompt: 'Arrange these iconic Bollywood couples by the year they got married (earliest to latest).', order: ['Deepika Padukone & Ranveer Singh', 'Katrina Kaif & Vicky Kaushal', 'Alia Bhatt & Ranbir Kapoor', 'Kiara Advani & Sidharth Malhotra'] },
+  { category: 'Bollywood', prompt: 'Arrange these Bollywood actors by height (shortest to tallest).', order: ['Aamir Khan', 'Shah Rukh Khan', 'Ranveer Singh', 'Amitabh Bachchan'] },
+  // ---- Weddings & Lifestyle ----
+  { category: 'Weddings & Lifestyle', prompt: 'Arrange these Hindu wedding rituals in the traditional order.', order: ['Jai Mala (Varmala)', 'Kanyadaan', 'Saptapadi (Seven Pheras)', 'Sindoor Ceremony'] },
+  { category: 'Weddings & Lifestyle', prompt: 'Arrange these wedding anniversaries from earliest to latest.', order: ['Paper Anniversary', 'Silver Anniversary', 'Ruby Anniversary', 'Golden Anniversary'] },
+  { category: 'Weddings & Lifestyle', prompt: 'Arrange these family members from oldest generation to youngest.', order: ['Grandparent', 'Parent', 'Child', 'Grandchild'] },
+  { category: 'Weddings & Lifestyle', prompt: "Arrange these bridal wear elements in the order they're typically worn.", order: ['Lehenga', 'Footwear', 'Jewellery', 'Dupatta'] },
+  { category: 'Weddings & Lifestyle', prompt: 'Arrange these wedding celebrations from smallest gathering to largest.', order: ['Proposal', 'Engagement', 'Wedding Ceremony', 'Reception'] },
+  // ---- Fun & Everyday Life ----
+  { category: 'Everyday Life', prompt: 'Arrange these Indian cities from north to south.', order: ['Delhi', 'Jaipur', 'Bengaluru', 'Chennai'] },
+  { category: 'Everyday Life', prompt: 'Arrange these iPhone models from oldest to newest.', order: ['iPhone X', 'iPhone 11', 'iPhone 13', 'iPhone 16'] },
+  { category: 'Everyday Life', prompt: 'Arrange these cricket formats from shortest to longest.', order: ['The Hundred', 'T20', 'ODI', 'Test'] },
+  { category: 'Everyday Life', prompt: 'Arrange these seasons in the order they occur during the year.', order: ['Spring', 'Summer', 'Autumn', 'Winter'] },
+  { category: 'Everyday Life', prompt: 'Arrange these traffic light colors in their normal operating sequence.', order: ['Red', 'Green', 'Yellow'] },
 ];
+
+/** Fisher–Yates shuffle that never returns the input order (so the displayed
+ *  options can't accidentally reveal the answer). */
+function shuffled<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  if (a.length > 1 && a.every((v, i) => v === arr[i])) return shuffled(arr);
+  return a;
+}
 
 /* Photo Hunt — photograph tasks. */
 const PHOTO_TASKS = [
@@ -183,7 +211,7 @@ export async function seedDefaultContent(
           wedding_game_id: idOf('fastest_finger'),
           question_type: 'arrange_order',
           prompt: q.prompt,
-          options: q.shuffled, // guests see the shuffled order
+          options: shuffled(q.order), // guests see the shuffled order
           correct_answer: q.order, // correct sequence, hidden from guests
           points: 100,
           is_double: q.is_double ?? false,
