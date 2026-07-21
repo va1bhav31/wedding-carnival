@@ -36,7 +36,7 @@ export default function FastestFinger({
 
   const bg = { backgroundImage: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.primary})` };
 
-  // Subscribe to live_state changes pushed by the host.
+  // Subscribe to live_state changes pushed by the host (instant when it works).
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
@@ -49,6 +49,42 @@ export default function FastestFinger({
       .subscribe();
     return () => {
       supabase.removeChannel(channel);
+    };
+  }, [gameId]);
+
+  // Fallback polling. Realtime WebSockets get suspended on mobile browsers
+  // (iOS power-saving, backgrounded tabs) or blocked by some networks, so the
+  // pushed question may never arrive. Poll the live state every few seconds and
+  // refetch the moment the tab regains focus so the phone always catches up.
+  useEffect(() => {
+    const supabase = createClient();
+    let cancelled = false;
+    const pull = async () => {
+      const { data } = await supabase
+        .from('wedding_games')
+        .select('live_state')
+        .eq('id', gameId)
+        .maybeSingle();
+      if (cancelled || !data) return;
+      const next = (data.live_state ?? {}) as LiveState;
+      setLive((prev) =>
+        prev.active_question_id === next.active_question_id && prev.started_at === next.started_at
+          ? prev // unchanged — avoid needless re-render / round reset
+          : next
+      );
+    };
+    const id = setInterval(pull, 3000);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') pull();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', pull);
+    pull();
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', pull);
     };
   }, [gameId]);
 
