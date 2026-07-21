@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
 import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase } from '@/lib/guest-nav';
+import GuestBackdrop from '@/components/GuestBackdrop';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 const TEAM = { bride: '👰', groom: '🤵' } as Record<string, string>;
@@ -31,38 +32,53 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
   const list = players ?? [];
   const { bride, groom } = coupleNames(w);
   const { primary, accent, secondary } = themeColors(w);
-  const bg = { background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)` } as CSSProperties;
+  const bg = {
+    backgroundImage: `linear-gradient(135deg, ${primary} 0%, ${secondary} 55%, ${primary} 100%)`,
+  } as CSSProperties;
 
   return (
-    <main style={bg} className="min-h-dvh px-5 py-8 text-white">
-      <div className="mx-auto max-w-md">
+    <main style={bg} className="wc-aurora relative min-h-dvh overflow-hidden px-5 py-8 text-white">
+      <GuestBackdrop accent={accent} />
+      <div className="relative z-10 mx-auto max-w-md">
         <div className="mb-6 text-center">
-          <p className="text-sm text-white/70">
+          <p className="wc-rise text-sm text-white/70">
             {bride} &amp; {groom}
           </p>
-          <h1 className="font-serif text-3xl font-bold">🏆 Leaderboard</h1>
+          <h1 className="wc-rise font-serif text-3xl font-bold" style={{ animationDelay: '.08s' }}>
+            <span className="wc-bob-slow inline-block">🏆</span> Leaderboard
+          </h1>
         </div>
 
         {list.length === 0 ? (
-          <p className="text-center text-white/80">No scores yet — be the first to play!</p>
+          <p className="wc-pop text-center text-white/80">No scores yet — be the first to play!</p>
         ) : (
           <ul className="grid gap-2">
             {list.map((p, i) => {
               const isMe = p.id === guestId;
+              const isTop = i < 3;
               return (
                 <li
                   key={p.id}
-                  className={`flex items-center gap-3 rounded-2xl px-4 py-3 ${
-                    isMe ? 'bg-white text-gray-900 shadow-lg ring-2' : 'bg-white/15 backdrop-blur'
+                  className={`wc-rise flex items-center gap-3 rounded-2xl px-4 py-3 ${
+                    isMe
+                      ? 'bg-white text-gray-900 shadow-xl'
+                      : isTop
+                        ? 'bg-white/25 shadow-lg ring-1 ring-white/25 backdrop-blur'
+                        : 'bg-white/12 backdrop-blur'
                   }`}
-                  style={isMe ? { boxShadow: `0 0 0 2px ${accent}` } : undefined}
+                  style={{
+                    animationDelay: `${i * 0.05}s`,
+                    ...(isMe ? { boxShadow: `0 0 0 2px ${accent}, 0 12px 30px -10px ${accent}` } : {}),
+                  }}
                 >
-                  <span className="w-7 text-center font-bold">{MEDAL[i] ?? i + 1}</span>
-                  <span className="flex-1 font-semibold">
-                    {p.nickname || p.name} {p.team ? TEAM[p.team] ?? '' : ''}
-                    {isMe && <span className="ml-1 text-xs text-fuchsia-600">(you)</span>}
+                  <span className={`w-8 text-center ${isTop ? 'text-xl' : 'font-bold'}`}>
+                    {MEDAL[i] ?? i + 1}
                   </span>
-                  <span className="font-bold" style={{ color: isMe ? secondary : accent }}>
+                  <span className="flex-1 truncate font-semibold">
+                    {p.nickname || p.name} {p.team ? TEAM[p.team] ?? '' : ''}
+                    {isMe && <span className="ml-1 text-xs" style={{ color: secondary }}>(you)</span>}
+                  </span>
+                  <span className="text-lg font-black" style={{ color: isMe ? secondary : accent }}>
                     {p.total_points}
                   </span>
                 </li>
@@ -72,7 +88,7 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
         )}
 
         <div className="mt-8 text-center">
-          <Link href={`${base}/play`} className="rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
+          <Link href={`${base}/play`} className="wc-btn inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white ring-1 ring-white/15 backdrop-blur">
             ← Back to games
           </Link>
         </div>

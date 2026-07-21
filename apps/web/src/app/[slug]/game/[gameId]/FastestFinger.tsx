@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import GuestBackdrop from '@/components/GuestBackdrop';
 
 type Colors = { primary: string; accent: string; secondary: string; logo?: string };
 type LiveState = { active_question_id?: string; started_at?: string; duration_ms?: number };
@@ -33,7 +34,7 @@ export default function FastestFinger({
   const [earned, setEarned] = useState(0);
   const loadedFor = useRef<string | null>(null);
 
-  const bg = { background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` };
+  const bg = { backgroundImage: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.primary})` };
 
   // Subscribe to live_state changes pushed by the host.
   useEffect(() => {
@@ -138,20 +139,21 @@ export default function FastestFinger({
   const correctSeq = result?.correct_answer ?? [];
 
   return (
-    <main style={bg} className="flex min-h-dvh flex-col items-center justify-center gap-5 px-5 py-10 text-center text-white">
-      <div className="flex items-center gap-2 text-sm font-semibold text-white/80">
+    <main style={bg} className="wc-aurora relative flex min-h-dvh flex-col items-center justify-center gap-5 overflow-hidden px-5 py-10 text-center text-white">
+      <GuestBackdrop accent={colors.accent} />
+      <div className="relative z-10 flex items-center gap-2 text-sm font-semibold text-white/80">
         <span className="h-2 w-2 animate-pulse rounded-full" style={{ background: colors.accent }} />
         ⚡ {title}
       </div>
 
       {!question ? (
-        <div className="max-w-sm">
-          <div className="mb-3 text-5xl">⏳</div>
+        <div className="wc-pop relative z-10 max-w-sm">
+          <div className="wc-bob mb-3 text-5xl">⏳</div>
           <p className="text-lg text-white/90">Waiting for the host to launch the next question…</p>
           <p className="mt-1 text-sm text-white/60">Get ready — tap the options into the right order, fast! 🏃</p>
         </div>
       ) : (
-        <div className="w-full max-w-md">
+        <div className="relative z-10 w-full max-w-md">
           {/* timer */}
           <div className="mb-3 text-center">
             <span
@@ -162,7 +164,7 @@ export default function FastestFinger({
             </span>
           </div>
 
-          <div className="rounded-3xl bg-white p-6 text-gray-900 shadow-2xl">
+          <div className="wc-pop rounded-3xl bg-white p-6 text-gray-900 shadow-2xl">
             <h2 className="mb-2 text-xl font-semibold">{question.prompt}</h2>
             <p className="mb-5 text-sm text-gray-500">
               {result
@@ -232,8 +234,8 @@ export default function FastestFinger({
         </div>
       )}
 
-      <div className="text-sm text-white/70">Your points this round: {earned}</div>
-      <Link href={`${base}/leaderboard`} className="rounded-full bg-white/20 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur">
+      <div className="relative z-10 text-sm text-white/70">Your points this round: {earned}</div>
+      <Link href={`${base}/leaderboard`} className="wc-btn relative z-10 rounded-full bg-white/20 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur">
         🏆 Leaderboard
       </Link>
     </main>

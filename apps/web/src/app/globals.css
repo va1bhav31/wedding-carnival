@@ -17,3 +17,63 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ============================================================
+   Wedding Carnival — guest experience motion system
+   Reusable, theme-agnostic classes. Colors come from inline
+   styles (per-wedding theme); these only add movement + polish.
+   ============================================================ */
+
+@keyframes wc-bob      { 0%,100%{transform:translateY(0)}        50%{transform:translateY(-14px)} }
+@keyframes wc-bob-slow { 0%,100%{transform:translateY(0)}        50%{transform:translateY(-24px)} }
+@keyframes wc-drift1   { 0%{transform:translate(0,0) scale(1)} 33%{transform:translate(38px,-28px) scale(1.08)} 66%{transform:translate(-26px,18px) scale(.95)} 100%{transform:translate(0,0) scale(1)} }
+@keyframes wc-drift2   { 0%{transform:translate(0,0) scale(1)} 50%{transform:translate(-48px,28px) scale(1.1)} 100%{transform:translate(0,0) scale(1)} }
+@keyframes wc-rise     { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+@keyframes wc-pop      { from{opacity:0;transform:scale(.92)}       to{opacity:1;transform:scale(1)} }
+@keyframes wc-twinkle  { 0%,100%{opacity:.12;transform:scale(.6)}  50%{opacity:.85;transform:scale(1)} }
+@keyframes wc-shine    { from{transform:translateX(-130%) skewX(-15deg)} to{transform:translateX(240%) skewX(-15deg)} }
+@keyframes wc-gradient { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+@keyframes wc-spin-slow{ to{transform:rotate(360deg)} }
+@keyframes wc-pulse    { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* Entrance animations (add inline animation-delay for stagger) */
+.wc-rise   { animation: wc-rise .6s cubic-bezier(.2,.7,.3,1) both; }
+.wc-pop    { animation: wc-pop .5s cubic-bezier(.2,.7,.3,1) both; }
+
+/* Gentle floating (hero logo, medals, etc.) */
+.wc-bob      { animation: wc-bob 4s ease-in-out infinite; }
+.wc-bob-slow { animation: wc-bob-slow 7s ease-in-out infinite; }
+
+/* Animated gradient background — pair with inline `backgroundImage`
+   (a 3-stop gradient) so there's room for the position shift. */
+.wc-aurora { background-size: 200% 200%; animation: wc-gradient 18s ease infinite; }
+
+/* Soft drifting blobs (decorative). Color set inline. */
+.wc-blob        { position:absolute; border-radius:9999px; filter:blur(64px); opacity:.5; pointer-events:none; }
+.wc-blob.b1     { animation: wc-drift1 20s ease-in-out infinite; }
+.wc-blob.b2     { animation: wc-drift2 24s ease-in-out infinite; }
+
+/* Twinkling sparkles */
+.wc-twinkle { position:absolute; border-radius:9999px; background:#fff; box-shadow:0 0 8px rgba(255,255,255,.7); animation: wc-twinkle 3.4s ease-in-out infinite; }
+
+/* Card with hover lift + a light sweep */
+.wc-card    { position:relative; overflow:hidden; transition: transform .25s cubic-bezier(.2,.7,.3,1), box-shadow .25s; }
+.wc-card:hover { transform: translateY(-4px); }
+.wc-card::after { content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(100deg,transparent 25%,rgba(255,255,255,.35) 50%,transparent 75%);
+  transform:translateX(-130%) skewX(-15deg); }
+.wc-card:hover::after { animation: wc-shine .85s ease; }
+
+/* Button with press-lift + shimmer */
+.wc-btn        { position:relative; overflow:hidden; transition: transform .2s, box-shadow .2s; }
+.wc-btn:hover  { transform: translateY(-2px); }
+.wc-btn:active { transform: translateY(0) scale(.98); }
+.wc-btn::after { content:""; position:absolute; top:0; left:0; height:100%; width:45%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);
+  transform:translateX(-160%) skewX(-15deg); pointer-events:none; }
+.wc-btn:hover::after { animation: wc-shine 1s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .wc-rise,.wc-pop,.wc-bob,.wc-bob-slow,.wc-aurora,.wc-blob,.wc-twinkle { animation: none !important; }
+  .wc-card::after,.wc-btn::after { display: none; }
+}

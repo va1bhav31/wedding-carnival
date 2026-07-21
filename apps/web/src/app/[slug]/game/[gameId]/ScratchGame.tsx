@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import GuestBackdrop from '@/components/GuestBackdrop';
 
 type Colors = { primary: string; accent: string; secondary: string; logo?: string };
 type Prize = { label: string; message: string | null; is_winner: boolean; already: boolean };
@@ -27,7 +28,7 @@ export default function ScratchGame({
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const drawing = useRef(false);
 
-  const bg = { background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` };
+  const bg = { backgroundImage: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.primary})` };
 
   // Assign the prize server-side as soon as the card opens.
   useEffect(() => {
@@ -119,23 +120,24 @@ export default function ScratchGame({
   }, [prize, revealed, colors, doReveal]);
 
   return (
-    <main style={bg} className="flex min-h-dvh flex-col items-center justify-center gap-5 px-5 py-10 text-center text-white">
-      <div className="text-sm font-semibold text-white/80">🎁 {title}</div>
+    <main style={bg} className="wc-aurora relative flex min-h-dvh flex-col items-center justify-center gap-5 overflow-hidden px-5 py-10 text-center text-white">
+      <GuestBackdrop accent={colors.accent} />
+      <div className="relative z-10 text-sm font-semibold text-white/80">🎁 {title}</div>
 
       {error ? (
-        <div className="max-w-sm">
+        <div className="relative z-10 max-w-sm">
           <p className="text-white/90">{error}</p>
-          <Link href={`${base}/play`} className="mt-4 inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
+          <Link href={`${base}/play`} className="wc-btn mt-4 inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
             ← Back to games
           </Link>
         </div>
       ) : !prize ? (
-        <p className="text-lg text-white/90">Preparing your card… 🎫</p>
+        <p className="relative z-10 text-lg text-white/90">Preparing your card… 🎫</p>
       ) : (
         <>
           <div
             ref={wrapRef}
-            className="relative h-56 w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl"
+            className="wc-pop relative z-10 h-56 w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl"
           >
             {/* Prize underneath */}
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
@@ -152,19 +154,19 @@ export default function ScratchGame({
           </div>
 
           {revealed ? (
-            <div className="max-w-sm">
+            <div className="wc-rise relative z-10 max-w-sm">
               <p className="text-lg font-semibold">
                 {prize.is_winner ? '🎉 You’re a lucky winner!' : 'A little blessing for you 💖'}
               </p>
               <p className="mt-1 text-sm text-white/80">
                 {prize.already ? 'You’ve already scratched this card.' : 'Show this to the couple to claim it.'}
               </p>
-              <Link href={`${base}/play`} className="mt-4 inline-block rounded-full bg-white px-6 py-3 font-semibold" style={{ color: colors.secondary }}>
+              <Link href={`${base}/play`} className="wc-btn mt-4 inline-block rounded-full bg-white px-6 py-3 font-semibold" style={{ color: colors.secondary }}>
                 ← More games
               </Link>
             </div>
           ) : (
-            <p className="text-sm text-white/70">Scratch the card to reveal your surprise! 🪙</p>
+            <p className="relative z-10 text-sm text-white/70">Scratch the card to reveal your surprise! 🪙</p>
           )}
         </>
       )}

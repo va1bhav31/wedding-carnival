@@ -5,6 +5,7 @@ import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
 import { joinWedding } from '@/lib/actions/guests';
 import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase, guestHome } from '@/lib/guest-nav';
+import GuestBackdrop from '@/components/GuestBackdrop';
 
 export default async function JoinPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -21,12 +22,13 @@ export default async function JoinPage({ params }: { params: Promise<{ slug: str
   const { primary, accent, secondary } = themeColors(w);
 
   const bg = {
-    background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
+    backgroundImage: `linear-gradient(135deg, ${primary} 0%, ${secondary} 55%, ${primary} 100%)`,
   } as CSSProperties;
 
   return (
-    <main style={bg} className="flex min-h-dvh items-center justify-center px-6 py-10">
-      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl">
+    <main style={bg} className="wc-aurora relative flex min-h-dvh items-center justify-center overflow-hidden px-6 py-10">
+      <GuestBackdrop accent={accent} />
+      <div className="wc-pop relative z-10 w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl ring-1 ring-black/5">
         <h1 className="text-center font-serif text-2xl font-bold text-gray-900">
           Join {bride} &amp; {groom}&apos;s Carnival 🎪
         </h1>
@@ -79,7 +81,7 @@ export default async function JoinPage({ params }: { params: Promise<{ slug: str
           </div>
 
           <button
-            className="mt-2 rounded-full py-3.5 text-lg font-semibold text-white shadow-lg transition hover:-translate-y-0.5"
+            className="wc-btn mt-2 rounded-full py-3.5 text-lg font-bold text-white shadow-lg"
             style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}
           >
             🎉 Let&apos;s play

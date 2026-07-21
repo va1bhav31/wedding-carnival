@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import GuestBackdrop from '@/components/GuestBackdrop';
 import type { TriviaQuestion } from './page';
 
 type Colors = { primary: string; accent: string; secondary: string; logo?: string };
@@ -34,7 +35,7 @@ export default function TriviaGame({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const bg = { background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` };
+  const bg = { backgroundImage: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.primary})` };
   const done = index >= questions.length;
   const q = done ? null : questions[index];
 
@@ -73,7 +74,7 @@ export default function TriviaGame({
 
   if (questions.length === 0) {
     return (
-      <Shell bg={bg}>
+      <Shell bg={bg} accent={colors.accent}>
         <p className="text-lg">No questions yet — check back soon! 🎪</p>
         <BackLink base={base} />
       </Shell>
@@ -82,18 +83,18 @@ export default function TriviaGame({
 
   if (done) {
     return (
-      <Shell bg={bg}>
-        <div className="text-6xl">🏆</div>
-        <h1 className="font-serif text-3xl font-bold">All done!</h1>
-        <p className="text-white/90">
+      <Shell bg={bg} accent={colors.accent}>
+        <div className="wc-bob text-6xl">🏆</div>
+        <h1 className="wc-rise font-serif text-3xl font-bold">All done!</h1>
+        <p className="wc-rise text-white/90" style={{ animationDelay: '.1s' }}>
           You earned <span className="font-bold" style={{ color: colors.accent }}>{earned}</span> points
           this round.
         </p>
-        <div className="mt-2 flex gap-3">
-          <Link href={`${base}/leaderboard`} className="rounded-full bg-white px-6 py-3 font-semibold" style={{ color: colors.secondary }}>
+        <div className="wc-rise mt-2 flex gap-3" style={{ animationDelay: '.2s' }}>
+          <Link href={`${base}/leaderboard`} className="wc-btn rounded-full bg-white px-6 py-3 font-semibold" style={{ color: colors.secondary }}>
             🏆 Leaderboard
           </Link>
-          <Link href={`${base}/play`} className="rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
+          <Link href={`${base}/play`} className="wc-btn rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
             More games
           </Link>
         </div>
@@ -102,16 +103,16 @@ export default function TriviaGame({
   }
 
   return (
-    <Shell bg={bg}>
+    <Shell bg={bg} accent={colors.accent}>
       <div className="w-full max-w-md">
         <div className="mb-4 flex items-center justify-between text-sm text-white/80">
           <span className="font-semibold">{title}</span>
-          <span>
+          <span className="rounded-full bg-white/15 px-2.5 py-0.5 backdrop-blur">
             {index + 1} / {questions.length}
           </span>
         </div>
 
-        <div className="rounded-3xl bg-white p-6 text-gray-900 shadow-2xl">
+        <div className="wc-pop rounded-3xl bg-white p-6 text-gray-900 shadow-2xl">
           {q!.category && (
             <span className="mb-2 inline-block rounded-full bg-fuchsia-100 px-3 py-1 text-xs font-semibold text-fuchsia-700">
               {q!.category}
@@ -151,7 +152,7 @@ export default function TriviaGame({
               </span>
               <button
                 onClick={next}
-                className="rounded-full px-6 py-2.5 font-semibold text-white"
+                className="wc-btn rounded-full px-6 py-2.5 font-semibold text-white shadow-md"
                 style={{ background: colors.primary }}
               >
                 {index + 1 === questions.length ? 'Finish' : 'Next →'}
@@ -166,10 +167,11 @@ export default function TriviaGame({
   );
 }
 
-function Shell({ bg, children }: { bg: React.CSSProperties; children: React.ReactNode }) {
+function Shell({ bg, accent, children }: { bg: React.CSSProperties; accent: string; children: React.ReactNode }) {
   return (
-    <main style={bg} className="flex min-h-dvh flex-col items-center justify-center gap-4 px-5 py-10 text-center text-white">
-      {children}
+    <main style={bg} className="wc-aurora relative flex min-h-dvh flex-col items-center justify-center gap-4 overflow-hidden px-5 py-10 text-center text-white">
+      <GuestBackdrop accent={accent} />
+      <div className="relative z-10 flex w-full flex-col items-center gap-4">{children}</div>
     </main>
   );
 }
