@@ -30,6 +30,20 @@ type Particle = { x: number; y: number; vx: number; vy: number; life: number; ma
 const OBSTACLES: ObKind[] = ['car', 'cow', 'photog', 'uncle', 'dhol', 'barrier'];
 const MAX_LIVES = 3;
 const SPAWN_Z = 130;
+const JUMP_DURATION = 0.55; // seconds, full arc
+const JUMP_HEIGHT_M = 1.7; // in "world metres" scaled by mppx at draw time
+
+// Low, hoppable obstacles vs. ones a horse can't clear (must dodge lanes instead).
+const JUMPABLE: Record<ObKind, boolean> = {
+  barrier: true,
+  dhol: true,
+  car: false,
+  cow: false,
+  photog: false,
+  uncle: false,
+};
+// A wide barrier blocks all 3 lanes at once — jumping is the only way through.
+const WIDE_GAP_ROWS: Record<Difficulty, number> = { easy: 6, medium: 5, hard: 4 };
 
 type Game = {
   phase: Phase;
@@ -49,6 +63,10 @@ type Game = {
   objs: Obj[];
   parts: Particle[];
   hintT: number;
+  jumping: boolean;
+  jumpElapsed: number;
+  landedPulse: number; // squash-on-landing timer
+  rowsSinceWide: number;
 };
 
 function freshGame(diff: Difficulty): Game {
@@ -70,6 +88,10 @@ function freshGame(diff: Difficulty): Game {
     objs: [],
     parts: [],
     hintT: 4,
+    jumping: false,
+    jumpElapsed: 0,
+    landedPulse: 0,
+    rowsSinceWide: 0,
   };
 }
 
@@ -159,9 +181,20 @@ export default function BaraatRush({
       g.laneT = Math.max(-1, Math.min(1, g.laneT + dir));
       g.hintT = 0;
     };
+    const jump = () => {
+      const g = gameRef.current;
+      if (g.phase !== 'playing' || g.jumping) return; // no double-jump
+      g.jumping = true;
+      g.jumpElapsed = 0;
+      g.hintT = 0;
+    };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') move(-1);
       else if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') move(1);
+      else if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
+        e.preventDefault();
+        jump();
+      }
     };
     let tx = 0,
       ty = 0,
@@ -176,7 +209,9 @@ export default function BaraatRush({
       const t = e.changedTouches[0];
       const dx = t.clientX - tx;
       const dy = t.clientY - ty;
-      if (Date.now() - tt < 600 && Math.abs(dx) > 24 && Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
+      const fast = Date.now() - tt < 600;
+      if (fast && dy < -28 && Math.abs(dy) > Math.abs(dx)) jump();
+      else if (fast && Math.abs(dx) > 24 && Math.abs(dx) > Math.abs(dy)) move(dx > 0 ? 1 : -1);
       else if (Math.abs(dx) <= 24 && Math.abs(dy) <= 24) {
         // tap: left/right half of the screen
         const w = window.innerWidth;
@@ -258,6 +293,15 @@ export default function BaraatRush({
       } else if (roll < 0.68) {
         g.objs.push({ kind: 'heart', lane: free, z: SPAWN_Z + 8, seed: roll });
       }
+    };
+
+    // Blocks all 3 lanes at once — no lane dodge is possible, only a jump clears it.
+    const spawnWideBarrier = (g: Game) => {
+      const kind: ObKind = hash(g.dist + 21) < 0.35 ? 'dhol' : 'barrier';
+      for (const lane of [-1, 0, 1]) {
+        g.objs.push({ kind, lane, z: SPAWN_Z, seed: hash(g.dist + lane * 13) });
+      }
+      g.freeLane = 0; // reset so the row right after has a fair, centered gap
     };
 
     const burst = (g: Game, x: number, y: number, color: string, n = 10) => {
@@ -794,7 +838,16 @@ export default function BaraatRush({
         g.hintT = Math.max(0, g.hintT - dt);
         if (g.sinceSpawn >= DIFF[g.diff].gap) {
           g.sinceSpawn = 0;
-          spawnRow(g);
+          // After a grace period, periodically force an all-lane barrier that
+          // can only be cleared by jumping — makes the jump mechanic essential,
+          // not just a style option.
+          if (g.t > 5 && g.rowsSinceWide >= WIDE_GAP_ROWS[g.diff]) {
+            spawnWideBarrier(g);
+            g.rowsSinceWide = 0;
+          } else {
+            spawnRow(g);
+            g.rowsSinceWide += 1;
+          }
         }
         // lane easing
         const d = g.laneT - g.laneF;
@@ -802,11 +855,29 @@ export default function BaraatRush({
         // advance objects
         for (const o of g.objs) o.z -= ds;
 
+        // jump physics
+        if (g.jumping) {
+          g.jumpElapsed += dt;
+          if (g.jumpElapsed >= JUMP_DURATION) {
+            g.jumping = false;
+            g.jumpElapsed = 0;
+            g.landedPulse = 1;
+            burst(g, W / 2 + Math.round(g.laneF) * W * 0.14, H * 0.87, '#e8dcc4', 6);
+          }
+        }
+        g.landedPulse = Math.max(0, g.landedPulse - dt * 4);
+
         // collisions
         const laneNow = Math.round(g.laneF);
         for (const o of g.objs) {
           if (o.taken || o.z > 2.4 || o.z < -0.8 || o.lane !== laneNow) continue;
           const isPickup = o.kind === 'coin' || o.kind === 'ring' || o.kind === 'heart';
+          if (!isPickup && g.jumping && JUMPABLE[o.kind as ObKind]) {
+            // Cleared it — small bonus for a well-timed jump.
+            o.taken = true;
+            g.score += 5;
+            continue;
+          }
           if (isPickup) {
             o.taken = true;
             const px = W / 2 + laneNow * W * 0.14;
@@ -1071,7 +1142,27 @@ export default function BaraatRush({
         const px = cx + g.laneF * laneW;
         const lean = g.laneT - g.laneF;
         const blink = g.inv > 0 && Math.floor(now / 90) % 2 === 0;
-        if (!blink) drawHorseGroom(px, baseY, mppx * 1.05, g.t, lean);
+        const airT = g.jumping ? Math.min(1, g.jumpElapsed / JUMP_DURATION) : 0;
+        const jumpH = g.jumping ? JUMP_HEIGHT_M * mppx * 4 * airT * (1 - airT) : 0;
+        if (!blink) {
+          if (jumpH > 1) {
+            // ground shadow shrinks and fades as the horse rises, to sell the jump
+            const sc = Math.max(0.35, 1 - (jumpH / (mppx * JUMP_HEIGHT_M)) * 0.5);
+            ctx.fillStyle = `rgba(30,15,25,${0.28 * sc})`;
+            ctx.beginPath();
+            ctx.ellipse(px, baseY, mppx * 1.05 * 0.5 * sc, mppx * 1.05 * 0.13 * sc, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          const stretch = g.jumping ? 1 + Math.sin(airT * Math.PI) * 0.07 : 1;
+          const squash = g.landedPulse > 0 ? 1 - g.landedPulse * 0.14 : 1;
+          const scaleY = stretch * squash;
+          const scaleX = 1 / Math.sqrt(scaleY);
+          ctx.save();
+          ctx.translate(px, baseY - jumpH);
+          ctx.scale(scaleX, scaleY);
+          drawHorseGroom(0, 0, mppx * 1.05, g.t, lean);
+          ctx.restore();
+        }
       }
 
       // pickup particles
@@ -1161,9 +1252,9 @@ export default function BaraatRush({
           const a = Math.min(1, g.hintT);
           ctx.globalAlpha = a * (0.7 + 0.3 * Math.sin(now * 0.006));
           ctx.fillStyle = '#fff3d6';
-          ctx.font = '700 16px system-ui, sans-serif';
+          ctx.font = '700 15px system-ui, sans-serif';
           ctx.textAlign = 'center';
-          ctx.fillText('◀  swipe to move  ▶', cx, H * 0.94);
+          ctx.fillText('◀ ▶  move     ▲  jump', cx, H * 0.94);
           ctx.globalAlpha = 1;
         }
       }
@@ -1206,8 +1297,8 @@ export default function BaraatRush({
             <div className="text-4xl">🐎</div>
             <h1 className="mt-1 font-serif text-2xl font-bold">{title}</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Ride the baraat to the venue — dodge the chaos, grab the WC coins. It never ends…
-              how far can you ride?
+              Swipe to dodge, swipe up to jump, grab the WC coins. It never ends… how far can
+              you ride?
             </p>
             {best !== null && best > 0 && (
               <p className="mt-2 text-sm font-semibold text-fuchsia-600">Your best: {best}</p>
