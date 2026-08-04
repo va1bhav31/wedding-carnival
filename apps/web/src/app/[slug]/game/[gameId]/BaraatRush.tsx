@@ -2,9 +2,15 @@
 
 // Baraat Rush — endless runner (Subway-Surfers style, no finish line).
 // Pseudo-3D canvas: 3 lanes converging on a palace gate, groom on horseback,
-// Indian-wedding obstacles (car, cow, photographer, dancing uncle, giant dhol,
-// barricade), WC coins / rings / hearts to collect. Three difficulties.
-// Scores are submitted server-side (best per guest feeds the leaderboard).
+// Indian-wedding obstacles (dancer, cow, barricade, festive cars), WC coins /
+// rings / hearts to collect. Three difficulties. Scores are submitted
+// server-side (best per guest feeds this game's own leaderboard).
+//
+// The player and obstacles are real illustrated art (see /public/baraat) —
+// only the environment (sky, road, palace, walls) is procedurally drawn.
+// The player has just 2 distinct source poses, so smoothness comes from
+// crossfading between them plus procedural bob/squash/lean on top, not from
+// a raw frame-swap.
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -22,28 +28,58 @@ const DIFF: Record<
   hard: { label: 'Hard', blurb: '1 life · dhol on fire', speed: 21, ramp: 0.34, cap: 38, gap: 23, lives: 1, double: 0.5 },
 };
 
-type ObKind = 'car' | 'cow' | 'photog' | 'uncle' | 'dhol' | 'barrier';
+// Obstacle kinds map 1:1 onto the illustrated sprites in /public/baraat.
+type ObKind = 'dancer' | 'cow' | 'cowSit' | 'barrier1' | 'barrier2' | 'taxi' | 'carPink';
 type PickKind = 'coin' | 'ring' | 'heart';
 type Obj = { kind: ObKind | PickKind; lane: number; z: number; seed: number; taken?: boolean };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; color: string; r: number };
 
-const OBSTACLES: ObKind[] = ['car', 'cow', 'photog', 'uncle', 'dhol', 'barrier'];
+const OBSTACLES: ObKind[] = ['dancer', 'cow', 'cowSit', 'barrier1', 'barrier2', 'taxi', 'carPink'];
 const MAX_LIVES = 3;
 const SPAWN_Z = 130;
 const JUMP_DURATION = 0.55; // seconds, full arc
-const JUMP_HEIGHT_M = 1.7; // in "world metres" scaled by mppx at draw time
+const JUMP_HEIGHT_M = 1.7; // world metres, scaled by mppx at draw time
+const PLAYER_HEIGHT_M = 2.6;
 
 // Low, hoppable obstacles vs. ones a horse can't clear (must dodge lanes instead).
 const JUMPABLE: Record<ObKind, boolean> = {
-  barrier: true,
-  dhol: true,
-  car: false,
+  barrier1: true,
+  barrier2: true,
+  dancer: false,
   cow: false,
-  photog: false,
-  uncle: false,
+  cowSit: false,
+  taxi: false,
+  carPink: false,
 };
 // A wide barrier blocks all 3 lanes at once — jumping is the only way through.
 const WIDE_GAP_ROWS: Record<Difficulty, number> = { easy: 6, medium: 5, hard: 4 };
+
+// Where each sprite lives, and the "world size" used to scale it consistently
+// with the road's perspective. `dim` says which axis `size` measures (metres)
+// — the other axis follows the source image's own aspect ratio, so nothing
+// distorts. `flip` lets side-profile obstacles mirror for lane variety.
+type SpriteKey = 'horseStatic' | 'horseRun' | ObKind;
+const SPRITE_SRC: Record<SpriteKey, string> = {
+  horseStatic: '/baraat/horse-static.webp',
+  horseRun: '/baraat/horse-run.webp',
+  dancer: '/baraat/ob-dancer.webp',
+  cow: '/baraat/ob-cow.webp',
+  cowSit: '/baraat/ob-cow-sit.webp',
+  barrier1: '/baraat/ob-barrier-1.webp',
+  barrier2: '/baraat/ob-barrier-2.webp',
+  taxi: '/baraat/ob-taxi.webp',
+  carPink: '/baraat/ob-car-pink.webp',
+};
+const OB_SCALE: Record<ObKind, { dim: 'width' | 'height'; size: number; flip?: boolean }> = {
+  dancer: { dim: 'height', size: 1.8 },
+  cow: { dim: 'width', size: 2.3, flip: true },
+  cowSit: { dim: 'width', size: 2.1, flip: true },
+  barrier1: { dim: 'width', size: 2.6 },
+  barrier2: { dim: 'height', size: 2.0 },
+  taxi: { dim: 'width', size: 2.3 },
+  carPink: { dim: 'width', size: 2.3 },
+};
+const FOG_TINT = '243,185,143'; // matches the horizon color — used for atmospheric depth
 
 type Game = {
   phase: Phase;
@@ -125,14 +161,40 @@ export default function BaraatRush({
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gameRef = useRef<Game>({ ...freshGame('medium'), phase: 'menu' });
+  const imagesRef = useRef<Partial<Record<SpriteKey, HTMLImageElement>>>({});
   const [phase, setPhase] = useState<Phase>('menu');
   const [finalScore, setFinalScore] = useState(0);
   const [best, setBest] = useState<number | null>(null);
   const [submitState, setSubmitState] = useState<'idle' | 'saving' | 'saved' | 'improved' | 'failed'>('idle');
+  const [assetsReady, setAssetsReady] = useState(false);
 
   const setPhaseBoth = useCallback((p: Phase) => {
     gameRef.current.phase = p;
     setPhase(p);
+  }, []);
+
+  // Preload every sprite once. Drawing gracefully no-ops on any image not
+  // yet loaded, but we gate "start" on this so the very first run isn't
+  // missing art mid-round.
+  useEffect(() => {
+    let cancelled = false;
+    const entries = Object.entries(SPRITE_SRC) as [SpriteKey, string][];
+    let loaded = 0;
+    entries.forEach(([key, src]) => {
+      const img = new Image();
+      img.decoding = 'async';
+      const done = () => {
+        loaded += 1;
+        if (!cancelled && loaded === entries.length) setAssetsReady(true);
+      };
+      img.onload = done;
+      img.onerror = done;
+      img.src = src;
+      imagesRef.current[key] = img;
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Existing best (for the menu).
@@ -262,12 +324,20 @@ export default function BaraatRush({
       vy: 22 + hash(i + 13) * 30,
       r: hash(i + 31) * Math.PI,
     }));
+    // soft floating bokeh orbs, for premium ambiance behind the HUD
+    const orbs = Array.from({ length: 7 }, (_, i) => ({
+      x: hash(i + 200) * 1000,
+      y: hash(i + 260) * 1000,
+      s: 10 + hash(i + 210) * 16,
+      vy: -4 - hash(i + 220) * 6,
+    }));
 
     const F = 13; // focal length (m) for perspective
     const kOf = (z: number) => F / (F + z);
 
     let last = performance.now();
     let raf = 0;
+    let lastStrideSin = 0; // for dust-puff-on-footfall detection
 
     const spawnRow = (g: Game) => {
       // keep the free lane reachable from the previous free lane
@@ -297,7 +367,7 @@ export default function BaraatRush({
 
     // Blocks all 3 lanes at once — no lane dodge is possible, only a jump clears it.
     const spawnWideBarrier = (g: Game) => {
-      const kind: ObKind = hash(g.dist + 21) < 0.35 ? 'dhol' : 'barrier';
+      const kind: ObKind = hash(g.dist + 21) < 0.5 ? 'barrier1' : 'barrier2';
       for (const lane of [-1, 0, 1]) {
         g.objs.push({ kind, lane, z: SPAWN_Z, seed: hash(g.dist + lane * 13) });
       }
@@ -312,411 +382,110 @@ export default function BaraatRush({
       }
     };
 
-    /* ================= sprites ================= */
+    /* ================= sprites & environment art ================= */
 
-    const shadow = (x: number, y: number, w: number) => {
-      ctx.fillStyle = 'rgba(30,15,25,.28)';
-      ctx.beginPath();
-      ctx.ellipse(x, y, w * 0.5, w * 0.13, 0, 0, Math.PI * 2);
-      ctx.fill();
-    };
-
-    const drawHorseGroom = (x: number, y: number, w: number, t: number, lean: number) => {
-      // seen from behind; w = overall width in px
-      const bob = Math.sin(t * 11) * w * 0.02;
+    const spriteShadow = (x: number, yGround: number, w: number, strength = 1) => {
       ctx.save();
-      ctx.translate(x, y + bob);
-      ctx.rotate(lean * 0.14);
-      shadow(0, w * 0.06 - bob, w * 1.05);
-
-      const leg = (lx: number, phase: number) => {
-        const sw = Math.sin(t * 11 + phase) * w * 0.055;
-        ctx.strokeStyle = '#f3ede2';
-        ctx.lineCap = 'round';
-        ctx.lineWidth = w * 0.075;
-        ctx.beginPath();
-        ctx.moveTo(lx, -w * 0.18);
-        ctx.lineTo(lx + sw, w * 0.03);
-        ctx.stroke();
-        ctx.fillStyle = '#5d4a3a';
-        ctx.beginPath();
-        ctx.ellipse(lx + sw, w * 0.045, w * 0.045, w * 0.03, 0, 0, Math.PI * 2);
-        ctx.fill();
-      };
-      leg(-w * 0.3, 0);
-      leg(w * 0.3, Math.PI);
-      leg(-w * 0.18, Math.PI);
-      leg(w * 0.18, 0);
-
-      // tail
-      ctx.strokeStyle = '#efe6d6';
-      ctx.lineWidth = w * 0.05;
+      ctx.filter = 'blur(2.5px)';
+      ctx.fillStyle = `rgba(25,14,22,${0.3 * strength})`;
       ctx.beginPath();
-      ctx.moveTo(0, -w * 0.32);
-      ctx.quadraticCurveTo(w * 0.1, -w * 0.12 + Math.sin(t * 6) * w * 0.03, w * 0.04, w * 0.02);
-      ctx.stroke();
-
-      // rump
-      const bodyG = ctx.createLinearGradient(-w * 0.4, 0, w * 0.4, 0);
-      bodyG.addColorStop(0, '#e9e2d3');
-      bodyG.addColorStop(0.5, '#fbf7ee');
-      bodyG.addColorStop(1, '#ddd4c2');
-      ctx.fillStyle = bodyG;
-      ctx.beginPath();
-      ctx.ellipse(0, -w * 0.3, w * 0.42, w * 0.28, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, yGround + 1, Math.max(2, w * 0.5), Math.max(1, w * 0.15), 0, 0, Math.PI * 2);
       ctx.fill();
-
-      // saddle drape
-      const dr = ctx.createLinearGradient(0, -w * 0.62, 0, -w * 0.3);
-      dr.addColorStop(0, '#e2559b');
-      dr.addColorStop(1, '#b02d72');
-      ctx.fillStyle = dr;
-      rr(ctx, -w * 0.36, -w * 0.56, w * 0.72, w * 0.26, w * 0.1);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(244,215,90,.9)';
-      ctx.lineWidth = Math.max(1, w * 0.014);
-      rr(ctx, -w * 0.36, -w * 0.56, w * 0.72, w * 0.26, w * 0.1);
-      ctx.stroke();
-
-      // horse neck + head peeking ahead
-      ctx.fillStyle = '#f2ecdf';
-      ctx.beginPath();
-      ctx.moveTo(-w * 0.1, -w * 0.62);
-      ctx.quadraticCurveTo(-w * 0.34, -w * 0.86, -w * 0.26, -w * 1.02);
-      ctx.quadraticCurveTo(-w * 0.22, -w * 1.12, -w * 0.12, -w * 1.08);
-      ctx.quadraticCurveTo(-w * 0.02, -w * 1.0, -w * 0.02, -w * 0.7);
-      ctx.closePath();
-      ctx.fill();
-      ctx.fillStyle = '#e5dcc8';
-      ctx.beginPath(); // ears
-      ctx.moveTo(-w * 0.24, -w * 1.1);
-      ctx.lineTo(-w * 0.2, -w * 1.2);
-      ctx.lineTo(-w * 0.16, -w * 1.09);
-      ctx.closePath();
-      ctx.fill();
-      // bridle plume
-      ctx.fillStyle = '#e2559b';
-      ctx.beginPath();
-      ctx.ellipse(-w * 0.2, -w * 1.16, w * 0.035, w * 0.06, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // groom torso (back)
-      const sher = ctx.createLinearGradient(0, -w * 1.05, 0, -w * 0.52);
-      sher.addColorStop(0, '#f8efdd');
-      sher.addColorStop(1, '#e8d9ba');
-      ctx.fillStyle = sher;
-      rr(ctx, -w * 0.24, -w * 1.02, w * 0.48, w * 0.5, w * 0.14);
-      ctx.fill();
-      // embroidery
-      ctx.strokeStyle = 'rgba(212,164,60,.75)';
-      ctx.lineWidth = Math.max(1, w * 0.012);
-      ctx.beginPath();
-      ctx.moveTo(0, -w * 1.0);
-      ctx.lineTo(0, -w * 0.56);
-      ctx.stroke();
-      // arms to reins
-      ctx.strokeStyle = '#efe3c8';
-      ctx.lineWidth = w * 0.09;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(-w * 0.2, -w * 0.9);
-      ctx.quadraticCurveTo(-w * 0.3, -w * 0.8, -w * 0.24, -w * 0.72);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.moveTo(w * 0.2, -w * 0.9);
-      ctx.quadraticCurveTo(w * 0.3, -w * 0.82, w * 0.22, -w * 0.74);
-      ctx.stroke();
-
-      // turban + trailing safa
-      ctx.fillStyle = '#d6437f';
-      ctx.beginPath();
-      ctx.ellipse(0, -w * 1.12, w * 0.16, w * 0.14, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#b02d72';
-      ctx.beginPath();
-      ctx.ellipse(0, -w * 1.06, w * 0.17, w * 0.06, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#f4d75a'; // kalgi
-      ctx.beginPath();
-      ctx.ellipse(0, -w * 1.2, w * 0.025, w * 0.045, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // dupatta trail
-      ctx.strokeStyle = 'rgba(226,85,155,.85)';
-      ctx.lineWidth = w * 0.06;
-      ctx.beginPath();
-      ctx.moveTo(w * 0.08, -w * 1.06);
-      ctx.quadraticCurveTo(w * 0.3 + Math.sin(t * 5) * w * 0.08, -w * 0.86, w * 0.34, -w * 0.6 + Math.sin(t * 4) * w * 0.05);
-      ctx.stroke();
       ctx.restore();
     };
 
-    const drawCar = (x: number, y: number, w: number, seed: number) => {
+    // Atmospheric-perspective helper: distant sprites desaturate/lighten
+    // slightly toward the horizon color instead of staying full-contrast at
+    // any depth, which is a big part of what reads as "flat 2010 flash game".
+    const hazeFilter = (k: number) => {
+      const haze = Math.max(0, 1 - k);
+      return `saturate(${Math.round(100 - haze * 42)}%) brightness(${(1 + haze * 0.16).toFixed(2)})`;
+    };
+
+    const drawObstacle = (o: Obj, x: number, yGround: number, k: number) => {
+      const cfg = OB_SCALE[o.kind as ObKind];
+      const img = imagesRef.current[o.kind as SpriteKey];
+      if (!cfg || !img || !img.complete || !img.naturalWidth) return;
+      const ratio = img.naturalWidth / img.naturalHeight;
+      const hM = cfg.dim === 'height' ? cfg.size : cfg.size / ratio;
+      const wM = cfg.dim === 'height' ? hM * ratio : cfg.size;
+      const dh = hM * mppxRef.k * k;
+      const dw = wM * mppxRef.k * k;
+      if (dh < 2) return;
+      const flip = Boolean(cfg.flip) && o.seed > 0.5;
+
+      spriteShadow(x, yGround, dw * 1.15);
+      ctx.save();
+      ctx.filter = hazeFilter(k);
+      ctx.translate(x, 0);
+      if (flip) ctx.scale(-1, 1);
+      ctx.drawImage(img, -dw / 2, yGround - dh, dw, dh);
+      ctx.restore();
+    };
+
+    const drawPlayer = (
+      g: Game,
+      x: number,
+      yGround: number,
+      k: number,
+      lean: number,
+      jumpH: number,
+      airT: number
+    ) => {
+      const staticImg = imagesRef.current.horseStatic;
+      const runImg = imagesRef.current.horseRun;
+      if (!staticImg?.complete || !runImg?.complete || !staticImg.naturalWidth || !runImg.naturalWidth) return;
+
+      const ratio = runImg.naturalWidth / runImg.naturalHeight;
+      const dh = PLAYER_HEIGHT_M * mppxRef.k * k;
+      const dw = dh * ratio;
+
+      const strideHz = 1.5 + g.speed * 0.05;
+      const phase = (g.t * strideHz) % 1;
+      const s = Math.sin(phase * Math.PI * 2);
+      const bobY = -Math.abs(s) * dh * 0.035;
+      const blend = (1 - Math.cos(phase * Math.PI * 2)) / 2; // 0..1..0 crossfade static<->run
+
+      if (s > 0 && lastStrideSin <= 0 && g.phase === 'playing' && !g.jumping) {
+        burst(g, x, yGround, 'rgba(224,204,172,.85)', 3);
+      }
+      lastStrideSin = s;
+
+      const shadowScale = jumpH > 1 ? Math.max(0.35, 1 - (jumpH / (mppxRef.k * JUMP_HEIGHT_M)) * 0.5) : 1;
+      spriteShadow(x, yGround, dw * 1.5, shadowScale);
+
+      const jumpStretch = 1 + Math.sin(airT * Math.PI) * 0.06;
+      const strideSquash = 1 - Math.abs(s) * 0.035;
+      const landSquash = g.landedPulse > 0 ? 1 - g.landedPulse * 0.12 : 1;
+      const scaleY = jumpStretch * strideSquash * landSquash;
+      const scaleX = 1 / Math.sqrt(scaleY);
+
+      ctx.save();
+      ctx.translate(x, yGround - jumpH + bobY);
+      ctx.rotate(lean * 0.12);
+      ctx.scale(scaleX, scaleY);
+      ctx.drawImage(staticImg, -dw / 2, -dh, dw, dh);
+      ctx.globalAlpha = blend;
+      ctx.drawImage(runImg, -dw / 2, -dh, dw, dh);
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    };
+
+    const drawPot = (x: number, y: number, w: number) => {
       ctx.save();
       ctx.translate(x, y);
-      shadow(0, 0, w * 1.05);
-      const body = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
-      body.addColorStop(0, '#dfe2e8');
-      body.addColorStop(0.5, '#ffffff');
-      body.addColorStop(1, '#c9ccd4');
-      ctx.fillStyle = body;
-      rr(ctx, -w * 0.5, -w * 0.62, w, w * 0.55, w * 0.09);
+      ctx.fillStyle = '#b06a3c';
+      rr(ctx, -w * 0.28, -w * 0.5, w * 0.56, w * 0.5, w * 0.08);
       ctx.fill();
-      // roof + rear window
-      ctx.fillStyle = '#eef0f4';
-      rr(ctx, -w * 0.42, -w * 0.95, w * 0.84, w * 0.4, w * 0.1);
+      ctx.fillStyle = '#c47a46';
+      rr(ctx, -w * 0.34, -w * 0.58, w * 0.68, w * 0.14, w * 0.05);
       ctx.fill();
-      ctx.fillStyle = '#3d4756';
-      rr(ctx, -w * 0.36, -w * 0.9, w * 0.72, w * 0.3, w * 0.07);
-      ctx.fill();
-      // tail lights
-      ctx.fillStyle = '#ff5449';
-      rr(ctx, -w * 0.47, -w * 0.5, w * 0.12, w * 0.08, w * 0.03);
-      ctx.fill();
-      rr(ctx, w * 0.35, -w * 0.5, w * 0.12, w * 0.08, w * 0.03);
-      ctx.fill();
-      // garland across the boot
-      ctx.strokeStyle = '#e88f2a';
-      ctx.lineWidth = w * 0.05;
-      ctx.beginPath();
-      ctx.moveTo(-w * 0.44, -w * 0.34);
-      ctx.quadraticCurveTo(0, -w * 0.16, w * 0.44, -w * 0.34);
-      ctx.stroke();
-      ctx.fillStyle = '#e2559b';
-      for (let i = -2; i <= 2; i++) {
+      for (let i = 0; i < 5; i++) {
+        ctx.fillStyle = i % 2 ? '#e2559b' : '#ef7fb4';
         ctx.beginPath();
-        ctx.arc(i * w * 0.18, -w * 0.27 + Math.abs(i) * -w * 0.02 + w * 0.02, w * 0.035, 0, Math.PI * 2);
+        ctx.arc((hash(i * 3 + x) - 0.5) * w * 0.5, -w * 0.66 - hash(i + x) * w * 0.18, w * 0.11, 0, Math.PI * 2);
         ctx.fill();
       }
-      // wheels
-      ctx.fillStyle = '#2b2f36';
-      rr(ctx, -w * 0.5, -w * 0.12, w * 0.16, w * 0.12, w * 0.03);
-      ctx.fill();
-      rr(ctx, w * 0.34, -w * 0.12, w * 0.16, w * 0.12, w * 0.03);
-      ctx.fill();
-      void seed;
-      ctx.restore();
-    };
-
-    const drawCow = (x: number, y: number, w: number, seed: number, t: number) => {
-      ctx.save();
-      ctx.translate(x, y);
-      const flip = seed > 0.5 ? 1 : -1;
-      ctx.scale(flip, 1);
-      shadow(0, 0, w);
-      const bob = Math.sin(t * 2 + seed * 9) * w * 0.01;
-      // body
-      const g = ctx.createLinearGradient(0, -w * 0.5, 0, 0);
-      g.addColorStop(0, '#fdfaf3');
-      g.addColorStop(1, '#e3dcc9');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.ellipse(0, -w * 0.3 + bob, w * 0.44, w * 0.24, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // legs
-      ctx.strokeStyle = '#efe9da';
-      ctx.lineWidth = w * 0.06;
-      ctx.lineCap = 'round';
-      for (const lx of [-0.3, -0.14, 0.14, 0.3]) {
-        ctx.beginPath();
-        ctx.moveTo(lx * w, -w * 0.16);
-        ctx.lineTo(lx * w, w * 0.0);
-        ctx.stroke();
-      }
-      // drape
-      ctx.fillStyle = '#d6437f';
-      rr(ctx, -w * 0.26, -w * 0.5 + bob, w * 0.5, w * 0.2, w * 0.05);
-      ctx.fill();
-      // head
-      ctx.fillStyle = '#f8f4e8';
-      ctx.beginPath();
-      ctx.ellipse(w * 0.48, -w * 0.36 + bob, w * 0.14, w * 0.17, 0.2, 0, Math.PI * 2);
-      ctx.fill();
-      // horns
-      ctx.strokeStyle = '#c9b48c';
-      ctx.lineWidth = w * 0.035;
-      ctx.beginPath();
-      ctx.moveTo(w * 0.44, -w * 0.5 + bob);
-      ctx.quadraticCurveTo(w * 0.4, -w * 0.62, w * 0.46, -w * 0.66);
-      ctx.moveTo(w * 0.54, -w * 0.5 + bob);
-      ctx.quadraticCurveTo(w * 0.58, -w * 0.62, w * 0.52, -w * 0.68);
-      ctx.stroke();
-      // ear + eye
-      ctx.fillStyle = '#e8e0cd';
-      ctx.beginPath();
-      ctx.ellipse(w * 0.38, -w * 0.44 + bob, w * 0.05, w * 0.03, -0.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#3a3126';
-      ctx.beginPath();
-      ctx.arc(w * 0.5, -w * 0.4 + bob, w * 0.018, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    };
-
-    const drawPhotog = (x: number, y: number, w: number, t: number, seed: number) => {
-      ctx.save();
-      ctx.translate(x, y);
-      shadow(0, 0, w * 0.8);
-      // flash
-      const fl = (t * 0.9 + seed * 3) % 2.4 < 0.12;
-      // legs
-      ctx.strokeStyle = '#3f4750';
-      ctx.lineWidth = w * 0.11;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(-w * 0.12, -w * 0.5);
-      ctx.lineTo(-w * 0.16, 0);
-      ctx.moveTo(w * 0.12, -w * 0.5);
-      ctx.lineTo(w * 0.18, 0);
-      ctx.stroke();
-      // torso (vest)
-      ctx.fillStyle = '#59636e';
-      rr(ctx, -w * 0.22, -w * 1.0, w * 0.44, w * 0.55, w * 0.1);
-      ctx.fill();
-      ctx.fillStyle = '#7b8794';
-      rr(ctx, -w * 0.22, -w * 1.0, w * 0.14, w * 0.55, w * 0.06);
-      ctx.fill();
-      // arms up to camera
-      ctx.strokeStyle = '#59636e';
-      ctx.lineWidth = w * 0.1;
-      ctx.beginPath();
-      ctx.moveTo(-w * 0.2, -w * 0.92);
-      ctx.lineTo(-w * 0.08, -w * 1.1);
-      ctx.moveTo(w * 0.2, -w * 0.92);
-      ctx.lineTo(w * 0.08, -w * 1.1);
-      ctx.stroke();
-      // head + cap
-      ctx.fillStyle = '#caa07a';
-      ctx.beginPath();
-      ctx.arc(0, -w * 1.16, w * 0.13, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#39404a';
-      ctx.beginPath();
-      ctx.arc(0, -w * 1.2, w * 0.13, Math.PI, 0);
-      ctx.fill();
-      // camera
-      ctx.fillStyle = '#20262e';
-      rr(ctx, -w * 0.14, -w * 1.16, w * 0.28, w * 0.16, w * 0.03);
-      ctx.fill();
-      ctx.fillStyle = fl ? '#ffffff' : '#0f1216';
-      ctx.beginPath();
-      ctx.arc(0, -w * 1.08, w * 0.055, 0, Math.PI * 2);
-      ctx.fill();
-      if (fl) {
-        const gl = ctx.createRadialGradient(0, -w * 1.08, 0, 0, -w * 1.08, w * 0.5);
-        gl.addColorStop(0, 'rgba(255,255,255,.9)');
-        gl.addColorStop(1, 'rgba(255,255,255,0)');
-        ctx.fillStyle = gl;
-        ctx.beginPath();
-        ctx.arc(0, -w * 1.08, w * 0.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    };
-
-    const drawUncle = (x: number, y: number, w: number, t: number, seed: number) => {
-      ctx.save();
-      ctx.translate(x, y);
-      shadow(0, 0, w * 0.85);
-      const sway = Math.sin(t * 6 + seed * 6) * 0.18;
-      ctx.rotate(sway);
-      // legs
-      ctx.strokeStyle = '#f0ede6';
-      ctx.lineWidth = w * 0.11;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(-w * 0.1, -w * 0.5);
-      ctx.lineTo(-w * 0.2, 0);
-      ctx.moveTo(w * 0.1, -w * 0.5);
-      ctx.lineTo(w * 0.2, 0);
-      ctx.stroke();
-      // kurta
-      const kg = ctx.createLinearGradient(0, -w, 0, -w * 0.45);
-      kg.addColorStop(0, '#e8b03c');
-      kg.addColorStop(1, '#c98d20');
-      ctx.fillStyle = kg;
-      rr(ctx, -w * 0.24, -w * 1.0, w * 0.48, w * 0.55, w * 0.12);
-      ctx.fill();
-      // arms up dancing
-      ctx.strokeStyle = '#e8b03c';
-      ctx.lineWidth = w * 0.1;
-      ctx.beginPath();
-      ctx.moveTo(-w * 0.2, -w * 0.94);
-      ctx.quadraticCurveTo(-w * 0.42, -w * 1.1, -w * 0.34, -w * 1.3);
-      ctx.moveTo(w * 0.2, -w * 0.94);
-      ctx.quadraticCurveTo(w * 0.42, -w * 1.12, w * 0.32, -w * 1.32);
-      ctx.stroke();
-      ctx.fillStyle = '#caa07a';
-      ctx.beginPath();
-      ctx.arc(-w * 0.34, -w * 1.34, w * 0.06, 0, Math.PI * 2);
-      ctx.arc(w * 0.32, -w * 1.36, w * 0.06, 0, Math.PI * 2);
-      ctx.fill();
-      // head + moustache
-      ctx.fillStyle = '#caa07a';
-      ctx.beginPath();
-      ctx.arc(0, -w * 1.14, w * 0.14, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#4a3526';
-      ctx.lineWidth = w * 0.03;
-      ctx.beginPath();
-      ctx.moveTo(-w * 0.07, -w * 1.1);
-      ctx.quadraticCurveTo(0, -w * 1.06, w * 0.07, -w * 1.1);
-      ctx.stroke();
-      ctx.restore();
-    };
-
-    const drawDhol = (x: number, y: number, w: number, seed: number) => {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.rotate((seed - 0.5) * 0.25);
-      shadow(0, 0, w);
-      const g = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
-      g.addColorStop(0, '#a9713d');
-      g.addColorStop(0.5, '#d59a5c');
-      g.addColorStop(1, '#8f5a2c');
-      ctx.fillStyle = g;
-      rr(ctx, -w * 0.5, -w * 0.72, w, w * 0.62, w * 0.16);
-      ctx.fill();
-      // drum skins
-      ctx.fillStyle = '#f7efdd';
-      ctx.beginPath();
-      ctx.ellipse(-w * 0.5, -w * 0.41, w * 0.09, w * 0.31, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(w * 0.5, -w * 0.41, w * 0.09, w * 0.31, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // pink cross straps
-      ctx.strokeStyle = '#d6437f';
-      ctx.lineWidth = w * 0.045;
-      for (let i = 0; i < 4; i++) {
-        const sx = -w * 0.42 + i * w * 0.28;
-        ctx.beginPath();
-        ctx.moveTo(sx, -w * 0.7);
-        ctx.lineTo(sx + w * 0.16, -w * 0.12);
-        ctx.stroke();
-      }
-      ctx.restore();
-    };
-
-    const drawBarrier = (x: number, y: number, w: number) => {
-      ctx.save();
-      ctx.translate(x, y);
-      shadow(0, 0, w);
-      ctx.strokeStyle = '#8b6f3e';
-      ctx.lineWidth = w * 0.06;
-      ctx.beginPath();
-      ctx.moveTo(-w * 0.4, 0);
-      ctx.lineTo(-w * 0.34, -w * 0.5);
-      ctx.moveTo(w * 0.4, 0);
-      ctx.lineTo(w * 0.34, -w * 0.5);
-      ctx.stroke();
-      rr(ctx, -w * 0.5, -w * 0.62, w, w * 0.2, w * 0.04);
-      const stripes = ctx.createLinearGradient(-w * 0.5, 0, w * 0.5, 0);
-      for (let i = 0; i <= 8; i++) {
-        stripes.addColorStop(i / 8, i % 2 ? '#f4c531' : '#2e2a24');
-        if (i < 8) stripes.addColorStop((i + 0.999) / 8, i % 2 ? '#f4c531' : '#2e2a24');
-      }
-      ctx.fillStyle = stripes;
-      ctx.fill();
       ctx.restore();
     };
 
@@ -761,7 +530,6 @@ export default function BaraatRush({
       ctx.beginPath();
       ctx.arc(0, w * 0.08, w * 0.34, 0, Math.PI * 2);
       ctx.stroke();
-      // diamond
       ctx.fillStyle = '#dff3ff';
       ctx.beginPath();
       ctx.moveTo(0, -w * 0.48);
@@ -799,23 +567,10 @@ export default function BaraatRush({
       ctx.restore();
     };
 
-    const drawPot = (x: number, y: number, w: number) => {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.fillStyle = '#b06a3c';
-      rr(ctx, -w * 0.28, -w * 0.5, w * 0.56, w * 0.5, w * 0.08);
-      ctx.fill();
-      ctx.fillStyle = '#c47a46';
-      rr(ctx, -w * 0.34, -w * 0.58, w * 0.68, w * 0.14, w * 0.05);
-      ctx.fill();
-      for (let i = 0; i < 5; i++) {
-        ctx.fillStyle = i % 2 ? '#e2559b' : '#ef7fb4';
-        ctx.beginPath();
-        ctx.arc((hash(i * 3 + x) - 0.5) * w * 0.5, -w * 0.66 - hash(i + x) * w * 0.18, w * 0.11, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      ctx.restore();
-    };
+    // mppx changes with canvas size (on resize); draw* closures above need
+    // the current value, so it's read through this tiny mutable box rather
+    // than being frozen at effect-creation time.
+    const mppxRef = { k: 40 };
 
     /* ================= frame ================= */
     const frame = (now: number) => {
@@ -921,6 +676,7 @@ export default function BaraatRush({
 
       /* ---------- render ---------- */
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
       const shakeX = playing ? Math.sin(now * 0.09) * 7 * g.shake : 0;
       const shakeY = playing ? Math.cos(now * 0.11) * 5 * g.shake : 0;
       ctx.translate(shakeX, shakeY);
@@ -930,23 +686,55 @@ export default function BaraatRush({
       const cx = W / 2;
       const roadHalf0 = Math.min(W * 0.46, 320);
       const mppx = roadHalf0 / 4.6; // px per metre at z=0
+      mppxRef.k = mppx;
 
-      // sky
-      const sky = ctx.createLinearGradient(0, 0, 0, horizonY * 1.25);
-      sky.addColorStop(0, '#7fb2d9');
-      sky.addColorStop(0.45, '#f6d9a8');
+      // ---- sky: richer multi-stop gradient ----
+      const sky = ctx.createLinearGradient(0, 0, 0, horizonY * 1.3);
+      sky.addColorStop(0, '#6fa3d6');
+      sky.addColorStop(0.35, '#a9c8e0');
+      sky.addColorStop(0.62, '#f3cfa0');
       sky.addColorStop(1, '#f3b98f');
       ctx.fillStyle = sky;
-      ctx.fillRect(-20, -20, W + 40, horizonY * 1.3 + 20);
-      // sun glow
-      const sun = ctx.createRadialGradient(cx, horizonY * 0.92, 0, cx, horizonY * 0.92, W * 0.4);
-      sun.addColorStop(0, 'rgba(255,236,190,.9)');
-      sun.addColorStop(1, 'rgba(255,236,190,0)');
-      ctx.fillStyle = sun;
-      ctx.fillRect(0, 0, W, horizonY * 1.3);
+      ctx.fillRect(-20, -20, W + 40, horizonY * 1.35 + 20);
+
+      // soft drifting clouds (parallax)
+      ctx.save();
+      ctx.filter = 'blur(7px)';
+      ctx.fillStyle = 'rgba(255,255,255,.32)';
+      for (let i = 0; i < 4; i++) {
+        const ccx = ((g.dist * 1.6 + i * 260) % (W + 300)) - 150;
+        const ccy = horizonY * 0.2 + i * 16;
+        ctx.beginPath();
+        ctx.ellipse(ccx, ccy, 44, 13, 0, 0, Math.PI * 2);
+        ctx.ellipse(ccx + 28, ccy + 4, 28, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // layered sun bloom
+      for (const [r, a] of [
+        [W * 0.55, 0.09],
+        [W * 0.32, 0.16],
+        [W * 0.15, 0.32],
+      ] as [number, number][]) {
+        const sun = ctx.createRadialGradient(cx, horizonY * 0.85, 0, cx, horizonY * 0.85, r);
+        sun.addColorStop(0, `rgba(255,238,196,${a})`);
+        sun.addColorStop(1, 'rgba(255,238,196,0)');
+        ctx.fillStyle = sun;
+        ctx.fillRect(0, 0, W, horizonY * 1.3);
+      }
+
+      // distant haze band — atmospheric layering before the palace
+      const hazeBand = ctx.createLinearGradient(0, horizonY - H * 0.06, 0, horizonY + 4);
+      hazeBand.addColorStop(0, 'rgba(216,168,180,0)');
+      hazeBand.addColorStop(1, 'rgba(216,168,180,.5)');
+      ctx.fillStyle = hazeBand;
+      ctx.fillRect(0, horizonY - H * 0.07, W, H * 0.08);
 
       // palace gate silhouette at the vanishing point
-      ctx.fillStyle = 'rgba(196,120,130,.55)';
+      ctx.save();
+      ctx.filter = 'blur(0.6px)';
+      ctx.fillStyle = 'rgba(196,120,130,.58)';
       const gw = W * 0.34;
       ctx.beginPath();
       ctx.moveTo(cx - gw / 2, horizonY + 2);
@@ -957,13 +745,21 @@ export default function BaraatRush({
       ctx.lineTo(cx + gw / 2, horizonY + 2);
       ctx.closePath();
       ctx.fill();
-      // gate domes
       for (const dxr of [-0.5, -0.3, 0.3, 0.5]) {
         ctx.beginPath();
         ctx.arc(cx + gw * dxr, horizonY - H * (Math.abs(dxr) > 0.4 ? 0.13 : 0.2), W * 0.028, Math.PI, 0);
         ctx.fill();
       }
-      // arch opening (glow)
+      // fairy lights along the roofline
+      for (let i = -5; i <= 5; i++) {
+        const lx = cx + gw * 0.46 * (i / 5);
+        const ly = horizonY - H * (Math.abs(i) > 3 ? 0.12 : 0.19) - 3;
+        ctx.fillStyle = 'rgba(255,224,150,.85)';
+        ctx.beginPath();
+        ctx.arc(lx, ly, Math.max(1, W * 0.0028), 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
       const arch = ctx.createLinearGradient(0, horizonY - H * 0.12, 0, horizonY);
       arch.addColorStop(0, 'rgba(255,238,205,.95)');
       arch.addColorStop(1, 'rgba(255,214,170,.8)');
@@ -988,8 +784,6 @@ export default function BaraatRush({
         const k = kOf(z);
         return { k, y: horizonY + (baseY - horizonY) * k, half: roadHalf0 * k };
       };
-      ctx.fillStyle = '#e9b7c9';
-      // left wall polygon (from far to near)
       const far = wallTop(110);
       const near = wallTop(0);
       for (const side of [-1, 1]) {
@@ -1036,18 +830,46 @@ export default function BaraatRush({
         drawPot(cx + (half + mppx * 0.55 * k), y, mppx * 0.9 * k);
       }
 
-      // road
-      ctx.beginPath();
-      ctx.moveTo(cx - far.half, far.y);
-      ctx.lineTo(cx + far.half, far.y);
-      ctx.lineTo(cx + near.half, near.y + 40);
-      ctx.lineTo(cx - near.half, near.y + 40);
-      ctx.closePath();
-      const road = ctx.createLinearGradient(0, horizonY, 0, baseY);
-      road.addColorStop(0, '#5a5560');
-      road.addColorStop(1, '#3c3843');
+      // ---- road: richer asphalt + specular sheen + texture ----
+      const tracePath = () => {
+        ctx.beginPath();
+        ctx.moveTo(cx - far.half, far.y);
+        ctx.lineTo(cx + far.half, far.y);
+        ctx.lineTo(cx + near.half, near.y + 40);
+        ctx.lineTo(cx - near.half, near.y + 40);
+        ctx.closePath();
+      };
+      tracePath();
+      const road = ctx.createLinearGradient(0, horizonY, 0, baseY + 40);
+      road.addColorStop(0, '#5b5468');
+      road.addColorStop(0.5, '#453f52');
+      road.addColorStop(1, '#2c283a');
       ctx.fillStyle = road;
       ctx.fill();
+      tracePath();
+      const sheen = ctx.createLinearGradient(cx - roadHalf0 * 0.5, 0, cx + roadHalf0 * 0.5, 0);
+      sheen.addColorStop(0, 'rgba(255,255,255,0)');
+      sheen.addColorStop(0.5, 'rgba(255,255,255,.07)');
+      sheen.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = sheen;
+      ctx.fill();
+
+      // subtle road grain (cheap texture so the asphalt isn't a flat fill)
+      const grainStep = 3.1;
+      const gOff = g.dist % grainStep;
+      for (let zz = grainStep - gOff; zz < 60; zz += grainStep) {
+        const world = Math.floor((g.dist + zz) / grainStep);
+        const k = kOf(zz);
+        const y = horizonY + (baseY - horizonY) * k;
+        for (let j = 0; j < 3; j++) {
+          const h1 = hash(world * 3 + j);
+          const x = cx + (h1 * 2 - 1) * roadHalf0 * 0.92 * k;
+          ctx.fillStyle = `rgba(255,255,255,${0.03 + 0.02 * hash(world + j)})`;
+          ctx.beginPath();
+          ctx.arc(x, y, Math.max(0.6, mppx * 0.02 * k), 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
 
       // pink rope borders
       for (const b of [-1, 1]) {
@@ -1058,7 +880,7 @@ export default function BaraatRush({
         ctx.lineWidth = Math.max(2, mppx * 0.12);
         ctx.stroke();
       }
-      // lane dashes
+      // lane dashes — warm gold glow
       const dashStep = 6;
       const dOff = g.dist % dashStep;
       for (const b of [-1 / 3, 1 / 3]) {
@@ -1069,7 +891,16 @@ export default function BaraatRush({
           const y2 = horizonY + (baseY - horizonY) * k2;
           const x1 = cx + b * roadHalf0 * 2 * k1;
           const x2 = cx + b * roadHalf0 * 2 * k2;
-          ctx.strokeStyle = 'rgba(250,240,220,.5)';
+          ctx.save();
+          ctx.filter = 'blur(2px)';
+          ctx.strokeStyle = 'rgba(244,205,90,.3)';
+          ctx.lineWidth = Math.max(2.5, mppx * 0.18 * k2);
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+          ctx.restore();
+          ctx.strokeStyle = 'rgba(255,246,220,.6)';
           ctx.lineWidth = Math.max(1.5, mppx * 0.1 * k2);
           ctx.beginPath();
           ctx.moveTo(x1, y1);
@@ -1104,34 +935,18 @@ export default function BaraatRush({
         const y = horizonY + (baseY - horizonY) * k;
         const laneW = (roadHalf0 * 2) / 3;
         const x = cx + o.lane * laneW * k;
-        const t = g.t;
         switch (o.kind) {
-          case 'car':
-            drawCar(x, y, mppx * 2.6 * k, o.seed);
-            break;
-          case 'cow':
-            drawCow(x, y, mppx * 2.1 * k, o.seed, t);
-            break;
-          case 'photog':
-            drawPhotog(x, y, mppx * 1.25 * k, t, o.seed);
-            break;
-          case 'uncle':
-            drawUncle(x, y, mppx * 1.25 * k, t, o.seed);
-            break;
-          case 'dhol':
-            drawDhol(x, y, mppx * 1.9 * k, o.seed);
-            break;
-          case 'barrier':
-            drawBarrier(x, y, mppx * 2.5 * k);
-            break;
           case 'coin':
-            drawCoin(x, y, mppx * 0.85 * k, t, o.seed);
+            drawCoin(x, y, mppx * 0.85 * k, g.t, o.seed);
             break;
           case 'ring':
-            drawRing(x, y, mppx * 0.9 * k, t);
+            drawRing(x, y, mppx * 0.9 * k, g.t);
             break;
           case 'heart':
-            drawHeart(x, y, mppx * 0.9 * k, t);
+            drawHeart(x, y, mppx * 0.9 * k, g.t);
+            break;
+          default:
+            drawObstacle(o, x, y, k);
             break;
         }
       }
@@ -1144,25 +959,7 @@ export default function BaraatRush({
         const blink = g.inv > 0 && Math.floor(now / 90) % 2 === 0;
         const airT = g.jumping ? Math.min(1, g.jumpElapsed / JUMP_DURATION) : 0;
         const jumpH = g.jumping ? JUMP_HEIGHT_M * mppx * 4 * airT * (1 - airT) : 0;
-        if (!blink) {
-          if (jumpH > 1) {
-            // ground shadow shrinks and fades as the horse rises, to sell the jump
-            const sc = Math.max(0.35, 1 - (jumpH / (mppx * JUMP_HEIGHT_M)) * 0.5);
-            ctx.fillStyle = `rgba(30,15,25,${0.28 * sc})`;
-            ctx.beginPath();
-            ctx.ellipse(px, baseY, mppx * 1.05 * 0.5 * sc, mppx * 1.05 * 0.13 * sc, 0, 0, Math.PI * 2);
-            ctx.fill();
-          }
-          const stretch = g.jumping ? 1 + Math.sin(airT * Math.PI) * 0.07 : 1;
-          const squash = g.landedPulse > 0 ? 1 - g.landedPulse * 0.14 : 1;
-          const scaleY = stretch * squash;
-          const scaleX = 1 / Math.sqrt(scaleY);
-          ctx.save();
-          ctx.translate(px, baseY - jumpH);
-          ctx.scale(scaleX, scaleY);
-          drawHorseGroom(0, 0, mppx * 1.05, g.t, lean);
-          ctx.restore();
-        }
+        if (!blink) drawPlayer(g, px, baseY, 1, lean, jumpH, airT);
       }
 
       // pickup particles
@@ -1195,6 +992,25 @@ export default function BaraatRush({
         ctx.fill();
         ctx.restore();
       }
+      // ambient bokeh orbs
+      ctx.save();
+      ctx.filter = 'blur(3px)';
+      for (const o of orbs) {
+        o.y += o.vy * dt;
+        if (o.y < -20) o.y = H + 20;
+        ctx.fillStyle = 'rgba(255,224,150,.18)';
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, o.s, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // vignette for a cinematic finish
+      const vig = ctx.createRadialGradient(cx, H * 0.55, H * 0.28, cx, H * 0.55, H * 0.78);
+      vig.addColorStop(0, 'rgba(0,0,0,0)');
+      vig.addColorStop(1, 'rgba(8,4,12,.32)');
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, W, H);
 
       /* ---------- HUD ---------- */
       if (g.phase === 'playing' || g.phase === 'paused') {
@@ -1294,8 +1110,9 @@ export default function BaraatRush({
       {phase === 'menu' && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/25 px-5">
           <div className={`${card} wc-pop w-full max-w-sm text-center`}>
-            <div className="text-4xl">🐎</div>
-            <h1 className="mt-1 font-serif text-2xl font-bold">{title}</h1>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/baraat/horse-static.webp" alt="" className="mx-auto h-24 w-auto drop-shadow-xl" />
+            <h1 className="mt-2 font-serif text-2xl font-bold">{title}</h1>
             <p className="mt-1 text-sm text-gray-500">
               Swipe to dodge, swipe up to jump, grab the WC coins. It never ends… how far can
               you ride?
@@ -1308,13 +1125,15 @@ export default function BaraatRush({
                 <button
                   key={d}
                   onClick={() => start(d)}
-                  className="wc-btn flex items-center justify-between rounded-2xl border-2 border-gray-200 px-5 py-3.5 text-left font-semibold transition hover:border-fuchsia-300"
+                  disabled={!assetsReady}
+                  className="wc-btn flex items-center justify-between rounded-2xl border-2 border-gray-200 px-5 py-3.5 text-left font-semibold transition hover:border-fuchsia-300 disabled:cursor-wait disabled:opacity-40"
                 >
                   <span>{DIFF[d].label}</span>
                   <span className="text-xs font-medium text-gray-400">{DIFF[d].blurb}</span>
                 </button>
               ))}
             </div>
+            {!assetsReady && <p className="mt-3 text-xs text-gray-400">Loading the baraat…</p>}
             <Link href={`${base}/play`} className="mt-4 inline-block text-sm text-gray-400 hover:text-gray-600">
               ← Back to games
             </Link>
