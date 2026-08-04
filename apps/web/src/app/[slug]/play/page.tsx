@@ -23,6 +23,8 @@ const TEAM_LABEL: Record<string, string> = { bride: '👰 Bride Side', groom: '�
 
 // Game types with a playable screen built so far.
 const PLAYABLE = new Set(['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'scratch_win', 'baraat_rush']);
+// Game types with their own points leaderboard (see /game/[gameId]/leaderboard).
+const SCORED = new Set(['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'baraat_rush']);
 
 export default async function PlayHub({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -133,13 +135,27 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
                 </>
               );
               return (
-                <li key={g.id} className="wc-rise" style={{ animationDelay: `${0.15 + i * 0.06}s` }}>
+                <li
+                  key={g.id}
+                  className="wc-rise flex items-center gap-2"
+                  style={{ animationDelay: `${0.15 + i * 0.06}s` }}
+                >
                   {canPlay ? (
-                    <Link href={`${base}/game/${g.id}`} className={rowCls}>
+                    <Link href={`${base}/game/${g.id}`} className={`${rowCls} flex-1`}>
                       {inner}
                     </Link>
                   ) : (
-                    <div className={`${rowCls} opacity-90`}>{inner}</div>
+                    <div className={`${rowCls} flex-1 opacity-90`}>{inner}</div>
+                  )}
+                  {SCORED.has(g.game_type) && (
+                    <Link
+                      href={`${base}/game/${g.id}/leaderboard`}
+                      className="wc-btn grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/20 text-lg text-white shadow-lg ring-1 ring-white/20 backdrop-blur"
+                      aria-label={`${g.title || meta.label} leaderboard`}
+                      title="Leaderboard"
+                    >
+                      🏆
+                    </Link>
                   )}
                 </li>
               );

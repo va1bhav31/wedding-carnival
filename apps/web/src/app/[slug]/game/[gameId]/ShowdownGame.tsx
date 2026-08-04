@@ -16,6 +16,7 @@ const SIDES = [
 
 export default function ShowdownGame({
   base,
+  gameId,
   guestId,
   title,
   questions,
@@ -94,7 +95,7 @@ export default function ShowdownGame({
           You earned <span className="font-bold" style={{ color: colors.accent }}>{earned}</span> points.
         </p>
         <div className="wc-rise mt-2 flex gap-3" style={{ animationDelay: '.2s' }}>
-          <Link href={`${base}/leaderboard`} className="wc-btn rounded-full bg-white px-6 py-3 font-semibold" style={{ color: colors.secondary }}>
+          <Link href={`${base}/game/${gameId}/leaderboard`} className="wc-btn rounded-full bg-white px-6 py-3 font-semibold" style={{ color: colors.secondary }}>
             🏆 Leaderboard
           </Link>
           <Link href={`${base}/play`} className="wc-btn rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">

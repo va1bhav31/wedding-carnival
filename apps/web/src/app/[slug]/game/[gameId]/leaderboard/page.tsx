@@ -6,13 +6,26 @@ import { createClient } from '@/lib/supabase/server';
 import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
 import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase } from '@/lib/guest-nav';
+import { GAME_BY_TYPE } from '@/lib/games-catalog';
 import GuestBackdrop from '@/components/GuestBackdrop';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
 const TEAM = { bride: '👰', groom: '🤵' } as Record<string, string>;
 
-export default async function Leaderboard({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+// Game types this page knows how to rank, and where their score comes from.
+// Quiz-family games sum question_responses.points_awarded; arcade games read
+// their best run straight from game_scores.
+const QUIZ_TYPES = new Set(['couple_trivia', 'bride_groom_showdown', 'fastest_finger']);
+const ARCADE_TYPES = new Set(['baraat_rush', 'bride_groom_battle']);
+
+type Row = { guest_id: string; score: number };
+
+export default async function GameLeaderboard({
+  params,
+}: {
+  params: Promise<{ slug: string; gameId: string }>;
+}) {
+  const { slug, gameId } = await params;
   const w = await getWeddingBySlug(slug);
   if (!w) notFound();
 
@@ -22,23 +35,60 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
   if (!guestId) redirect(`${base}/join`);
 
   const supabase = await createClient();
-  const { data: players } = await supabase
-    .from('guests')
-    .select('id, name, nickname, team, total_points')
-    .eq('wedding_id', w.id)
-    .order('total_points', { ascending: false })
-    .limit(50);
-
-  // Baraat Rush keeps its own dedicated leaderboard and stays out of this
-  // combined one — link to it here if the wedding has it enabled.
-  const { data: baraat } = await supabase
+  const { data: game } = await supabase
     .from('wedding_games')
-    .select('id')
-    .eq('wedding_id', w.id)
-    .eq('game_type', 'baraat_rush')
+    .select('id, wedding_id, game_type, title')
+    .eq('id', gameId)
     .maybeSingle();
+  if (!game || game.wedding_id !== w.id) notFound();
 
-  const list = players ?? [];
+  const meta = GAME_BY_TYPE[game.game_type];
+  const title = game.title || meta?.label || game.game_type;
+
+  let rows: Row[] = [];
+  let scored = true;
+
+  if (QUIZ_TYPES.has(game.game_type)) {
+    const { data: qs } = await supabase.from('questions').select('id').eq('wedding_game_id', gameId);
+    const ids = (qs ?? []).map((q) => q.id);
+    if (ids.length > 0) {
+      const { data: responses } = await supabase
+        .from('question_responses')
+        .select('guest_id, points_awarded')
+        .in('question_id', ids);
+      const totals = new Map<string, number>();
+      for (const r of responses ?? []) {
+        totals.set(r.guest_id, (totals.get(r.guest_id) ?? 0) + (r.points_awarded ?? 0));
+      }
+      rows = Array.from(totals, ([guest_id, score]) => ({ guest_id, score }));
+    }
+  } else if (ARCADE_TYPES.has(game.game_type)) {
+    const { data: scores } = await supabase
+      .from('game_scores')
+      .select('guest_id, score')
+      .eq('wedding_game_id', gameId);
+    rows = (scores ?? []).map((s) => ({ guest_id: s.guest_id, score: s.score }));
+  } else {
+    scored = false;
+  }
+
+  rows.sort((a, b) => b.score - a.score);
+  const top = rows.slice(0, 50);
+
+  const guestIds = top.map((r) => r.guest_id);
+  const { data: guests } =
+    guestIds.length > 0
+      ? await supabase.from('guests').select('id, name, nickname, team').in('id', guestIds)
+      : { data: [] };
+  const guestById = new Map((guests ?? []).map((g) => [g.id, g]));
+
+  const list = top
+    .map((r) => {
+      const g = guestById.get(r.guest_id);
+      return g ? { id: r.guest_id, name: g.name, nickname: g.nickname, team: g.team, score: r.score } : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null);
+
   const { bride, groom } = coupleNames(w);
   const { primary, accent, secondary } = themeColors(w);
   const bg = {
@@ -54,14 +104,18 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
             {bride} &amp; {groom}
           </p>
           <h1 className="wc-rise font-serif text-3xl font-bold" style={{ animationDelay: '.08s' }}>
-            <span className="wc-bob-slow inline-block">🏆</span> Leaderboard
+            <span className="wc-bob-slow inline-block">{meta?.emoji ?? '🏆'}</span> {title}
           </h1>
           <p className="wc-rise mt-1 text-xs text-white/60" style={{ animationDelay: '.12s' }}>
-            Combined across quiz &amp; card games
+            This game&apos;s own leaderboard
           </p>
         </div>
 
-        {list.length === 0 ? (
+        {!scored ? (
+          <p className="wc-pop text-center text-white/80">
+            This game doesn&apos;t have a points leaderboard.
+          </p>
+        ) : list.length === 0 ? (
           <p className="wc-pop text-center text-white/80">No scores yet — be the first to play!</p>
         ) : (
           <ul className="grid gap-2">
@@ -91,7 +145,7 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
                     {isMe && <span className="ml-1 text-xs" style={{ color: secondary }}>(you)</span>}
                   </span>
                   <span className="text-lg font-black" style={{ color: isMe ? secondary : accent }}>
-                    {p.total_points}
+                    {p.score}
                   </span>
                 </li>
               );
@@ -100,14 +154,12 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
         )}
 
         <div className="mt-8 flex flex-col items-center gap-3">
-          <Link href={`${base}/play`} className="wc-btn inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white ring-1 ring-white/15 backdrop-blur">
-            ← Back to games
+          <Link href={`${base}/game/${gameId}`} className="wc-btn inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white ring-1 ring-white/15 backdrop-blur">
+            ← Back to {title}
           </Link>
-          {baraat && (
-            <Link href={`${base}/game/${baraat.id}/leaderboard`} className="text-sm text-white/60 hover:text-white/90">
-              🐎 Baraat Rush has its own leaderboard →
-            </Link>
-          )}
+          <Link href={`${base}/leaderboard`} className="text-sm text-white/60 hover:text-white/90">
+            View the combined leaderboard →
+          </Link>
         </div>
       </div>
     </main>

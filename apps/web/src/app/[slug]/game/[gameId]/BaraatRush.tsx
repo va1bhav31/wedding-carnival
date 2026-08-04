@@ -1375,7 +1375,7 @@ export default function BaraatRush({
                 Change level
               </button>
               <Link
-                href={`${base}/leaderboard`}
+                href={`${base}/game/${gameId}/leaderboard`}
                 className="rounded-full bg-gray-100 px-6 py-2.5 font-semibold text-gray-700 hover:bg-gray-200"
               >
                 🏆 Leaderboard

@@ -1,6 +1,8 @@
 // Same-origin score endpoint for arcade games (Baraat Rush, later Battle).
-// One best-score row per guest per game; improvements add the delta to the
-// guest's total_points so arcade runs show up on the main leaderboard.
+// One best-score row per guest per game, kept ONLY in game_scores — arcade
+// runs intentionally do NOT feed guests.total_points (the combined
+// leaderboard). Each arcade game has its own dedicated leaderboard instead;
+// see /[slug]/game/[gameId]/leaderboard.
 // All Supabase I/O is server-side (service role) — phones only talk to us.
 
 import { cookies } from 'next/headers';
@@ -101,21 +103,9 @@ export async function POST(
     if (error) return Response.json({ error: error.message }, { status: 400, headers: NO_STORE });
   }
 
-  // Leaderboard: total_points carries this game's BEST run — add only the delta.
+  // Intentionally NOT added to guests.total_points — this game has its own
+  // dedicated leaderboard (game_scores) and stays out of the combined one.
   const delta = Math.max(0, score - prevBest);
-  if (delta > 0) {
-    const { data: guest } = await supabase
-      .from('guests')
-      .select('total_points')
-      .eq('id', guestId)
-      .maybeSingle();
-    if (guest) {
-      await supabase
-        .from('guests')
-        .update({ total_points: (guest.total_points ?? 0) + delta })
-        .eq('id', guestId);
-    }
-  }
 
   return Response.json(
     { best: Math.max(prevBest, score), improved, added: delta },

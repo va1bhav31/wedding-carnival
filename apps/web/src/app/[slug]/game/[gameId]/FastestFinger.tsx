@@ -235,7 +235,7 @@ export default function FastestFinger({
       )}
 
       <div className="relative z-10 text-sm text-white/70">Your points this round: {earned}</div>
-      <Link href={`${base}/leaderboard`} className="wc-btn relative z-10 rounded-full bg-white/20 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur">
+      <Link href={`${base}/game/${gameId}/leaderboard`} className="wc-btn relative z-10 rounded-full bg-white/20 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur">
         🏆 Leaderboard
       </Link>
     </main>
