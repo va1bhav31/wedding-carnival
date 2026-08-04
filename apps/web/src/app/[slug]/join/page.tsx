@@ -6,6 +6,7 @@ import { joinWedding } from '@/lib/actions/guests';
 import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase, guestHome } from '@/lib/guest-nav';
 import GuestBackdrop from '@/components/GuestBackdrop';
+import TeamAvatar from '@/components/TeamAvatar';
 
 export default async function JoinPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -67,14 +68,16 @@ export default async function JoinPage({ params }: { params: Promise<{ slug: str
             <div className="grid grid-cols-2 gap-3">
               <label className="cursor-pointer">
                 <input type="radio" name="team" value="bride" className="peer sr-only" />
-                <div className="rounded-2xl border-2 border-gray-200 py-4 text-center font-semibold text-gray-700 transition peer-checked:border-transparent peer-checked:bg-pink-500 peer-checked:text-white">
-                  👰 Bride Side
+                <div className="flex flex-col items-center gap-1.5 rounded-2xl border-2 border-gray-200 py-3.5 text-center font-semibold text-gray-700 transition peer-checked:border-transparent peer-checked:bg-pink-500 peer-checked:text-white">
+                  <TeamAvatar team="bride" className="h-10 w-10 rounded-full object-cover object-top ring-2 ring-black/5" />
+                  Bride Side
                 </div>
               </label>
               <label className="cursor-pointer">
                 <input type="radio" name="team" value="groom" className="peer sr-only" />
-                <div className="rounded-2xl border-2 border-gray-200 py-4 text-center font-semibold text-gray-700 transition peer-checked:border-transparent peer-checked:bg-purple-600 peer-checked:text-white">
-                  🤵 Groom Side
+                <div className="flex flex-col items-center gap-1.5 rounded-2xl border-2 border-gray-200 py-3.5 text-center font-semibold text-gray-700 transition peer-checked:border-transparent peer-checked:bg-purple-600 peer-checked:text-white">
+                  <TeamAvatar team="groom" className="h-10 w-10 rounded-full object-cover object-top ring-2 ring-black/5" />
+                  Groom Side
                 </div>
               </label>
             </div>

@@ -7,19 +7,21 @@ import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
 import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase } from '@/lib/guest-nav';
 import GuestBackdrop from '@/components/GuestBackdrop';
+import GameIcon, { GAME_ICON } from '@/components/GameIcon';
+import TeamAvatar from '@/components/TeamAvatar';
 
-const GAME_META: Record<string, { emoji: string; label: string }> = {
-  bride_groom_showdown: { emoji: '🎭', label: 'Bride vs Groom Showdown' },
-  couple_trivia: { emoji: '🎯', label: 'Couple Trivia' },
-  photo_hunt: { emoji: '📸', label: 'Photo Hunt' },
-  scratch_win: { emoji: '🎁', label: 'Scratch & Win' },
-  bride_groom_battle: { emoji: '👾', label: 'Bride vs Groom Battle' },
-  fastest_finger: { emoji: '⚡', label: 'Fastest Finger First' },
-  spin_wheel_dare: { emoji: '🎡', label: 'Spin the Wheel Dare' },
-  baraat_rush: { emoji: '🐎', label: 'Baraat Rush' },
+const GAME_META: Record<string, { label: string }> = {
+  bride_groom_showdown: { label: 'Bride vs Groom Showdown' },
+  couple_trivia: { label: 'Couple Trivia' },
+  photo_hunt: { label: 'Photo Hunt' },
+  scratch_win: { label: 'Scratch & Win' },
+  bride_groom_battle: { label: 'Bride vs Groom Battle' },
+  fastest_finger: { label: 'Fastest Finger First' },
+  spin_wheel_dare: { label: 'Spin the Wheel Dare' },
+  baraat_rush: { label: 'Baraat Rush' },
 };
 
-const TEAM_LABEL: Record<string, string> = { bride: '👰 Bride Side', groom: '🤵 Groom Side' };
+const TEAM_LABEL: Record<string, string> = { bride: 'Bride Side', groom: 'Groom Side' };
 
 // Game types with a playable screen built so far.
 const PLAYABLE = new Set(['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'scratch_win', 'baraat_rush']);
@@ -75,7 +77,8 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
           </div>
           <div className="shrink-0 text-right">
             {guest.team && (
-              <span className="rounded-full bg-white/20 px-3 py-1 text-xs font-semibold backdrop-blur">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 py-1 pl-1.5 pr-3 text-xs font-semibold backdrop-blur">
+                <TeamAvatar team={guest.team} className="h-5 w-5 rounded-full object-cover object-top ring-1 ring-white/40" />
                 {TEAM_LABEL[guest.team] ?? guest.team}
               </span>
             )}
@@ -94,7 +97,8 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
           className="wc-rise wc-btn mb-6 flex items-center justify-center gap-2 rounded-2xl bg-white/15 py-3.5 font-semibold text-white ring-1 ring-white/15 backdrop-blur"
           style={{ animationDelay: '.05s' }}
         >
-          🏆 View Leaderboard
+          <GameIcon type="trophy" className="h-4 w-4" />
+          View Leaderboard
         </Link>
 
         {/* Games */}
@@ -117,10 +121,10 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
                 <>
                   <span className="flex min-w-0 items-center gap-3 font-semibold">
                     <span
-                      className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-2xl shadow-inner"
-                      style={{ background: `linear-gradient(135deg, ${primary}22, ${secondary}22)` }}
+                      className="grid h-11 w-11 shrink-0 place-items-center rounded-xl shadow-inner"
+                      style={{ background: `linear-gradient(135deg, ${primary}22, ${secondary}22)`, color: secondary }}
                     >
-                      {meta.emoji}
+                      <GameIcon type={GAME_ICON[g.game_type] ?? 'sparkle'} className="h-6 w-6" />
                     </span>
                     <span className="truncate">{g.title || meta.label}</span>
                   </span>
@@ -150,11 +154,11 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
                   {SCORED.has(g.game_type) && (
                     <Link
                       href={`${base}/game/${g.id}/leaderboard`}
-                      className="wc-btn grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/20 text-lg text-white shadow-lg ring-1 ring-white/20 backdrop-blur"
+                      className="wc-btn grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/20 text-white shadow-lg ring-1 ring-white/20 backdrop-blur"
                       aria-label={`${g.title || meta.label} leaderboard`}
                       title="Leaderboard"
                     >
-                      🏆
+                      <GameIcon type="trophy" className="h-5 w-5" />
                     </Link>
                   )}
                 </li>

@@ -7,9 +7,10 @@ import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
 import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase } from '@/lib/guest-nav';
 import GuestBackdrop from '@/components/GuestBackdrop';
+import GameIcon from '@/components/GameIcon';
+import TeamAvatar from '@/components/TeamAvatar';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
-const TEAM = { bride: '👰', groom: '🤵' } as Record<string, string>;
 
 export default async function Leaderboard({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -53,8 +54,9 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
           <p className="wc-rise text-sm text-white/70">
             {bride} &amp; {groom}
           </p>
-          <h1 className="wc-rise font-serif text-3xl font-bold" style={{ animationDelay: '.08s' }}>
-            <span className="wc-bob-slow inline-block">🏆</span> Leaderboard
+          <h1 className="wc-rise flex items-center justify-center gap-2 font-serif text-3xl font-bold" style={{ animationDelay: '.08s' }}>
+            <GameIcon type="trophy" className="wc-bob-slow h-7 w-7" style={{ color: accent }} />
+            Leaderboard
           </h1>
           <p className="wc-rise mt-1 text-xs text-white/60" style={{ animationDelay: '.12s' }}>
             Combined across quiz &amp; card games
@@ -86,8 +88,14 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
                   <span className={`w-8 text-center ${isTop ? 'text-xl' : 'font-bold'}`}>
                     {MEDAL[i] ?? i + 1}
                   </span>
+                  {p.team && (
+                    <TeamAvatar
+                      team={p.team}
+                      className="h-7 w-7 shrink-0 rounded-full object-cover object-top ring-1 ring-black/5"
+                    />
+                  )}
                   <span className="flex-1 truncate font-semibold">
-                    {p.nickname || p.name} {p.team ? TEAM[p.team] ?? '' : ''}
+                    {p.nickname || p.name}
                     {isMe && <span className="ml-1 text-xs" style={{ color: secondary }}>(you)</span>}
                   </span>
                   <span className="text-lg font-black" style={{ color: isMe ? secondary : accent }}>
@@ -104,8 +112,12 @@ export default async function Leaderboard({ params }: { params: Promise<{ slug: 
             ← Back to games
           </Link>
           {baraat && (
-            <Link href={`${base}/game/${baraat.id}/leaderboard`} className="text-sm text-white/60 hover:text-white/90">
-              🐎 Baraat Rush has its own leaderboard →
+            <Link
+              href={`${base}/game/${baraat.id}/leaderboard`}
+              className="inline-flex items-center gap-1.5 text-sm text-white/60 hover:text-white/90"
+            >
+              <GameIcon type="horse" className="h-4 w-4" />
+              Baraat Rush has its own leaderboard →
             </Link>
           )}
         </div>

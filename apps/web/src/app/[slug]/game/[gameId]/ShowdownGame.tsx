@@ -10,8 +10,8 @@ type Colors = { primary: string; accent: string; secondary: string; logo?: strin
 type Result = { correct: boolean; points: number; correct_answer: string };
 
 const SIDES = [
-  { value: 'bride', emoji: '👰', label: 'Bride', img: '/b_or_g/bride.svg', glasses: '/b_or_g/bride-glasses.svg' },
-  { value: 'groom', emoji: '🤵', label: 'Groom', img: '/b_or_g/groom.svg', glasses: '/b_or_g/groom-glasses.svg' },
+  { value: 'bride', label: 'Bride', img: '/b_or_g/bride.svg', glasses: '/b_or_g/bride-glasses.svg' },
+  { value: 'groom', label: 'Groom', img: '/b_or_g/groom.svg', glasses: '/b_or_g/groom-glasses.svg' },
 ] as const;
 
 export default function ShowdownGame({

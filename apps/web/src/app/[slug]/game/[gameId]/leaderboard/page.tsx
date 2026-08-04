@@ -8,9 +8,10 @@ import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase } from '@/lib/guest-nav';
 import { GAME_BY_TYPE } from '@/lib/games-catalog';
 import GuestBackdrop from '@/components/GuestBackdrop';
+import GameIcon, { GAME_ICON } from '@/components/GameIcon';
+import TeamAvatar from '@/components/TeamAvatar';
 
 const MEDAL = ['🥇', '🥈', '🥉'];
-const TEAM = { bride: '👰', groom: '🤵' } as Record<string, string>;
 
 // Game types this page knows how to rank, and where their score comes from.
 // Quiz-family games sum question_responses.points_awarded; arcade games read
@@ -103,8 +104,13 @@ export default async function GameLeaderboard({
           <p className="wc-rise text-sm text-white/70">
             {bride} &amp; {groom}
           </p>
-          <h1 className="wc-rise font-serif text-3xl font-bold" style={{ animationDelay: '.08s' }}>
-            <span className="wc-bob-slow inline-block">{meta?.emoji ?? '🏆'}</span> {title}
+          <h1 className="wc-rise flex items-center justify-center gap-2 font-serif text-3xl font-bold" style={{ animationDelay: '.08s' }}>
+            <GameIcon
+              type={GAME_ICON[game.game_type] ?? 'trophy'}
+              className="wc-bob-slow h-7 w-7"
+              style={{ color: accent }}
+            />
+            {title}
           </h1>
           <p className="wc-rise mt-1 text-xs text-white/60" style={{ animationDelay: '.12s' }}>
             This game&apos;s own leaderboard
@@ -140,8 +146,14 @@ export default async function GameLeaderboard({
                   <span className={`w-8 text-center ${isTop ? 'text-xl' : 'font-bold'}`}>
                     {MEDAL[i] ?? i + 1}
                   </span>
+                  {p.team && (
+                    <TeamAvatar
+                      team={p.team}
+                      className="h-7 w-7 shrink-0 rounded-full object-cover object-top ring-1 ring-black/5"
+                    />
+                  )}
                   <span className="flex-1 truncate font-semibold">
-                    {p.nickname || p.name} {p.team ? TEAM[p.team] ?? '' : ''}
+                    {p.nickname || p.name}
                     {isMe && <span className="ml-1 text-xs" style={{ color: secondary }}>(you)</span>}
                   </span>
                   <span className="text-lg font-black" style={{ color: isMe ? secondary : accent }}>
