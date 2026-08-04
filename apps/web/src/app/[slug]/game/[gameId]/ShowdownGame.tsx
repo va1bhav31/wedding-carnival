@@ -10,8 +10,8 @@ type Colors = { primary: string; accent: string; secondary: string; logo?: strin
 type Result = { correct: boolean; points: number; correct_answer: string };
 
 const SIDES = [
-  { value: 'bride', emoji: '👰', label: 'Bride' },
-  { value: 'groom', emoji: '🤵', label: 'Groom' },
+  { value: 'bride', emoji: '👰', label: 'Bride', img: '/b_or_g/bride.svg', glasses: '/b_or_g/bride-glasses.svg' },
+  { value: 'groom', emoji: '🤵', label: 'Groom', img: '/b_or_g/groom.svg', glasses: '/b_or_g/groom-glasses.svg' },
 ] as const;
 
 export default function ShowdownGame({
@@ -124,22 +124,41 @@ export default function ShowdownGame({
           <div className="grid grid-cols-2 gap-3">
             {SIDES.map((s) => {
               const isChosen = selected === s.value;
-              const isCorrect = result && s.value === result.correct_answer;
-              const isWrong = result && isChosen && !result.correct;
+              const isCorrect = Boolean(result) && s.value === result!.correct_answer;
+              const isWrong = Boolean(result) && isChosen && !result!.correct;
+              const dim = Boolean(result) && !isCorrect; // fade the non-answer once revealed
               let cls = 'border-gray-200 bg-white hover:border-fuchsia-300';
               if (isCorrect) cls = 'border-green-500 bg-green-50 text-green-800';
               else if (isWrong) cls = 'border-red-400 bg-red-50 text-red-700';
-              else if (result) cls = 'border-gray-200 bg-white opacity-60';
+              else if (result) cls = 'border-gray-200 bg-white';
               return (
                 <button
                   key={s.value}
                   disabled={Boolean(result) || busy}
                   onClick={() => choose(s.value)}
-                  className={`flex flex-col items-center gap-2 rounded-2xl border-2 py-6 font-semibold transition ${cls}`}
+                  className={`flex flex-col items-center gap-2 rounded-2xl border-2 pb-4 pt-3 font-semibold transition ${cls} ${
+                    isCorrect ? 'wc-winner' : ''
+                  } ${dim ? 'opacity-45 grayscale' : ''}`}
                 >
-                  <span className="text-4xl">{s.emoji}</span>
-                  {isCorrect ? '✓ ' : isWrong ? '✕ ' : ''}
-                  {s.label}
+                  <div className="relative aspect-square w-full">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={s.img} alt={s.label} className="h-full w-full object-contain" draggable={false} />
+                    {isCorrect && (
+                      // Same 750×750 canvas as the character, so full-size overlay lands on the face.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={s.glasses}
+                        alt=""
+                        aria-hidden
+                        className="wc-glasses pointer-events-none absolute inset-0 h-full w-full object-contain"
+                        draggable={false}
+                      />
+                    )}
+                  </div>
+                  <span>
+                    {isCorrect ? '✓ ' : isWrong ? '✕ ' : ''}
+                    {s.label}
+                  </span>
                 </button>
               );
             })}

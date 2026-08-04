@@ -73,7 +73,18 @@ body {
   transform:translateX(-160%) skewX(-15deg); pointer-events:none; }
 .wc-btn:hover::after { animation: wc-shine 1s ease; }
 
+/* Bride vs Groom Showdown — the winner "puts on" their glasses */
+@keyframes wc-glasses {
+  0%   { opacity: 0; transform: translateY(-32%) scale(1.15) rotate(-7deg); }
+  60%  { opacity: 1; transform: translateY(5%)   scale(1)    rotate(2deg); }
+  100% { opacity: 1; transform: translateY(0)    scale(1)    rotate(0); }
+}
+.wc-glasses { animation: wc-glasses .7s cubic-bezier(.2,.8,.3,1.25) both; }
+@keyframes wc-winner-pop { 0% { transform: scale(1); } 45% { transform: scale(1.06); } 100% { transform: scale(1); } }
+.wc-winner { animation: wc-winner-pop .55s ease both; }
+
 @media (prefers-reduced-motion: reduce) {
-  .wc-rise,.wc-pop,.wc-bob,.wc-bob-slow,.wc-aurora,.wc-blob,.wc-twinkle { animation: none !important; }
+  .wc-rise,.wc-pop,.wc-bob,.wc-bob-slow,.wc-aurora,.wc-blob,.wc-twinkle,.wc-glasses,.wc-winner { animation: none !important; }
+  .wc-glasses { opacity: 1; transform: none; }
   .wc-card::after,.wc-btn::after { display: none; }
 }
