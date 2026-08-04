@@ -83,14 +83,12 @@ export default async function GamesList({ params }: { params: Promise<{ id: stri
                     >
                       {row.status}
                     </span>
-                    {g.content !== 'arcade' && (
-                      <Link
-                        href={`/admin/events/${id}/games/${row.id}`}
-                        className="rounded-full bg-fuchsia-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-fuchsia-700"
-                      >
-                        Manage
-                      </Link>
-                    )}
+                    <Link
+                      href={`/admin/events/${id}/games/${row.id}`}
+                      className="rounded-full bg-fuchsia-600 px-4 py-1.5 text-sm font-semibold text-white hover:bg-fuchsia-700"
+                    >
+                      Manage
+                    </Link>
                   </>
                 )}
                 <form action={setGameEnabled}>

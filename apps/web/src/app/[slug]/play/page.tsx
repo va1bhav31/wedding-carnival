@@ -22,7 +22,7 @@ const GAME_META: Record<string, { emoji: string; label: string }> = {
 const TEAM_LABEL: Record<string, string> = { bride: '👰 Bride Side', groom: '🤵 Groom Side' };
 
 // Game types with a playable screen built so far.
-const PLAYABLE = new Set(['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'scratch_win']);
+const PLAYABLE = new Set(['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'scratch_win', 'baraat_rush']);
 
 export default async function PlayHub({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

@@ -9,8 +9,9 @@ import TriviaGame from './TriviaGame';
 import FastestFinger from './FastestFinger';
 import ShowdownGame from './ShowdownGame';
 import ScratchGame from './ScratchGame';
+import BaraatRush from './BaraatRush';
 
-const PLAYABLE_TYPES = ['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'scratch_win'];
+const PLAYABLE_TYPES = ['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'scratch_win', 'baraat_rush'];
 
 export type TriviaQuestion = {
   id: string;
@@ -97,6 +98,17 @@ export default async function GamePage({
         title={game.title || 'Fastest Finger First'}
         colors={colors}
         initialLiveState={(game.live_state ?? {}) as { active_question_id?: string }}
+      />
+    );
+  }
+
+  if (game.game_type === 'baraat_rush') {
+    return (
+      <BaraatRush
+        base={base}
+        gameId={gameId}
+        title={game.title || 'Baraat Rush'}
+        colors={colors}
       />
     );
   }
