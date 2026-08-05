@@ -31,7 +31,7 @@ const DIFF: Record<
 // Obstacle kinds map 1:1 onto the illustrated sprites in /public/baraat.
 type ObKind = 'dancer' | 'cow' | 'cowSit' | 'barrier1' | 'barrier2' | 'taxi' | 'carPink';
 type PickKind = 'coin' | 'ring' | 'heart';
-type Obj = { kind: ObKind | PickKind; lane: number; z: number; seed: number; taken?: boolean };
+type Obj = { kind: ObKind | PickKind; lane: number; z: number; seed: number; taken?: boolean; cleared?: boolean };
 type Particle = { x: number; y: number; vx: number; vy: number; life: number; max: number; color: string; r: number };
 
 const OBSTACLES: ObKind[] = ['dancer', 'cow', 'cowSit', 'barrier1', 'barrier2', 'taxi', 'carPink'];
@@ -42,12 +42,13 @@ const JUMP_HEIGHT_M = 1.7; // world metres, scaled by mppx at draw time
 const PLAYER_HEIGHT_M = 2.6;
 
 // Low, hoppable obstacles vs. ones a horse can't clear (must dodge lanes instead).
+// A sitting/lying cow is low enough to jump; a standing one is too tall/bulky.
 const JUMPABLE: Record<ObKind, boolean> = {
   barrier1: true,
   barrier2: true,
+  cowSit: true,
   dancer: false,
   cow: false,
-  cowSit: false,
   taxi: false,
   carPink: false,
 };
@@ -303,7 +304,10 @@ export default function BaraatRush({
       H = 0,
       dpr = 1;
     const resize = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // Capped at 1.5 rather than 2 — a lot of the raster/gradient work below
+      // scales with pixel count, and this alone cuts fill-rate ~44% on
+      // retina phones with barely any visible sharpness loss at game scale.
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       W = wrap.clientWidth;
       H = wrap.clientHeight;
       canvas.width = Math.round(W * dpr);
@@ -384,22 +388,20 @@ export default function BaraatRush({
 
     /* ================= sprites & environment art ================= */
 
+    // A soft radial-gradient shadow reads just as well as a blurred one and
+    // is far cheaper — ctx.filter blur is a real per-pixel convolution, and
+    // this was running on every obstacle + the player, every frame.
     const spriteShadow = (x: number, yGround: number, w: number, strength = 1) => {
-      ctx.save();
-      ctx.filter = 'blur(2.5px)';
-      ctx.fillStyle = `rgba(25,14,22,${0.3 * strength})`;
+      const rx = Math.max(2, w * 0.52);
+      const ry = Math.max(1, w * 0.16);
+      const grad = ctx.createRadialGradient(x, yGround, 0, x, yGround, rx);
+      grad.addColorStop(0, `rgba(20,10,18,${0.34 * strength})`);
+      grad.addColorStop(0.7, `rgba(20,10,18,${0.14 * strength})`);
+      grad.addColorStop(1, 'rgba(20,10,18,0)');
+      ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.ellipse(x, yGround + 1, Math.max(2, w * 0.5), Math.max(1, w * 0.15), 0, 0, Math.PI * 2);
+      ctx.ellipse(x, yGround + 1, rx, ry, 0, 0, Math.PI * 2);
       ctx.fill();
-      ctx.restore();
-    };
-
-    // Atmospheric-perspective helper: distant sprites desaturate/lighten
-    // slightly toward the horizon color instead of staying full-contrast at
-    // any depth, which is a big part of what reads as "flat 2010 flash game".
-    const hazeFilter = (k: number) => {
-      const haze = Math.max(0, 1 - k);
-      return `saturate(${Math.round(100 - haze * 42)}%) brightness(${(1 + haze * 0.16).toFixed(2)})`;
     };
 
     const drawObstacle = (o: Obj, x: number, yGround: number, k: number) => {
@@ -416,7 +418,6 @@ export default function BaraatRush({
 
       spriteShadow(x, yGround, dw * 1.15);
       ctx.save();
-      ctx.filter = hazeFilter(k);
       ctx.translate(x, 0);
       if (flip) ctx.scale(-1, 1);
       ctx.drawImage(img, -dw / 2, yGround - dh, dw, dh);
@@ -625,11 +626,13 @@ export default function BaraatRush({
         // collisions
         const laneNow = Math.round(g.laneF);
         for (const o of g.objs) {
-          if (o.taken || o.z > 2.4 || o.z < -0.8 || o.lane !== laneNow) continue;
+          if (o.taken || o.cleared || o.z > 2.4 || o.z < -0.8 || o.lane !== laneNow) continue;
           const isPickup = o.kind === 'coin' || o.kind === 'ring' || o.kind === 'heart';
           if (!isPickup && g.jumping && JUMPABLE[o.kind as ObKind]) {
-            // Cleared it — small bonus for a well-timed jump.
-            o.taken = true;
+            // Cleared it mid-air — small bonus. Unlike a hit/pickup, a jumped
+            // obstacle should keep sailing past underneath the horse and
+            // scroll off naturally, not vanish the instant it's cleared.
+            o.cleared = true;
             g.score += 5;
             continue;
           }
@@ -675,8 +678,10 @@ export default function BaraatRush({
       }
 
       /* ---------- render ---------- */
+      // No clearRect: the sky + ground fills below already fully repaint the
+      // canvas (with margin for the shake offset), so clearing first would
+      // just be wasted work.
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, W, H);
       const shakeX = playing ? Math.sin(now * 0.09) * 7 * g.shake : 0;
       const shakeY = playing ? Math.cos(now * 0.11) * 5 * g.shake : 0;
       ctx.translate(shakeX, shakeY);
@@ -697,19 +702,26 @@ export default function BaraatRush({
       ctx.fillStyle = sky;
       ctx.fillRect(-20, -20, W + 40, horizonY * 1.35 + 20);
 
-      // soft drifting clouds (parallax)
-      ctx.save();
-      ctx.filter = 'blur(7px)';
-      ctx.fillStyle = 'rgba(255,255,255,.32)';
+      // soft drifting clouds (parallax) — layered low-alpha ellipses instead
+      // of a blur filter, which is the expensive part per pixel touched
+      ctx.fillStyle = 'rgba(255,255,255,.16)';
       for (let i = 0; i < 4; i++) {
         const ccx = ((g.dist * 1.6 + i * 260) % (W + 300)) - 150;
         const ccy = horizonY * 0.2 + i * 16;
         ctx.beginPath();
-        ctx.ellipse(ccx, ccy, 44, 13, 0, 0, Math.PI * 2);
-        ctx.ellipse(ccx + 28, ccy + 4, 28, 10, 0, 0, Math.PI * 2);
+        ctx.ellipse(ccx, ccy, 50, 17, 0, 0, Math.PI * 2);
+        ctx.ellipse(ccx + 28, ccy + 4, 34, 13, 0, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.restore();
+      ctx.fillStyle = 'rgba(255,255,255,.28)';
+      for (let i = 0; i < 4; i++) {
+        const ccx = ((g.dist * 1.6 + i * 260) % (W + 300)) - 150;
+        const ccy = horizonY * 0.2 + i * 16;
+        ctx.beginPath();
+        ctx.ellipse(ccx, ccy, 40, 12, 0, 0, Math.PI * 2);
+        ctx.ellipse(ccx + 26, ccy + 3, 26, 9, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       // layered sun bloom
       for (const [r, a] of [
@@ -733,7 +745,6 @@ export default function BaraatRush({
 
       // palace gate silhouette at the vanishing point
       ctx.save();
-      ctx.filter = 'blur(0.6px)';
       ctx.fillStyle = 'rgba(196,120,130,.58)';
       const gw = W * 0.34;
       ctx.beginPath();
@@ -854,23 +865,6 @@ export default function BaraatRush({
       ctx.fillStyle = sheen;
       ctx.fill();
 
-      // subtle road grain (cheap texture so the asphalt isn't a flat fill)
-      const grainStep = 3.1;
-      const gOff = g.dist % grainStep;
-      for (let zz = grainStep - gOff; zz < 60; zz += grainStep) {
-        const world = Math.floor((g.dist + zz) / grainStep);
-        const k = kOf(zz);
-        const y = horizonY + (baseY - horizonY) * k;
-        for (let j = 0; j < 3; j++) {
-          const h1 = hash(world * 3 + j);
-          const x = cx + (h1 * 2 - 1) * roadHalf0 * 0.92 * k;
-          ctx.fillStyle = `rgba(255,255,255,${0.03 + 0.02 * hash(world + j)})`;
-          ctx.beginPath();
-          ctx.arc(x, y, Math.max(0.6, mppx * 0.02 * k), 0, Math.PI * 2);
-          ctx.fill();
-        }
-      }
-
       // pink rope borders
       for (const b of [-1, 1]) {
         ctx.beginPath();
@@ -891,15 +885,15 @@ export default function BaraatRush({
           const y2 = horizonY + (baseY - horizonY) * k2;
           const x1 = cx + b * roadHalf0 * 2 * k1;
           const x2 = cx + b * roadHalf0 * 2 * k2;
-          ctx.save();
-          ctx.filter = 'blur(2px)';
-          ctx.strokeStyle = 'rgba(244,205,90,.3)';
-          ctx.lineWidth = Math.max(2.5, mppx * 0.18 * k2);
+          // Cheap pseudo-glow: a wider, dimmer plain stroke under the crisp
+          // one, instead of a per-segment blur filter (this loop runs ~30+
+          // times a frame — filter blur here was the single biggest cost).
+          ctx.strokeStyle = 'rgba(244,205,90,.25)';
+          ctx.lineWidth = Math.max(3.5, mppx * 0.26 * k2);
           ctx.beginPath();
           ctx.moveTo(x1, y1);
           ctx.lineTo(x2, y2);
           ctx.stroke();
-          ctx.restore();
           ctx.strokeStyle = 'rgba(255,246,220,.6)';
           ctx.lineWidth = Math.max(1.5, mppx * 0.1 * k2);
           ctx.beginPath();
@@ -992,18 +986,18 @@ export default function BaraatRush({
         ctx.fill();
         ctx.restore();
       }
-      // ambient bokeh orbs
-      ctx.save();
-      ctx.filter = 'blur(3px)';
+      // ambient bokeh orbs (radial gradient, not a blur filter)
       for (const o of orbs) {
         o.y += o.vy * dt;
         if (o.y < -20) o.y = H + 20;
-        ctx.fillStyle = 'rgba(255,224,150,.18)';
+        const grad = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, o.s);
+        grad.addColorStop(0, 'rgba(255,224,150,.22)');
+        grad.addColorStop(1, 'rgba(255,224,150,0)');
+        ctx.fillStyle = grad;
         ctx.beginPath();
         ctx.arc(o.x, o.y, o.s, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.restore();
 
       // vignette for a cinematic finish
       const vig = ctx.createRadialGradient(cx, H * 0.55, H * 0.28, cx, H * 0.55, H * 0.78);
