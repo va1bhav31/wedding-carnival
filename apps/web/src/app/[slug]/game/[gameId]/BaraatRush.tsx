@@ -36,7 +36,7 @@ type Particle = { x: number; y: number; vx: number; vy: number; life: number; ma
 
 const OBSTACLES: ObKind[] = ['dancer', 'cow', 'cowSit', 'barrier1', 'barrier2', 'taxi', 'carPink'];
 const MAX_LIVES = 3;
-const SPAWN_Z = 130;
+const SPAWN_Z = 55; // shorter sight line — obstacles appear closer, less warning time
 const JUMP_DURATION = 0.55; // seconds, full arc
 const JUMP_HEIGHT_M = 1.7; // world metres, scaled by mppx at draw time
 const PLAYER_HEIGHT_M = 2.6;
@@ -336,7 +336,10 @@ export default function BaraatRush({
       vy: -4 - hash(i + 220) * 6,
     }));
 
-    const F = 13; // focal length (m) for perspective
+    // Focal length: higher = narrower FOV — flatter perspective, less road
+    // taper, and objects stay bigger for longer instead of shrinking to tiny
+    // dots far away (which was also giving way too much reaction time).
+    const F = 30;
     const kOf = (z: number) => F / (F + z);
 
     let last = performance.now();
@@ -921,10 +924,12 @@ export default function BaraatRush({
         ctx.restore();
       }
 
-      // objects far → near
+      // objects far → near — a much shorter sight line than before, on
+      // purpose: obstacles should appear at a real, reactable distance, not
+      // be visible from so far out that dodging is trivial.
       const sorted = [...g.objs].sort((a, b) => b.z - a.z);
       for (const o of sorted) {
-        if (o.z > 110 || o.z < -1) continue;
+        if (o.z > 48 || o.z < -1) continue;
         const k = kOf(o.z);
         const y = horizonY + (baseY - horizonY) * k;
         const laneW = (roadHalf0 * 2) / 3;
