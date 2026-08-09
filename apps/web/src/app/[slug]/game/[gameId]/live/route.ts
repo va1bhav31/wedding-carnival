@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 
 const NO_STORE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' };
 
-type LiveState = { active_question_id?: string; started_at?: string; duration_ms?: number };
+type LiveState = { active_question_id?: string; started_at?: string; duration_ms?: number; next_at?: string };
 
 /** Poll: current live state + the active question (safe columns) + whether this guest already answered. */
 export async function GET(

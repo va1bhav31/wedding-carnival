@@ -5,7 +5,7 @@ import Link from 'next/link';
 import GuestBackdrop from '@/components/GuestBackdrop';
 
 type Colors = { primary: string; accent: string; secondary: string; logo?: string };
-type LiveState = { active_question_id?: string; started_at?: string; duration_ms?: number };
+type LiveState = { active_question_id?: string; started_at?: string; duration_ms?: number; next_at?: string };
 type Question = { id: string; prompt: string; options: string[] };
 type Result = { correct: boolean; points: number; correct_answer: string[] };
 
@@ -51,7 +51,9 @@ export default function FastestFinger({
         };
         const next = data.live_state ?? {};
         setLive((prev) =>
-          prev.active_question_id === next.active_question_id && prev.started_at === next.started_at
+          prev.active_question_id === next.active_question_id &&
+          prev.started_at === next.started_at &&
+          prev.next_at === next.next_at
             ? prev
             : next
         );
@@ -92,6 +94,21 @@ export default function FastestFinger({
     const id = setInterval(tick, 100);
     return () => clearInterval(id);
   }, [live.active_question_id, live.started_at, live.duration_ms]);
+
+  // "Next question in…" heads-up countdown, shown between auto-launched
+  // questions during a host-run Launch All sequence.
+  const [nextIn, setNextIn] = useState(0);
+  useEffect(() => {
+    if (live.active_question_id || !live.next_at) {
+      setNextIn(0);
+      return;
+    }
+    const at = new Date(live.next_at).getTime();
+    const tick = () => setNextIn(Math.max(0, at - Date.now()));
+    tick();
+    const id = setInterval(tick, 200);
+    return () => clearInterval(id);
+  }, [live.active_question_id, live.next_at]);
 
   const submit = useCallback(
     async (finalOrder: string[]) => {
@@ -146,7 +163,18 @@ export default function FastestFinger({
         ⚡ {title}
       </div>
 
-      {!question ? (
+      {!question && nextIn > 0 ? (
+        <div className="wc-pop relative z-10 max-w-sm">
+          <span
+            className="inline-grid h-20 w-20 place-items-center rounded-full text-3xl font-bold text-gray-900"
+            style={{ background: colors.accent }}
+          >
+            {Math.ceil(nextIn / 1000)}
+          </span>
+          <p className="mt-4 text-lg font-semibold text-white/95">Get ready — next question coming up!</p>
+          <p className="mt-1 text-sm text-white/60">Fingers on the screen 🏃</p>
+        </div>
+      ) : !question ? (
         <div className="wc-pop relative z-10 max-w-sm">
           <div className="wc-bob mb-3 text-5xl">⏳</div>
           <p className="text-lg text-white/90">Waiting for the host to launch the next question…</p>

@@ -5,6 +5,7 @@ import { assertCanManage } from '@/lib/auth';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { GAME_BY_TYPE } from '@/lib/games-catalog';
 import { seedDefaultContent } from '@/lib/default-content';
+import { FF_DURATION_MS, FF_GAP_MS } from '@/lib/ff-timing';
 
 const STATUSES = ['locked', 'live', 'ended'] as const;
 
@@ -251,8 +252,6 @@ const DELETABLE: Record<string, string> = {
 
 /* ---------------- Fastest Finger live control ---------------- */
 
-const FF_DURATION_MS = 20000; // guests have 20s to arrange the order (per product doc)
-
 /** Host launches a question → all guests' screens show it (via realtime). */
 export async function launchQuestion(formData: FormData) {
   const weddingId = str(formData.get('wedding_id'));
@@ -269,6 +268,30 @@ export async function launchQuestion(formData: FormData) {
         active_question_id: questionId,
         started_at: new Date().toISOString(),
         duration_ms: FF_DURATION_MS,
+      },
+    })
+    .eq('id', gameId);
+  if (error) throw new Error(error.message);
+  revalidatePath(gamePath(weddingId, gameId));
+}
+
+/**
+ * "Next question in Xs" heads-up screen, shown between auto-launched
+ * questions during a Launch All run. No question content is revealed —
+ * guests just see a countdown — so this only needs a target timestamp.
+ */
+export async function setUpcomingQuestion(formData: FormData) {
+  const weddingId = str(formData.get('wedding_id'));
+  await assertCanManage(weddingId);
+  const gameId = str(formData.get('game_id'));
+  if (!gameId) throw new Error('Missing game.');
+
+  const supabase = createAdminClient();
+  const { error } = await supabase
+    .from('wedding_games')
+    .update({
+      live_state: {
+        next_at: new Date(Date.now() + FF_GAP_MS).toISOString(),
       },
     })
     .eq('id', gameId);

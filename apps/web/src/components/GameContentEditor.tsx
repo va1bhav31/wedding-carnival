@@ -7,9 +7,8 @@ import {
   addScratchPrize,
   addDare,
   deleteContent,
-  launchQuestion,
-  clearQuestion,
 } from '@/lib/actions/games';
+import FastestFingerLive from '@/components/FastestFingerLive';
 
 const input =
   'w-full rounded-xl border border-gray-200 px-4 py-2.5 text-gray-900 outline-none focus:border-fuchsia-400';
@@ -88,9 +87,9 @@ export default async function GameContentEditor({
       {game.game_type === 'fastest_finger' && (
         <FastestFingerControl
           supabase={supabase}
+          weddingId={weddingId}
           gameId={gameId}
           liveState={(game.live_state ?? {}) as { active_question_id?: string }}
-          hidden={hidden}
         />
       )}
     </div>
@@ -411,14 +410,14 @@ async function DareEditor({ supabase, gameId, hidden }: EditorProps) {
 
 async function FastestFingerControl({
   supabase,
+  weddingId,
   gameId,
   liveState,
-  hidden,
 }: {
   supabase: any;
+  weddingId: string;
   gameId: string;
   liveState: { active_question_id?: string };
-  hidden: React.ReactNode;
 }) {
   const { data: questions } = await supabase
     .from('questions')
@@ -430,49 +429,13 @@ async function FastestFingerControl({
 
   return (
     <div className={`${card} mt-6 grid gap-4`}>
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold text-gray-900">🔴 Live control</h2>
-        {activeId && (
-          <form action={clearQuestion}>
-            {hidden}
-            <button className="rounded-full bg-gray-800 px-4 py-1.5 text-sm font-semibold text-white hover:bg-black">
-              End question
-            </button>
-          </form>
-        )}
-      </div>
+      <h2 className="font-semibold text-gray-900">🔴 Live control</h2>
       <p className="text-sm text-gray-500">
-        Set the game to <strong>Live</strong> above, then launch questions one at a time. Every
-        guest&apos;s phone shows the shuffled options instantly and a 20s timer starts — the
-        fastest correct arrangement scores the biggest bonus.
+        Set the game to <strong>Live</strong> above. Every guest&apos;s phone shows the shuffled
+        options instantly and a 20s timer starts — the fastest correct arrangement scores the
+        biggest bonus.
       </p>
-      {list.length === 0 ? (
-        <p className="text-sm text-gray-400">Add questions above first.</p>
-      ) : (
-        <ul className="grid gap-2">
-          {list.map((q, i) => {
-            const isActive = activeId === q.id;
-            return (
-              <li key={q.id} className="flex items-center justify-between gap-3 rounded-xl bg-gray-50 px-3 py-2">
-                <span className="text-sm text-gray-800">
-                  {i + 1}. {q.prompt}
-                </span>
-                <form action={launchQuestion}>
-                  {hidden}
-                  <input type="hidden" name="question_id" value={q.id} />
-                  <button
-                    className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-                      isActive ? 'bg-green-600 text-white' : 'bg-fuchsia-600 text-white hover:bg-fuchsia-700'
-                    }`}
-                  >
-                    {isActive ? '● Live now' : 'Launch'}
-                  </button>
-                </form>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+      <FastestFingerLive weddingId={weddingId} gameId={gameId} questions={list} initialActiveId={activeId} />
     </div>
   );
 }
