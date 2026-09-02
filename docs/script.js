@@ -78,23 +78,6 @@ const io = new IntersectionObserver((entries) => {
 }, { threshold: 0.14 });
 document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
-/* ---------- Stat counters ---------- */
-const statObs = new IntersectionObserver((entries) => {
-  entries.forEach((e) => {
-    if (!e.isIntersecting) return;
-    const el = e.target;
-    const target = +el.dataset.count, suffix = el.dataset.suffix || '', dur = 1400, start = performance.now();
-    const step = (now) => {
-      const p = Math.min((now - start) / dur, 1);
-      el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))).toLocaleString() + suffix;
-      if (p < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-    statObs.unobserve(el);
-  });
-}, { threshold: 0.5 });
-document.querySelectorAll('.hero-stats strong').forEach((c) => statObs.observe(c));
-
 /* ---------- Live vote ---------- */
 (function () {
   let bride = 62, groom = 38, votes = 1204;
