@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 import GuestBackdrop from '@/components/GuestBackdrop';
 import type { TriviaQuestion } from './page';
 
@@ -17,7 +16,6 @@ const SIDES = [
 export default function ShowdownGame({
   base,
   gameId,
-  guestId,
   title,
   questions,
   answeredIds,
@@ -49,22 +47,26 @@ export default function ShowdownGame({
     setBusy(true);
     setSelected(side);
     setError(null);
-    const supabase = createClient();
-    const { data, error } = await supabase.rpc('submit_quiz_answer', {
-      p_guest_id: guestId,
-      p_question_id: q.id,
-      p_answer: side,
-      p_response_ms: null,
-    });
-    if (error) {
-      setError(error.message);
+    try {
+      const res = await fetch(`${base}/game/${gameId}/answer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId: q.id, answer: side }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data?.error || 'Something went wrong. Try again.');
+        setSelected(null);
+        setBusy(false);
+        return;
+      }
+      const r = data as Result;
+      setResult(r);
+      if (r.points > 0) setEarned((e) => e + r.points);
+    } catch {
+      setError('Connection issue, check your signal and try again.');
       setSelected(null);
-      setBusy(false);
-      return;
     }
-    const r = data as Result;
-    setResult(r);
-    if (r.points > 0) setEarned((e) => e + r.points);
     setBusy(false);
   }
 

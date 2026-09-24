@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/client';
 import GuestBackdrop from '@/components/GuestBackdrop';
 
 type Colors = { primary: string; accent: string; secondary: string; logo?: string };
@@ -11,7 +10,6 @@ type Prize = { label: string; message: string | null; is_winner: boolean; alread
 export default function ScratchGame({
   base,
   gameId,
-  guestId,
   title,
   colors,
 }: {
@@ -24,27 +22,47 @@ export default function ScratchGame({
   const [prize, setPrize] = useState<Prize | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const drawing = useRef(false);
 
   const bg = { backgroundImage: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.primary})` };
 
-  // Assign the prize server-side as soon as the card opens.
+  // Assign the prize server-side as soon as the card opens. Wrapped in a
+  // timeout + retry — this previously called Supabase directly from the
+  // browser with nothing to fall back on, so a flaky connection meant
+  // "Preparing your card…" forever with no way out.
   useEffect(() => {
-    const supabase = createClient();
+    let cancelled = false;
+    setError(null);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     (async () => {
-      const { data, error } = await supabase.rpc('scratch_card', {
-        p_guest_id: guestId,
-        p_wedding_game_id: gameId,
-      });
-      if (error) {
-        setError(error.message);
-        return;
+      try {
+        const res = await fetch(`${base}/game/${gameId}/scratch`, {
+          method: 'POST',
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        if (cancelled) return;
+        if (!res.ok) {
+          setError(data?.error || 'Could not open your card. Try again.');
+          return;
+        }
+        setPrize(data as Prize);
+      } catch {
+        if (!cancelled) setError('Connection issue, check your signal and try again.');
+      } finally {
+        clearTimeout(timeout);
       }
-      setPrize(data as Prize);
     })();
-  }, [guestId, gameId]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      controller.abort();
+    };
+  }, [gameId, base, attempt]);
 
   const doReveal = useCallback(() => {
     if (revealed) return;
@@ -127,9 +145,18 @@ export default function ScratchGame({
       {error ? (
         <div className="relative z-10 max-w-sm">
           <p className="text-white/90">{error}</p>
-          <Link href={`${base}/play`} className="wc-btn mt-4 inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
-            ← Back to games
-          </Link>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            <button
+              onClick={() => setAttempt((a) => a + 1)}
+              className="wc-btn rounded-full bg-white px-6 py-3 font-semibold"
+              style={{ color: colors.secondary }}
+            >
+              ↻ Try again
+            </button>
+            <Link href={`${base}/play`} className="wc-btn inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
+              ← Back to games
+            </Link>
+          </div>
         </div>
       ) : !prize ? (
         <p className="relative z-10 text-lg text-white/90">Preparing your card… 🎫</p>

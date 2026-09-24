@@ -10,6 +10,7 @@ import FastestFinger from './FastestFinger';
 import ShowdownGame from './ShowdownGame';
 import ScratchGame from './ScratchGame';
 import BaraatRush from './BaraatRush';
+import WaitingForLive from './WaitingForLive';
 
 const PLAYABLE_TYPES = ['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'scratch_win', 'baraat_rush'];
 
@@ -47,19 +48,15 @@ export default async function GamePage({
 
   const colors = themeColors(w);
 
-  // Not open yet → back to hub with a note.
+  // Not open yet — poll and auto-enter the moment the host starts it,
+  // instead of leaving the guest stuck until they manually refresh.
   if (game.status !== 'live') {
     return (
       <main
         style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}
         className="grid min-h-dvh place-items-center px-6 text-center text-white"
       >
-        <div>
-          <p className="text-lg">🎪 This game isn&apos;t open yet.</p>
-          <Link href={`${base}/play`} className="mt-4 inline-block rounded-full bg-white px-6 py-3 font-semibold text-gray-900">
-            ← Back to games
-          </Link>
-        </div>
+        <WaitingForLive base={base} gameId={gameId} />
       </main>
     );
   }

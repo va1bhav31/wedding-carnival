@@ -7,26 +7,11 @@ import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
 import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase } from '@/lib/guest-nav';
 import GuestBackdrop from '@/components/GuestBackdrop';
-import GameIcon, { GAME_ICON } from '@/components/GameIcon';
+import GameIcon from '@/components/GameIcon';
 import TeamAvatar from '@/components/TeamAvatar';
-
-const GAME_META: Record<string, { label: string }> = {
-  bride_groom_showdown: { label: 'Bride vs Groom Showdown' },
-  couple_trivia: { label: 'Couple Trivia' },
-  photo_hunt: { label: 'Photo Hunt' },
-  scratch_win: { label: 'Scratch & Win' },
-  bride_groom_battle: { label: 'Bride vs Groom Battle' },
-  fastest_finger: { label: 'Fastest Finger First' },
-  spin_wheel_dare: { label: 'Spin the Wheel Dare' },
-  baraat_rush: { label: 'Baraat Rush' },
-};
+import PlayGamesList from '@/components/PlayGamesList';
 
 const TEAM_LABEL: Record<string, string> = { bride: 'Bride Side', groom: 'Groom Side' };
-
-// Game types with a playable screen built so far.
-const PLAYABLE = new Set(['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'scratch_win', 'baraat_rush']);
-// Game types with their own points leaderboard (see /game/[gameId]/leaderboard).
-const SCORED = new Set(['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'baraat_rush']);
 
 export default async function PlayHub({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -106,66 +91,7 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
           Games
         </h2>
 
-        {gameList.length === 0 ? (
-          <div className="wc-pop rounded-2xl bg-white/15 p-8 text-center text-white/80 backdrop-blur">
-            🎪 Games are being set up — check back in a moment!
-          </div>
-        ) : (
-          <ul className="grid gap-3">
-            {gameList.map((g, i) => {
-              const meta = GAME_META[g.game_type] ?? { emoji: '🎮', label: g.game_type };
-              const canPlay = g.status === 'live' && PLAYABLE.has(g.game_type);
-              const rowCls =
-                'wc-card flex items-center justify-between gap-3 rounded-2xl bg-white p-4 text-gray-900 shadow-xl';
-              const inner = (
-                <>
-                  <span className="flex min-w-0 items-center gap-3 font-semibold">
-                    <span
-                      className="grid h-11 w-11 shrink-0 place-items-center rounded-xl shadow-inner"
-                      style={{ background: `linear-gradient(135deg, ${primary}22, ${secondary}22)`, color: secondary }}
-                    >
-                      <GameIcon type={GAME_ICON[g.game_type] ?? 'sparkle'} className="h-6 w-6" />
-                    </span>
-                    <span className="truncate">{g.title || meta.label}</span>
-                  </span>
-                  <span
-                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
-                      canPlay ? 'text-white shadow-sm' : 'bg-gray-100 text-gray-400'
-                    }`}
-                    style={canPlay ? { background: `linear-gradient(135deg, ${primary}, ${secondary})` } : undefined}
-                  >
-                    {canPlay ? 'Play ▶' : 'Soon'}
-                  </span>
-                </>
-              );
-              return (
-                <li
-                  key={g.id}
-                  className="wc-rise flex items-center gap-2"
-                  style={{ animationDelay: `${0.15 + i * 0.06}s` }}
-                >
-                  {canPlay ? (
-                    <Link href={`${base}/game/${g.id}`} className={`${rowCls} flex-1`}>
-                      {inner}
-                    </Link>
-                  ) : (
-                    <div className={`${rowCls} flex-1 opacity-90`}>{inner}</div>
-                  )}
-                  {SCORED.has(g.game_type) && (
-                    <Link
-                      href={`${base}/game/${g.id}/leaderboard`}
-                      className="wc-btn grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/20 text-white shadow-lg ring-1 ring-white/20 backdrop-blur"
-                      aria-label={`${g.title || meta.label} leaderboard`}
-                      title="Leaderboard"
-                    >
-                      <GameIcon type="trophy" className="h-5 w-5" />
-                    </Link>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
+        <PlayGamesList base={base} initialGames={gameList} primary={primary} secondary={secondary} />
 
         <footer className="mt-10 text-center text-xs text-white/50">
           Powered by Wedding Carnival™

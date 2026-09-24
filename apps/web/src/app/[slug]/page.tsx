@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
 import { guestBase } from '@/lib/guest-nav';
 import GuestBackdrop from '@/components/GuestBackdrop';
+import LiveWatcher from '@/components/LiveWatcher';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -33,6 +34,7 @@ export default async function GuestHome({ params }: { params: Promise<{ slug: st
       className="wc-aurora relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6 py-12 text-center text-white"
     >
       <GuestBackdrop accent={accent} />
+      {!isLive && <LiveWatcher base={base} />}
 
       <div className="relative z-10 flex w-full max-w-xl flex-col items-center gap-6">
         <div className="wc-pop wc-bob" style={{ animationDelay: '0s, .6s' }}>
