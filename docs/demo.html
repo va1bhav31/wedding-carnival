@@ -194,16 +194,65 @@
     </div>
 
     <div class="live-grid">
+      <div class="panel reveal" id="fffDemo">
+        <div class="panel-head"><span class="dot-live"></span> Fastest Finger First</div>
+        <h3 class="vote-q">Arrange these in the correct order</h3>
+        <div class="fff-timer"><i id="fffBar"></i></div>
+        <div class="fff-grid" id="fffGrid">
+          <button class="fff-opt" type="button"><span class="fff-badge">·</span><span class="fff-label"></span></button>
+          <button class="fff-opt" type="button"><span class="fff-badge">·</span><span class="fff-label"></span></button>
+          <button class="fff-opt" type="button"><span class="fff-badge">·</span><span class="fff-label"></span></button>
+          <button class="fff-opt" type="button"><span class="fff-badge">·</span><span class="fff-label"></span></button>
+        </div>
+        <p class="fff-note" id="fffNote">Tap in order, fastest guest wins</p>
+      </div>
+
       <div class="panel reveal" id="demo">
-        <div class="panel-head"><span class="dot-live"></span> Live Vote · Bride vs Groom</div>
+        <div class="panel-head"><span class="dot-live"></span> Bride vs Groom Showdown</div>
         <h3 class="vote-q">Who takes longer to get ready?</h3>
-        <div class="vote">
-          <button class="vote-btn bride" data-side="bride"><svg class="ico"><use href="#i-heart"/></svg> Bride</button>
-          <button class="vote-btn groom" data-side="groom"><svg class="ico"><use href="#i-ring"/></svg> Groom</button>
+        <div class="showdown-grid">
+          <button class="showdown-side" type="button" data-side="bride">
+            <span class="showdown-art">
+              <img src="assets/bride.svg" alt="Bride" />
+              <img src="assets/bride-glasses.svg" alt="" class="showdown-glasses" aria-hidden="true" />
+            </span>
+            Bride
+          </button>
+          <button class="showdown-side" type="button" data-side="groom">
+            <span class="showdown-art">
+              <img src="assets/groom.svg" alt="Groom" />
+              <img src="assets/groom-glasses.svg" alt="" class="showdown-glasses" aria-hidden="true" />
+            </span>
+            Groom
+          </button>
         </div>
         <div class="vbar"><span class="vbar-label">Bride <b id="brideVal">62%</b></span><div class="vbar-track"><i id="brideBar" style="width:62%"></i></div></div>
         <div class="vbar groom"><span class="vbar-label">Groom <b id="groomVal">38%</b></span><div class="vbar-track"><i id="groomBar" style="width:38%"></i></div></div>
         <p class="vote-count"><b id="voteCount">1,204</b> guests voted</p>
+      </div>
+
+      <div class="panel wide reveal">
+        <div class="panel-head">Baraat Rush</div>
+        <h3 class="vote-q">Ride the baraat, dodge the chaos</h3>
+        <div class="baraat-strip">
+          <div class="baraat-obstacle o1"><svg class="ico"><use href="#i-gift"/></svg></div>
+          <div class="baraat-obstacle o2"><svg class="ico"><use href="#i-wheel"/></svg></div>
+          <div class="baraat-obstacle o3"><svg class="ico"><use href="#i-camera"/></svg></div>
+          <img src="assets/baraat-horse.webp" alt="The Baraat Rush horse" class="baraat-horse" />
+        </div>
+        <p class="baraat-note">An endless-runner arcade game, live in every wedding's game hub</p>
+      </div>
+
+      <div class="panel reveal">
+        <div class="panel-head">Couple Trivia</div>
+        <h3 class="vote-q">Where did they first meet?</h3>
+        <div class="trivia-opts" id="triviaOpts">
+          <button class="trivia-opt" type="button" data-correct="true">College orientation</button>
+          <button class="trivia-opt" type="button">A friend's wedding</button>
+          <button class="trivia-opt" type="button">The same office</button>
+          <button class="trivia-opt" type="button">A dating app</button>
+        </div>
+        <p class="trivia-note" id="triviaNote">Guess before your friends do</p>
       </div>
 
       <div class="panel reveal">

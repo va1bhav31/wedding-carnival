@@ -78,6 +78,109 @@ const io = new IntersectionObserver((entries) => {
 }, { threshold: 0.14 });
 document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
+/* ---------- Fastest Finger First (arrange in order) ---------- */
+(function () {
+  const grid = document.getElementById('fffGrid');
+  if (!grid) return;
+  const bar = document.getElementById('fffBar');
+  const note = document.getElementById('fffNote');
+  const opts = Array.from(grid.querySelectorAll('.fff-opt'));
+  const correctOrder = ['Haldi', 'Sangeet', 'Wedding', 'Reception'];
+  const DURATION = 8000;
+  let order = [], locked = false, tickId = null, startedAt = 0;
+
+  function shuffled(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    if (a.length > 1 && a.every((v, i) => v === arr[i])) return shuffled(arr);
+    return a;
+  }
+
+  function lockResult(timedOut) {
+    if (locked) return;
+    locked = true;
+    clearInterval(tickId);
+    const isCorrect = order.length === correctOrder.length && order.every((v, i) => v === correctOrder[i]);
+    opts.forEach((btn) => {
+      btn.disabled = true;
+      const item = btn.dataset.item;
+      const pickedAt = order.indexOf(item);
+      if (pickedAt !== -1 && correctOrder[pickedAt] === item) btn.classList.add('correct');
+      else if (pickedAt !== -1) btn.classList.add('wrong');
+    });
+    note.textContent = isCorrect
+      ? 'Correct order, fastest finger wins!'
+      : (timedOut ? "Time's up. Correct: " : 'Not quite. Correct: ') + correctOrder.join(' → ');
+    setTimeout(reset, 2800);
+  }
+
+  function tap(btn) {
+    if (locked || btn.classList.contains('picked')) return;
+    order.push(btn.dataset.item);
+    btn.classList.add('picked');
+    btn.querySelector('.fff-badge').textContent = order.length;
+    if (order.length === correctOrder.length) lockResult(false);
+  }
+
+  function reset() {
+    order = [];
+    locked = false;
+    const items = shuffled(correctOrder);
+    opts.forEach((btn, i) => {
+      btn.dataset.item = items[i];
+      btn.querySelector('.fff-label').textContent = items[i];
+      btn.querySelector('.fff-badge').textContent = '·';
+      btn.classList.remove('picked', 'correct', 'wrong');
+      btn.disabled = false;
+    });
+    note.textContent = 'Tap in order, fastest guest wins';
+    clearInterval(tickId);
+    startedAt = performance.now();
+    bar.style.width = '100%';
+    tickId = setInterval(() => {
+      const left = Math.max(0, DURATION - (performance.now() - startedAt));
+      bar.style.width = (left / DURATION) * 100 + '%';
+      if (left <= 0) lockResult(true);
+    }, 100);
+  }
+
+  opts.forEach((btn) => btn.addEventListener('click', () => tap(btn)));
+  reset();
+})();
+
+/* ---------- Couple Trivia ---------- */
+(function () {
+  const wrap = document.getElementById('triviaOpts');
+  if (!wrap) return;
+  const note = document.getElementById('triviaNote');
+  const opts = Array.from(wrap.querySelectorAll('.trivia-opt'));
+  let locked = false;
+
+  function reset() {
+    locked = false;
+    opts.forEach((b) => { b.disabled = false; b.classList.remove('correct', 'wrong'); });
+    note.textContent = 'Guess before your friends do';
+  }
+
+  opts.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (locked) return;
+      locked = true;
+      const isCorrect = btn.dataset.correct === 'true';
+      opts.forEach((b) => {
+        b.disabled = true;
+        if (b.dataset.correct === 'true') b.classList.add('correct');
+        else if (b === btn) b.classList.add('wrong');
+      });
+      note.textContent = isCorrect ? 'Correct, +100 points!' : 'Not quite, the real answer is highlighted.';
+      setTimeout(reset, 2800);
+    });
+  });
+})();
+
 /* ---------- Live vote ---------- */
 (function () {
   let bride = 62, groom = 38, votes = 1204;
@@ -88,10 +191,10 @@ document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
     $('brideVal').textContent = bp + '%'; $('groomVal').textContent = gp + '%';
     $('voteCount').textContent = votes.toLocaleString();
   };
-  document.querySelectorAll('.vote-btn').forEach((btn) => {
+  document.querySelectorAll('.showdown-side').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.vote-btn').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
+      document.querySelectorAll('.showdown-side').forEach((b) => b.classList.remove('voted'));
+      btn.classList.add('voted');
       if (btn.dataset.side === 'bride') bride++; else groom++;
       votes++; render(); burst(btn);
     });
