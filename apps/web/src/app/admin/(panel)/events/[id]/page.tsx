@@ -12,7 +12,7 @@ export default async function EditEvent({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ host?: string }>;
+  searchParams: Promise<{ host?: string; message?: string }>;
 }) {
   const { id } = await params;
   const sp = await searchParams;
@@ -141,18 +141,33 @@ export default async function EditEvent({
           new email creates their login automatically.
         </p>
 
+        {sp.host === 'error' && (
+          <div className="mb-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+            Couldn&apos;t link host: {sp.message || 'Something went wrong.'}
+          </div>
+        )}
         {sp.host === 'linked' && (
           <div className="mb-4 rounded-xl bg-green-50 p-3 text-sm text-green-700">Host linked ✓</div>
         )}
+        {sp.host === 'linked-emailed' && (
+          <div className="mb-4 rounded-xl bg-green-50 p-3 text-sm text-green-700">
+            Host linked ✓ — they&apos;ve been emailed that this wedding is now in their account.
+          </div>
+        )}
         {sp.host === 'cleared' && (
           <div className="mb-4 rounded-xl bg-gray-100 p-3 text-sm text-gray-600">Host unlinked.</div>
+        )}
+        {sp.host === 'invited' && (
+          <div className="mb-4 rounded-xl bg-green-50 p-3 text-sm text-green-700">
+            Host account created ✓ — an email with a password-setup link is on its way to them.
+          </div>
         )}
         {sp.host === 'created' && (
           <div className="mb-4 rounded-xl bg-green-50 p-4 text-sm text-green-800">
             <p className="font-semibold">Host account created ✓</p>
             {tempPassword ? (
               <p className="mt-1">
-                Temporary password:{' '}
+                Couldn&apos;t email them automatically, so share this manually. Temporary password:{' '}
                 <code className="rounded bg-white px-2 py-0.5 font-mono">{tempPassword}</code>
                 <br />
                 Share it securely with the couple — they can change it after signing in.{' '}

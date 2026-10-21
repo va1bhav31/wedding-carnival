@@ -9,6 +9,7 @@ import { slugify } from '@/lib/slug';
 import { HOST_PW_COOKIE } from '@/lib/host-cookie';
 import { seedDefaultContent } from '@/lib/default-content';
 import { normalizeImageUrl } from '@/lib/image-url';
+import { sendHostAccessEmail } from '@/lib/email';
 
 const STATUSES = ['draft', 'ready', 'live', 'ended'] as const;
 
@@ -28,40 +29,69 @@ export async function setHostByEmail(formData: FormData) {
   if (!email) throw new Error('Enter a host email.');
 
   const supabase = createAdminClient();
-
-  // Find an existing auth user with this email.
-  const { data: list, error: listErr } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
-  if (listErr) throw new Error(listErr.message);
-  const existing = list.users.find((u) => (u.email ?? '').toLowerCase() === email);
-
-  let userId: string;
   let created = false;
+  let emailed = false;
   let tempPassword = '';
 
-  if (existing) {
-    userId = existing.id;
-  } else {
-    tempPassword = generatePassword();
-    const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
-      email,
-      password: tempPassword,
-      email_confirm: true,
-    });
-    if (createErr) throw new Error(createErr.message);
-    userId = newUser.user.id;
-    created = true;
+  try {
+    const { data: wedding } = await supabase
+      .from('weddings')
+      .select('couple_name_1, couple_name_2')
+      .eq('id', id)
+      .maybeSingle();
+    const coupleLabel =
+      wedding && wedding.couple_name_1 && wedding.couple_name_2
+        ? `${wedding.couple_name_1} & ${wedding.couple_name_2}`
+        : 'there';
+
+    // Find an existing auth user with this email.
+    const { data: list, error: listErr } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (listErr) throw new Error(listErr.message);
+    const existing = list.users.find((u) => (u.email ?? '').toLowerCase() === email);
+
+    let userId: string;
+    let setupLink: string | undefined;
+
+    if (existing) {
+      userId = existing.id;
+    } else {
+      tempPassword = generatePassword();
+      const { data: newUser, error: createErr } = await supabase.auth.admin.createUser({
+        email,
+        password: tempPassword,
+        email_confirm: true,
+      });
+      if (createErr) throw new Error(createErr.message);
+      userId = newUser.user.id;
+      created = true;
+
+      const { data: linkData, error: linkErr } = await supabase.auth.admin.generateLink({
+        type: 'recovery',
+        email,
+        options: { redirectTo: 'https://app.weddingcarnival.live/reset-password' },
+      });
+      if (!linkErr) setupLink = linkData.properties?.action_link;
+    }
+
+    const { error: updErr } = await supabase.from('weddings').update({ host_user_id: userId }).eq('id', id);
+    if (updErr) throw new Error(updErr.message);
+
+    const result = await sendHostAccessEmail({ to: email, coupleLabel, setupLink });
+    emailed = result.sent;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Something went wrong.';
+    redirect(`/admin/events/${id}?host=error&message=${encodeURIComponent(message)}`);
   }
 
-  const { error: updErr } = await supabase.from('weddings').update({ host_user_id: userId }).eq('id', id);
-  if (updErr) throw new Error(updErr.message);
-
-  if (created) {
+  if (created && !emailed) {
     const cookieStore = await cookies();
     cookieStore.set(HOST_PW_COOKIE, tempPassword, { httpOnly: true, maxAge: 300, path: '/' });
   }
 
   revalidatePath(`/admin/events/${id}`);
-  redirect(`/admin/events/${id}?host=${created ? 'created' : 'linked'}`);
+  redirect(
+    `/admin/events/${id}?host=${created ? (emailed ? 'invited' : 'created') : emailed ? 'linked-emailed' : 'linked'}`
+  );
 }
 
 /** Remove a wedding's host link. Admin-only. */
