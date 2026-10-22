@@ -52,6 +52,7 @@ export async function requireAdmin(): Promise<User> {
 export async function requireHostSession(): Promise<User> {
   const user = await getSessionUser();
   if (!user) redirect('/host/login');
+  if (user.user_metadata?.must_change_password) redirect('/host/set-password');
   return user;
 }
 

@@ -60,6 +60,7 @@ export async function setHostByEmail(formData: FormData) {
         email,
         password: tempPassword,
         email_confirm: true,
+        user_metadata: { must_change_password: true },
       });
       if (createErr) throw new Error(createErr.message);
       userId = newUser.user.id;
