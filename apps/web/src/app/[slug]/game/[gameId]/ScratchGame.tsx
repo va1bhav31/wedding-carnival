@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import GuestBackdrop from '@/components/GuestBackdrop';
+import GameHeader from '@/components/GameHeader';
 
 type Colors = { primary: string; accent: string; secondary: string; logo?: string };
 type Prize = { label: string; message: string | null; is_winner: boolean; already: boolean };
@@ -11,7 +11,6 @@ export default function ScratchGame({
   base,
   gameId,
   title,
-  colors,
 }: {
   base: string;
   gameId: string;
@@ -25,9 +24,6 @@ export default function ScratchGame({
   const [attempt, setAttempt] = useState(0);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
-  const drawing = useRef(false);
-
-  const bg = { backgroundImage: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.primary})` };
 
   // Assign the prize server-side as soon as the card opens. Wrapped in a
   // timeout + retry — this previously called Supabase directly from the
@@ -64,159 +60,162 @@ export default function ScratchGame({
     };
   }, [gameId, base, attempt]);
 
-  const doReveal = useCallback(() => {
-    if (revealed) return;
-    setRevealed(true);
-    if (prize?.is_winner) confettiBurst();
-  }, [revealed, prize]);
+  const doReveal = useCallback(() => setRevealed(true), []);
 
-  // Set up the scratch surface once we have the prize.
+  // A card scratched on an earlier visit opens already revealed.
+  const shown = revealed || Boolean(prize?.already);
+
+  // The foil: a fine champagne grain with script lettering, scratched away
+  // with a finger. Waits for the script face so the lettering draws in it.
   useEffect(() => {
-    if (!prize || revealed) return;
+    if (!prize || shown) return;
     const canvas = canvasRef.current;
     const wrap = wrapRef.current;
     if (!canvas || !wrap) return;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
+    let cancelled = false;
+    let down = false;
+    let strokes = 0;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
 
-    const r = wrap.getBoundingClientRect();
-    canvas.width = r.width;
-    canvas.height = r.height;
-    const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-    grad.addColorStop(0, colors.primary);
-    grad.addColorStop(1, colors.secondary);
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'rgba(255,255,255,.9)';
-    ctx.font = '600 18px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('✨ Scratch here ✨', canvas.width / 2, canvas.height / 2);
-    ctx.globalCompositeOperation = 'destination-out';
+    const paint = () => {
+      if (cancelled) return;
+      const r = wrap.getBoundingClientRect();
+      canvas.width = Math.round(r.width * dpr);
+      canvas.height = Math.round(r.height * dpr);
+      const { width: w, height: h } = canvas;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = '#c9a76d';
+      ctx.fillRect(0, 0, w, h);
+      const img = ctx.getImageData(0, 0, w, h);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const n = (Math.random() - 0.5) * 34;
+        d[i] += n;
+        d[i + 1] += n * 0.9;
+        d[i + 2] += n * 0.7;
+      }
+      ctx.putImageData(img, 0, 0);
+      const family = getComputedStyle(wrap).getPropertyValue('--ev-font-script').trim();
+      ctx.fillStyle = 'rgba(42, 26, 18, 0.78)';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = `${Math.round(h * 0.17)}px ${family || 'Georgia'}, Georgia, serif`;
+      ctx.fillText('Scratch here', w / 2, h / 2);
+    };
 
-    const pos = (e: MouseEvent | TouchEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const p = 'touches' in e ? e.touches[0] : e;
-      return { x: p.clientX - rect.left, y: p.clientY - rect.top };
-    };
-    const scratch = (x: number, y: number) => {
-      ctx.beginPath();
-      ctx.arc(x, y, 22, 0, Math.PI * 2);
-      ctx.fill();
-      checkCleared();
-    };
-    const checkCleared = () => {
-      const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const cleared = () => {
+      const { width: w, height: h } = canvas;
+      const data = ctx.getImageData(0, 0, w, h).data;
       let clear = 0;
-      for (let i = 3; i < data.length; i += 64) if (data[i] === 0) clear++;
-      if (clear / (data.length / 64) > 0.5) doReveal();
+      let total = 0;
+      for (let y = 0; y < h; y += 12) {
+        for (let x = 0; x < w; x += 12) {
+          total += 1;
+          if (data[(y * w + x) * 4 + 3] < 40) clear += 1;
+        }
+      }
+      return clear / total;
     };
 
-    const down = () => (drawing.current = true);
-    const up = () => (drawing.current = false);
-    const move = (e: MouseEvent) => {
-      if (!drawing.current) return;
-      const { x, y } = pos(e);
-      scratch(x, y);
+    const at = (e: PointerEvent): [number, number] => {
+      const r = canvas.getBoundingClientRect();
+      return [(e.clientX - r.left) * dpr, (e.clientY - r.top) * dpr];
     };
-    const tmove = (e: TouchEvent) => {
-      e.preventDefault();
-      const { x, y } = pos(e);
-      scratch(x, y);
+    const scratch = ([x, y]: [number, number]) => {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, 26 * dpr, 0, Math.PI * 2);
+      ctx.fill();
+      strokes += 1;
+      if (strokes % 10 === 0 && cleared() > 0.5) doReveal();
+    };
+    const onDown = (e: PointerEvent) => {
+      down = true;
+      canvas.setPointerCapture(e.pointerId);
+      scratch(at(e));
+    };
+    const onMove = (e: PointerEvent) => {
+      if (down) scratch(at(e));
+    };
+    const onUp = () => {
+      down = false;
     };
 
-    canvas.addEventListener('mousedown', down);
-    window.addEventListener('mouseup', up);
-    canvas.addEventListener('mousemove', move);
-    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); const { x, y } = pos(e); scratch(x, y); }, { passive: false });
-    canvas.addEventListener('touchmove', tmove, { passive: false });
+    (document.fonts ? document.fonts.ready : Promise.resolve()).then(paint);
+    canvas.addEventListener('pointerdown', onDown);
+    canvas.addEventListener('pointermove', onMove);
+    canvas.addEventListener('pointerup', onUp);
+    canvas.addEventListener('pointercancel', onUp);
     return () => {
-      canvas.removeEventListener('mousedown', down);
-      window.removeEventListener('mouseup', up);
-      canvas.removeEventListener('mousemove', move);
-      canvas.removeEventListener('touchmove', tmove);
+      cancelled = true;
+      canvas.removeEventListener('pointerdown', onDown);
+      canvas.removeEventListener('pointermove', onMove);
+      canvas.removeEventListener('pointerup', onUp);
+      canvas.removeEventListener('pointercancel', onUp);
     };
-  }, [prize, revealed, colors, doReveal]);
+  }, [prize, shown, doReveal]);
 
   return (
-    <main style={bg} className="wc-aurora relative flex min-h-dvh flex-col items-center justify-center gap-5 overflow-hidden px-5 py-10 text-center text-white">
-      <GuestBackdrop accent={colors.accent} />
-      <div className="relative z-10 text-sm font-semibold text-white/80">🎁 {title}</div>
-
-      {error ? (
-        <div className="relative z-10 max-w-sm">
-          <p className="text-white/90">{error}</p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <button
-              onClick={() => setAttempt((a) => a + 1)}
-              className="wc-btn rounded-full bg-white px-6 py-3 font-semibold"
-              style={{ color: colors.secondary }}
-            >
-              ↻ Try again
-            </button>
-            <Link href={`${base}/play`} className="wc-btn inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
-              ← Back to games
-            </Link>
-          </div>
-        </div>
-      ) : !prize ? (
-        <p className="relative z-10 text-lg text-white/90">Preparing your card… 🎫</p>
-      ) : (
-        <>
-          <div
-            ref={wrapRef}
-            className="wc-pop relative z-10 h-56 w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl"
-          >
-            {/* Prize underneath */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-6 text-center">
-              <div className="text-5xl">{prize.is_winner ? '🎁' : '✨'}</div>
-              <div className={`font-serif text-xl font-bold ${prize.is_winner ? 'text-fuchsia-700' : 'text-gray-800'}`}>
-                {prize.label}
-              </div>
-              {prize.message && <div className="text-sm text-gray-500">{prize.message}</div>}
-            </div>
-            {/* Scratch layer */}
-            {!revealed && (
-              <canvas ref={canvasRef} className="absolute inset-0 h-full w-full cursor-grab touch-none" />
-            )}
-          </div>
-
-          {revealed ? (
-            <div className="wc-rise relative z-10 max-w-sm">
-              <p className="text-lg font-semibold">
-                {prize.is_winner ? '🎉 You’re a lucky winner!' : 'A little blessing for you 💖'}
-              </p>
-              <p className="mt-1 text-sm text-white/80">
-                {prize.already ? 'You’ve already scratched this card.' : 'Show this to the couple to claim it.'}
-              </p>
-              <Link href={`${base}/play`} className="wc-btn mt-4 inline-block rounded-full bg-white px-6 py-3 font-semibold" style={{ color: colors.secondary }}>
-                ← More games
+    <>
+      <GameHeader base={base} title={title} />
+      <main className="g-stage">
+        {error ? (
+          <div className="quiet">
+            <h1>Your card didn&apos;t load</h1>
+            <p>{error}</p>
+            <div className="g-actions">
+              <button type="button" className="btn btn-primary btn-block" onClick={() => setAttempt((a) => a + 1)}>
+                Try again
+              </button>
+              <Link href={`${base}/play`} className="btn btn-quiet btn-block">
+                Back to games
               </Link>
             </div>
-          ) : (
-            <p className="relative z-10 text-sm text-white/70">Scratch the card to reveal your surprise! 🪙</p>
-          )}
-        </>
-      )}
-    </main>
-  );
-}
+          </div>
+        ) : !prize ? (
+          <div className="quiet">
+            <div className="ev-spinner" aria-hidden="true" />
+            <h1>Preparing your card</h1>
+            <p>One card per guest. It&apos;s being drawn for you now.</p>
+          </div>
+        ) : (
+          <section className="g-col">
+            <h1 className="g-prompt">{prize.already ? 'You’ve already scratched your card' : 'Your card from the couple'}</h1>
+            {!prize.already && <p className="g-hint">Scratch it with your finger to see what&apos;s inside.</p>}
 
-function confettiBurst() {
-  const emojis = ['🎉', '✨', '🎊', '🎁', '💖'];
-  for (let i = 0; i < 70; i++) {
-    const c = document.createElement('div');
-    c.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-    c.style.cssText = `position:fixed;left:${50 + (Math.random() - 0.5) * 40}%;top:45%;font-size:${12 + Math.random() * 18}px;pointer-events:none;z-index:999`;
-    document.body.appendChild(c);
-    const ang = Math.random() * Math.PI * 2;
-    const vel = 120 + Math.random() * 280;
-    c.animate(
-      [
-        { transform: 'translate(0,0)', opacity: 1 },
-        { transform: `translate(${Math.cos(ang) * vel}px,${Math.sin(ang) * vel + 350}px) rotate(${Math.random() * 720}deg)`, opacity: 0 },
-      ],
-      { duration: 1600 + Math.random() * 800, easing: 'cubic-bezier(.2,.6,.4,1)' }
-    );
-    setTimeout(() => c.remove(), 2500);
-  }
+            <div className="card" ref={wrapRef}>
+              <div className="card-face">
+                <p className="kind">{prize.is_winner ? 'You’ve won' : 'A blessing'}</p>
+                <p className="prize">{prize.label}</p>
+                {prize.message && <p className="g-hint">{prize.message}</p>}
+              </div>
+              {!shown && (
+                <canvas ref={canvasRef} role="img" aria-label="Scratch card. Drag your finger across it to reveal what's inside." />
+              )}
+            </div>
+
+            <p className="card-note" aria-live="polite">
+              {!shown
+                ? 'Scratch with your finger.'
+                : prize.is_winner
+                  ? 'Show this screen to the couple to claim it.'
+                  : prize.already
+                    ? 'Here it is again, in case you want to show someone.'
+                    : 'A little something from the couple.'}
+            </p>
+
+            {shown && (
+              <div className="g-actions">
+                <Link href={`${base}/play`} className="btn btn-quiet btn-block">
+                  Back to games
+                </Link>
+              </div>
+            )}
+          </section>
+        )}
+      </main>
+    </>
+  );
 }

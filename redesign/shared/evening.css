@@ -1,0 +1,133 @@
+/* Evening — shared foundation for every guest surface (hub + games). */
+
+@font-face {
+  font-family: 'Albert Sans';
+  src: url('fonts/albert-sans.woff2') format('woff2');
+  font-weight: 300 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Pinyon Script';
+  src: url('fonts/pinyon-script.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  --ground: #120c0a;
+  --raised: #1d1512;
+  --ivory: #f4ece1;
+  --ivory-soft: rgb(244 236 225 / 0.8);
+  --mute: #b8a99a;
+  --hair: rgb(244 236 225 / 0.12);
+  --line: rgb(244 236 225 / 0.22);
+  --champagne: #d8b57a;
+  --champagne-wash: rgb(216 181 122 / 0.08);
+  --rose: #c97b84;
+  --sage: #8fa89a;
+
+  --sans: 'Albert Sans', system-ui, sans-serif;
+  --script: 'Pinyon Script', Georgia, 'Times New Roman', serif;
+  --gutter: 20px;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { box-sizing: border-box; }
+
+html {
+  background: var(--ground);
+  color: var(--ivory);
+  -webkit-text-size-adjust: 100%;
+  scrollbar-color: #4a3a32 var(--ground);
+  scrollbar-width: thin;
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--ground); }
+::-webkit-scrollbar-thumb { background: #4a3a32; border-radius: 8px; }
+::selection { background: var(--champagne); color: var(--ground); }
+
+body {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+[hidden] { display: none !important; }
+h1, h2, h3, p { margin: 0; }
+p, li { text-wrap: pretty; }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+.ico {
+  width: 16px; height: 16px; flex: none;
+  fill: none; stroke: currentColor; stroke-width: 1.8;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.live-dot {
+  display: inline-block;
+  width: 8px; height: 8px; flex: none;
+  border-radius: 50%;
+  background: var(--champagne);
+}
+
+a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--champagne);
+  outline-offset: 3px;
+}
+
+/* Pills */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 56px; padding: 0 32px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit; font-weight: 600; font-size: 1.0625rem; letter-spacing: 0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 200ms var(--ease), border-color 200ms var(--ease), transform 120ms var(--ease);
+}
+.btn:active { transform: scale(0.985); }
+.btn-primary { background: var(--ivory); color: var(--ground); }
+.btn-primary:hover { background: #fff; }
+.btn-quiet { background: transparent; color: var(--ivory); border-color: var(--line); }
+.btn-quiet:hover { border-color: var(--ivory); }
+.btn-block { display: flex; width: 100%; }
+.btn[disabled] { opacity: 0.45; cursor: default; transform: none; }
+
+/* Prototype-only controls (never part of the shipped product) */
+.proto { margin-top: 8px; }
+.proto summary {
+  list-style: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  min-height: 44px;
+  cursor: pointer; color: var(--ivory); font-weight: 500; font-size: 0.9375rem;
+}
+.proto summary::-webkit-details-marker { display: none; }
+.proto .chev { transition: transform 200ms var(--ease); }
+.proto[open] .chev { transform: rotate(90deg); }
+.proto-note { margin: 2px 0 12px; font-size: 0.875rem; color: var(--mute); }
+.proto-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.proto button {
+  font: inherit; font-size: 0.9375rem; font-weight: 500;
+  color: var(--ivory);
+  background: transparent;
+  border: 1px solid rgb(244 236 225 / 0.3);
+  border-radius: 999px;
+  padding: 0 18px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.proto button:hover, .proto button[aria-pressed="true"] { border-color: var(--champagne); color: var(--champagne); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+}

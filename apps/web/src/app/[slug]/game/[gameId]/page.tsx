@@ -2,7 +2,9 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
-import { getWeddingBySlug, themeColors } from '@/lib/weddings';
+import { getWeddingBySlug, themeColors, coupleNames } from '@/lib/weddings';
+import { GAME_BY_TYPE } from '@/lib/games-catalog';
+import GameHeader from '@/components/GameHeader';
 import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase } from '@/lib/guest-nav';
 import TriviaGame from './TriviaGame';
@@ -50,14 +52,16 @@ export default async function GamePage({
 
   // Not open yet — poll and auto-enter the moment the host starts it,
   // instead of leaving the guest stuck until they manually refresh.
+  const gameTitle = game.title || GAME_BY_TYPE[game.game_type]?.label || 'This game';
+
   if (game.status !== 'live') {
     return (
-      <main
-        style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}
-        className="grid min-h-dvh place-items-center px-6 text-center text-white"
-      >
-        <WaitingForLive base={base} gameId={gameId} />
-      </main>
+      <>
+        <GameHeader base={base} title={gameTitle} />
+        <main className="g-stage">
+          <WaitingForLive base={base} gameId={gameId} title={gameTitle} />
+        </main>
+      </>
     );
   }
 
@@ -76,14 +80,20 @@ export default async function GamePage({
 
   if (!PLAYABLE_TYPES.includes(game.game_type)) {
     return (
-      <main className="grid min-h-dvh place-items-center px-6 text-center">
-        <div>
-          <p className="text-gray-600">This game type isn&apos;t playable yet.</p>
-          <Link href={`${base}/play`} className="mt-4 inline-block text-fuchsia-600 hover:underline">
-            ← Back to games
-          </Link>
-        </div>
-      </main>
+      <>
+        <GameHeader base={base} title={gameTitle} />
+        <main className="g-stage">
+          <div className="quiet">
+            <h1>Not on phones yet</h1>
+            <p>{gameTitle} can&apos;t be played from your phone yet. The host will run it in the room.</p>
+            <div className="g-actions">
+              <Link href={`${base}/play`} className="btn btn-quiet btn-block">
+                Back to games
+              </Link>
+            </div>
+          </div>
+        </main>
+      </>
     );
   }
 
@@ -132,6 +142,7 @@ export default async function GamePage({
         questions={(questions ?? []) as TriviaQuestion[]}
         answeredIds={answeredIds}
         colors={colors}
+        names={coupleNames(w)}
       />
     );
   }

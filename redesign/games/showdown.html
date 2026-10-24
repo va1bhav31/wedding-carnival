@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#120c0a" />
+  <title>Bride vs Groom Showdown · Aanya &amp; Vihaan</title>
+  <link rel="preload" href="../shared/fonts/albert-sans.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="../shared/fonts/pinyon-script.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="games.css" />
+</head>
+<body class="game">
+  <header class="g-top">
+    <a class="g-back" href="../game-hub/index.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>Games</a>
+    <p class="g-name">Showdown</p>
+    <p class="g-pts"><b class="num" id="pts">200</b> pts</p>
+  </header>
+
+  <main class="g-stage">
+
+    <section class="view" data-view="question" data-label="Question">
+      <p class="g-meta"><span id="counter">Question 3 of 15</span><span>Who's more likely?</span></p>
+      <h1 class="g-prompt" id="prompt">Who takes longer to get ready?</h1>
+      <div class="sides" id="sides">
+        <button class="side" type="button" data-side="bride">
+          <span class="side-name">Aanya</span><span class="side-role">the bride</span>
+        </button>
+        <button class="side" type="button" data-side="groom">
+          <span class="side-name">Vihaan</span><span class="side-role">the groom</span>
+        </button>
+      </div>
+      <p class="g-hint" id="hint" aria-live="polite">Tap a name. The couple's own answer is the right one.</p>
+      <div class="result" id="result" hidden aria-live="polite"></div>
+      <div class="g-actions" id="after" hidden>
+        <button class="btn btn-primary btn-block" type="button" id="next">Next question</button>
+      </div>
+    </section>
+
+    <section class="view" data-view="done" data-label="Finished">
+      <div class="quiet">
+        <p class="big-num champ num">700</p>
+        <h1 style="margin-top: 14px">Showdown complete</h1>
+        <p>You matched the couple on 7 of 15. Points count towards tonight's leaderboard.</p>
+        <div class="g-actions">
+          <a class="btn btn-primary btn-block" href="../game-hub/index.html#standings">See the leaderboard</a>
+          <a class="btn btn-quiet btn-block" href="../game-hub/index.html">More games</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="empty" data-label="No questions yet">
+      <div class="quiet">
+        <h1>No questions yet</h1>
+        <p>The couple is still writing them. Check back in a little while.</p>
+        <div class="g-actions">
+          <a class="btn btn-quiet btn-block" href="../game-hub/index.html">Back to games</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="g-foot">
+    <details class="proto">
+      <summary><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>Prototype states</summary>
+      <p class="proto-note">Sample data. Jump to any screen, or force an answer's outcome.</p>
+      <div class="proto-actions"></div>
+    </details>
+  </footer>
+
+  <script src="games.js"></script>
+  <script src="showdown.js"></script>
+</body>
+</html>

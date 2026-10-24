@@ -1,12 +1,9 @@
-import type { CSSProperties } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
-import { getWeddingBySlug, coupleNames, themeColors } from '@/lib/weddings';
+import { getWeddingBySlug, coupleNames } from '@/lib/weddings';
 import { joinWedding } from '@/lib/actions/guests';
 import { guestCookieName } from '@/lib/guest-cookie';
 import { guestBase, guestHome } from '@/lib/guest-nav';
-import GuestBackdrop from '@/components/GuestBackdrop';
-import TeamAvatar from '@/components/TeamAvatar';
 
 export default async function JoinPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -20,77 +17,61 @@ export default async function JoinPage({ params }: { params: Promise<{ slug: str
   if (cookieStore.get(guestCookieName(w.id))) redirect(`${base}/play`);
 
   const { bride, groom } = coupleNames(w);
-  const { primary, accent, secondary } = themeColors(w);
-
-  const bg = {
-    backgroundImage: `linear-gradient(135deg, ${primary} 0%, ${secondary} 55%, ${primary} 100%)`,
-  } as CSSProperties;
 
   return (
-    <main style={bg} className="wc-aurora relative flex min-h-dvh items-center justify-center overflow-hidden px-6 py-10">
-      <GuestBackdrop accent={accent} />
-      <div className="wc-pop relative z-10 w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl ring-1 ring-black/5">
-        <h1 className="text-center font-serif text-2xl font-bold text-gray-900">
-          Join {bride} &amp; {groom}&apos;s Carnival 🎪
-        </h1>
-        <p className="mb-6 mt-1 text-center text-sm text-gray-500">
-          Create your player profile to start playing.
+    <>
+      <header className="topbar">
+        <p className="couple">
+          {bride} &amp; {groom}
         </p>
+      </header>
+      <main className="page" style={{ paddingTop: 40 }}>
+        <h1 className="g-prompt">What should we call you?</h1>
+        <p className="g-hint">Your name shows on the leaderboard. No account, no password.</p>
 
-        <form action={joinWedding} className="grid gap-5">
+        <form action={joinWedding} className="form">
           <input type="hidden" name="slug" value={slug} />
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-800">Your name *</label>
-            <input
-              name="name"
-              required
-              maxLength={60}
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 outline-none focus:border-fuchsia-400"
-              placeholder="e.g. Riya"
-            />
+          <div className="field">
+            <label htmlFor="join-name">Your name</label>
+            <input id="join-name" name="name" required maxLength={60} autoComplete="given-name" className="input" placeholder="Riya" />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-800">
-              Nickname <span className="font-normal text-gray-400">(optional)</span>
+          <div className="field">
+            <label htmlFor="join-nick">
+              Nickname <small>optional</small>
             </label>
-            <input
-              name="nickname"
-              maxLength={40}
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 text-gray-900 outline-none focus:border-fuchsia-400"
-              placeholder="What friends call you"
-            />
+            <input id="join-nick" name="nickname" maxLength={40} className="input" placeholder="What friends call you" />
           </div>
 
-          <div>
-            <span className="mb-2 block text-sm font-medium text-gray-800">Pick your side</span>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="cursor-pointer">
-                <input type="radio" name="team" value="bride" className="peer sr-only" />
-                <div className="flex flex-col items-center gap-1.5 rounded-2xl border-2 border-gray-200 py-3.5 text-center font-semibold text-gray-700 transition peer-checked:border-transparent peer-checked:bg-pink-500 peer-checked:text-white">
-                  <TeamAvatar team="bride" className="h-10 w-10 rounded-full object-cover object-top ring-2 ring-black/5" />
-                  Bride Side
-                </div>
+          <fieldset className="field" style={{ border: 0, margin: 0, padding: 0 }}>
+            <legend>Whose side are you on?</legend>
+            <div className="sides" style={{ marginTop: 8 }}>
+              <label className="side-choice">
+                <input type="radio" name="team" value="bride" />
+                <span className="side-card">
+                  <span className="side-name">{bride}</span>
+                  <span className="side-role">the bride&apos;s side</span>
+                </span>
               </label>
-              <label className="cursor-pointer">
-                <input type="radio" name="team" value="groom" className="peer sr-only" />
-                <div className="flex flex-col items-center gap-1.5 rounded-2xl border-2 border-gray-200 py-3.5 text-center font-semibold text-gray-700 transition peer-checked:border-transparent peer-checked:bg-purple-600 peer-checked:text-white">
-                  <TeamAvatar team="groom" className="h-10 w-10 rounded-full object-cover object-top ring-2 ring-black/5" />
-                  Groom Side
-                </div>
+              <label className="side-choice">
+                <input type="radio" name="team" value="groom" />
+                <span className="side-card">
+                  <span className="side-name">{groom}</span>
+                  <span className="side-role">the groom&apos;s side</span>
+                </span>
               </label>
             </div>
-          </div>
+          </fieldset>
 
-          <button
-            className="wc-btn mt-2 rounded-full py-3.5 text-lg font-bold text-white shadow-lg"
-            style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}
-          >
-            🎉 Let&apos;s play
+          <button className="btn btn-primary btn-block" style={{ marginTop: 6 }}>
+            Start playing
           </button>
         </form>
-      </div>
-    </main>
+      </main>
+      <footer className="foot">
+        <p className="wordmark">Wedding Carnival</p>
+      </footer>
+    </>
   );
 }

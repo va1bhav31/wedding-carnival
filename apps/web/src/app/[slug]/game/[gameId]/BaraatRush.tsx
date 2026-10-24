@@ -152,7 +152,6 @@ export default function BaraatRush({
   base,
   gameId,
   title,
-  colors,
 }: {
   base: string;
   gameId: string;
@@ -168,6 +167,12 @@ export default function BaraatRush({
   const [best, setBest] = useState<number | null>(null);
   const [submitState, setSubmitState] = useState<'idle' | 'saving' | 'saved' | 'improved' | 'failed'>('idle');
   const [assetsReady, setAssetsReady] = useState(false);
+  const hudFontRef = useRef('system-ui, sans-serif');
+
+  useEffect(() => {
+    const fam = wrapRef.current && getComputedStyle(wrapRef.current).getPropertyValue('--ev-font-sans').trim();
+    if (fam) hudFontRef.current = `${fam}, system-ui, sans-serif`;
+  }, []);
 
   const setPhaseBoth = useCallback((p: Phase) => {
     gameRef.current.phase = p;
@@ -1016,31 +1021,31 @@ export default function BaraatRush({
         const pad = 12;
         ctx.textBaseline = 'middle';
         // score pill
-        ctx.fillStyle = 'rgba(20,12,20,.45)';
+        ctx.fillStyle = 'rgba(18,12,10,.66)';
         rr(ctx, pad, pad, 132, 40, 20);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(244,205,90,.7)';
+        ctx.strokeStyle = 'rgba(244,236,225,.22)';
         ctx.lineWidth = 1.5;
         rr(ctx, pad, pad, 132, 40, 20);
         ctx.stroke();
-        ctx.fillStyle = '#ffe9b0';
-        ctx.font = '700 19px system-ui, sans-serif';
+        ctx.fillStyle = '#f4ece1';
+        ctx.font = `500 20px ${hudFontRef.current}`;
         ctx.textAlign = 'left';
         ctx.fillText(`${Math.round(g.score)}`, pad + 16, pad + 21);
-        ctx.font = '600 11px system-ui, sans-serif';
-        ctx.fillStyle = 'rgba(255,233,176,.75)';
+        ctx.font = `600 11px ${hudFontRef.current}`;
+        ctx.fillStyle = 'rgba(184,169,154,1)';
         ctx.fillText('SCORE', pad + 84, pad + 21);
         // coins pill
         const cw = 96;
-        ctx.fillStyle = 'rgba(20,12,20,.45)';
+        ctx.fillStyle = 'rgba(18,12,10,.66)';
         rr(ctx, W - pad - cw, pad, cw, 40, 20);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(244,205,90,.7)';
+        ctx.strokeStyle = 'rgba(244,236,225,.22)';
         rr(ctx, W - pad - cw, pad, cw, 40, 20);
         ctx.stroke();
         drawCoin(W - pad - cw + 22, pad + 30, 20, g.t, 0.3);
-        ctx.fillStyle = '#ffe9b0';
-        ctx.font = '700 18px system-ui, sans-serif';
+        ctx.fillStyle = '#f4ece1';
+        ctx.font = `500 18px ${hudFontRef.current}`;
         ctx.textAlign = 'left';
         ctx.fillText(`${g.coins}`, W - pad - cw + 42, pad + 21);
         // hearts
@@ -1048,7 +1053,7 @@ export default function BaraatRush({
           const hx = W - pad - 20 - i * 26;
           const hy = pad + 62;
           ctx.globalAlpha = i < g.lives ? 1 : 0.22;
-          ctx.fillStyle = '#e0447f';
+          ctx.fillStyle = '#d8b57a';
           ctx.beginPath();
           ctx.moveTo(hx, hy + 7);
           ctx.bezierCurveTo(hx - 12, hy - 3, hx - 6, hy - 12, hx, hy - 4);
@@ -1058,7 +1063,7 @@ export default function BaraatRush({
         ctx.globalAlpha = 1;
         // difficulty tag
         ctx.fillStyle = 'rgba(255,255,255,.55)';
-        ctx.font = '600 11px system-ui, sans-serif';
+        ctx.font = `600 11px ${hudFontRef.current}`;
         ctx.textAlign = 'left';
         ctx.fillText(DIFF[g.diff].label.toUpperCase(), pad + 4, pad + 58);
 
@@ -1066,10 +1071,10 @@ export default function BaraatRush({
         if (g.hintT > 0 && g.phase === 'playing') {
           const a = Math.min(1, g.hintT);
           ctx.globalAlpha = a * (0.7 + 0.3 * Math.sin(now * 0.006));
-          ctx.fillStyle = '#fff3d6';
-          ctx.font = '700 15px system-ui, sans-serif';
+          ctx.fillStyle = '#f4ece1';
+          ctx.font = `600 15px ${hudFontRef.current}`;
           ctx.textAlign = 'center';
-          ctx.fillText('◀ ▶  move     ▲  jump', cx, H * 0.94);
+          ctx.fillText('Swipe to move, swipe up to jump', cx, H * 0.94);
           ctx.globalAlpha = 1;
         }
       }
@@ -1082,121 +1087,113 @@ export default function BaraatRush({
   }, [gameOver]);
 
   /* ---------- UI overlays ---------- */
-  const card = 'rounded-3xl bg-white/95 p-6 text-gray-900 shadow-2xl backdrop-blur';
-  const btnP = 'wc-btn rounded-full px-6 py-3 font-bold text-white shadow-lg';
+  const saveNote =
+    submitState === 'improved'
+      ? 'Your best yet. The leaderboard is updated.'
+      : submitState === 'saved'
+        ? best !== null
+          ? `Your best is ${best.toLocaleString('en-IN')}.`
+          : 'Score saved.'
+        : submitState === 'saving'
+          ? 'Saving your score.'
+          : submitState === 'failed'
+            ? 'Couldn’t save the score. Check your signal.'
+            : '';
 
   return (
-    <main
-      className="relative h-dvh w-full overflow-hidden"
-      style={{ background: `linear-gradient(${colors.primary}, ${colors.secondary})` }}
-    >
+    <main className="relative w-full overflow-hidden" style={{ height: '100dvh', background: 'var(--ground)' }}>
       <div ref={wrapRef} className="absolute inset-0">
         <canvas ref={canvasRef} className="absolute inset-0 touch-none select-none" />
       </div>
 
-      {/* top bar (HTML) */}
       {phase === 'playing' && (
-        <button
-          onClick={() => setPhaseBoth('paused')}
-          className="absolute right-3 top-16 z-20 grid h-10 w-10 place-items-center rounded-full bg-black/40 text-white backdrop-blur"
-          aria-label="Pause"
-        >
-          ❚❚
-        </button>
+        <div className="hud" style={{ top: 96, justifyContent: 'flex-end' }}>
+          <button type="button" className="hud-chip hud-pause" onClick={() => setPhaseBoth('paused')} aria-label="Pause">
+            <svg className="ico" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 6v12M15 6v12" />
+            </svg>
+          </button>
+        </div>
       )}
 
-      {/* menu */}
       {phase === 'menu' && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/25 px-5">
-          <div className={`${card} wc-pop w-full max-w-sm text-center`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/baraat/horse-static.webp" alt="" className="mx-auto h-24 w-auto drop-shadow-xl" />
-            <h1 className="mt-2 font-serif text-2xl font-bold">{title}</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Swipe to dodge, swipe up to jump, grab the WC coins. It never ends… how far can
-              you ride?
-            </p>
-            {best !== null && best > 0 && (
-              <p className="mt-2 text-sm font-semibold text-fuchsia-600">Your best: {best}</p>
-            )}
-            <div className="mt-5 grid gap-3">
+        <div className="sheet" style={{ alignItems: 'start', overflowY: 'auto', background: 'var(--ground)' }}>
+          <div style={{ width: '100%', maxWidth: 480, margin: '0 auto' }}>
+            <div className="g-top" style={{ margin: '0 calc(-1 * var(--gutter))', position: 'relative' }}>
+              <Link className="g-back" href={`${base}/play`}>
+                <svg className="ico" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M15 6l-6 6 6 6" />
+                </svg>
+                Games
+              </Link>
+              <p className="g-name">{title}</p>
+              <p className="g-pts">
+                {best !== null && best > 0 && (
+                  <>
+                    Best <b className="num">{best.toLocaleString('en-IN')}</b>
+                  </>
+                )}
+              </p>
+            </div>
+            <div className="rush-art" style={{ marginTop: 24 }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/baraat/horse-static.webp" alt="The groom on his horse, seen from behind" width={305} height={900} />
+            </div>
+            <h1 className="g-prompt">Ride the baraat to the mandap</h1>
+            <p className="g-hint">Swipe left or right to change lanes, swipe up to jump the low ones. Grab the coins. How far can you ride?</p>
+            <ul className="diffs">
               {(Object.keys(DIFF) as Difficulty[]).map((d) => (
-                <button
-                  key={d}
-                  onClick={() => start(d)}
-                  disabled={!assetsReady}
-                  className="wc-btn flex items-center justify-between rounded-2xl border-2 border-gray-200 px-5 py-3.5 text-left font-semibold transition hover:border-fuchsia-300 disabled:cursor-wait disabled:opacity-40"
-                >
-                  <span>{DIFF[d].label}</span>
-                  <span className="text-xs font-medium text-gray-400">{DIFF[d].blurb}</span>
-                </button>
+                <li key={d}>
+                  <button type="button" className="opt" onClick={() => start(d)} disabled={!assetsReady}>
+                    <span className="mark num">{DIFF[d].lives}</span>
+                    <span className="opt-text" style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {DIFF[d].label}
+                      <small style={{ fontSize: '0.9375rem', fontWeight: 400, color: 'var(--mute)' }}>{DIFF[d].blurb}</small>
+                    </span>
+                  </button>
+                </li>
               ))}
-            </div>
-            {!assetsReady && <p className="mt-3 text-xs text-gray-400">Loading the baraat…</p>}
-            <Link href={`${base}/play`} className="mt-4 inline-block text-sm text-gray-400 hover:text-gray-600">
-              ← Back to games
-            </Link>
+            </ul>
+            <p className="g-hint" aria-live="polite" style={{ paddingBottom: 32 }}>
+              {assetsReady ? 'Pick a pace to start. The number is your lives.' : 'Loading the baraat.'}
+            </p>
           </div>
         </div>
       )}
 
-      {/* pause */}
       {phase === 'paused' && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 px-5">
-          <div className={`${card} wc-pop w-full max-w-xs text-center`}>
-            <h2 className="font-serif text-xl font-bold">Paused</h2>
-            <div className="mt-4 grid gap-3">
-              <button onClick={() => setPhaseBoth('playing')} className={btnP} style={{ background: colors.primary }}>
-                ▶ Resume
+        <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="rush-paused">
+          <div className="sheet-inner">
+            <h2 id="rush-paused">Paused</h2>
+            <p>The baraat waits for you.</p>
+            <div className="g-actions">
+              <button type="button" className="btn btn-primary btn-block" onClick={() => setPhaseBoth('playing')}>
+                Resume
               </button>
-              <button
-                onClick={() => setPhaseBoth('menu')}
-                className="rounded-full border-2 border-gray-200 px-6 py-2.5 font-semibold text-gray-600 hover:border-gray-300"
-              >
-                Quit run
+              <button type="button" className="btn btn-quiet btn-block" onClick={() => setPhaseBoth('menu')}>
+                End this run
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* game over */}
       {phase === 'over' && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/40 px-5">
-          <div className={`${card} wc-pop w-full max-w-sm text-center`}>
-            <div className="text-4xl">🥁</div>
-            <h2 className="mt-1 font-serif text-2xl font-bold">The baraat halts!</h2>
-            <p className="mt-3 text-5xl font-black" style={{ color: colors.secondary }}>
-              {finalScore}
-            </p>
-            <p className="mt-1 text-sm text-gray-500">
-              {submitState === 'improved'
-                ? '🎉 New personal best — leaderboard updated!'
-                : submitState === 'saved'
-                  ? best !== null
-                    ? `Best: ${best}`
-                    : 'Score saved.'
-                  : submitState === 'saving'
-                    ? 'Saving score…'
-                    : submitState === 'failed'
-                      ? 'Could not save — check your connection.'
-                      : ''}
-            </p>
-            <div className="mt-5 grid gap-3">
-              <button onClick={() => start(gameRef.current.diff)} className={btnP} style={{ background: colors.primary }}>
-                🐎 Ride again
+        <div className="sheet">
+          <div className="sheet-inner">
+            <p className="big-num champ num">{finalScore.toLocaleString('en-IN')}</p>
+            {submitState === 'improved' && <p className="flag">New best</p>}
+            <h2 style={{ marginTop: 18 }}>The baraat halts</h2>
+            <p aria-live="polite">{saveNote}</p>
+            <div className="g-actions">
+              <button type="button" className="btn btn-primary btn-block" onClick={() => start(gameRef.current.diff)}>
+                Ride again
               </button>
-              <button
-                onClick={() => setPhaseBoth('menu')}
-                className="rounded-full border-2 border-gray-200 px-6 py-2.5 font-semibold text-gray-600 hover:border-gray-300"
-              >
-                Change level
+              <button type="button" className="btn btn-quiet btn-block" onClick={() => setPhaseBoth('menu')}>
+                Change pace
               </button>
-              <Link
-                href={`${base}/game/${gameId}/leaderboard`}
-                className="rounded-full bg-gray-100 px-6 py-2.5 font-semibold text-gray-700 hover:bg-gray-200"
-              >
-                🏆 Leaderboard
+              <Link href={`${base}/game/${gameId}/leaderboard`} className="btn btn-quiet btn-block">
+                Leaderboard
               </Link>
             </div>
           </div>

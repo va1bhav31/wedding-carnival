@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#120c0a" />
+  <title>Spin the Wheel · Aanya &amp; Vihaan</title>
+  <link rel="preload" href="../shared/fonts/albert-sans.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="games.css" />
+</head>
+<body class="game">
+  <header class="g-top">
+    <a class="g-back" href="../game-hub/index.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>Games</a>
+    <p class="g-name">Spin the Wheel</p>
+    <p class="g-pts">Round <b class="num">1</b> of 2</p>
+  </header>
+
+  <main class="g-stage">
+
+    <section class="view" data-view="waiting" data-label="Waiting for the spin">
+      <span class="team-tag"><i aria-hidden="true"></i>You're on Team Bride</span>
+      <h1 class="g-prompt">The host spins on the big screen</h1>
+      <p class="g-hint">One of these lands. Both teams race to finish it first. Just for fun, no points.</p>
+      <ol class="drum" id="drum-wait"></ol>
+    </section>
+
+    <section class="view" data-view="spinning" data-label="Spinning">
+      <span class="team-tag"><i aria-hidden="true"></i>You're on Team Bride</span>
+      <h1 class="g-prompt">Spinning</h1>
+      <p class="g-hint" aria-live="polite" id="spin-hint">Watch the big screen.</p>
+      <ol class="drum" id="drum-spin"></ol>
+    </section>
+
+    <section class="view" data-view="dare" data-label="The dare">
+      <span class="team-tag"><i aria-hidden="true"></i>You're on Team Bride</span>
+      <h1 class="dare-title" id="dare-title">Human Pyramid</h1>
+      <p class="dare-desc" id="dare-desc">Build a mini human pyramid of four or five people.</p>
+      <p class="dare-who">Both teams, go. First to finish wins the round.</p>
+      <div class="g-actions">
+        <a class="btn btn-quiet btn-block" href="../game-hub/index.html">Back to games</a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="g-foot">
+    <details class="proto">
+      <summary><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>Prototype states</summary>
+      <p class="proto-note">Sample data. Not yet on guests' phones in the live app; this is the proposed guest screen.</p>
+      <div class="proto-actions"></div>
+    </details>
+  </footer>
+
+  <script src="games.js"></script>
+  <script src="spin-dare.js"></script>
+</body>
+</html>

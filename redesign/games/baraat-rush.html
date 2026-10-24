@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#120c0a" />
+  <title>Baraat Rush · Aanya &amp; Vihaan</title>
+  <link rel="preload" href="../shared/fonts/albert-sans.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="games.css" />
+</head>
+<body class="game">
+  <header class="g-top">
+    <a class="g-back" href="../game-hub/index.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>Games</a>
+    <p class="g-name">Baraat Rush</p>
+    <p class="g-pts">Best <b class="num">1,240</b></p>
+  </header>
+
+  <main class="g-stage">
+
+    <section class="view" data-view="menu" data-label="Start screen">
+      <div class="rush-art"><img src="img/horse-static.webp" alt="The groom on his horse, seen from behind" width="305" height="900" /></div>
+      <h1 class="g-prompt">Ride the baraat to the mandap</h1>
+      <p class="g-hint">Swipe left or right to change lanes. Swipe up to jump the low ones. Every metre counts.</p>
+      <fieldset style="border: 0; margin: 0; padding: 0">
+        <legend class="sr-only">Difficulty</legend>
+        <ul class="diffs">
+          <li class="diff">
+            <input type="radio" name="diff" id="d-easy" value="easy" />
+            <label class="opt" for="d-easy"><span class="mark num">3</span><span class="opt-text">Easy<small>Three lives, a lively trot</small></span></label>
+          </li>
+          <li class="diff">
+            <input type="radio" name="diff" id="d-medium" value="medium" checked />
+            <label class="opt" for="d-medium"><span class="mark num">2</span><span class="opt-text">Medium<small>Two lives, full baraat pace</small></span></label>
+          </li>
+          <li class="diff">
+            <input type="radio" name="diff" id="d-hard" value="hard" />
+            <label class="opt" for="d-hard"><span class="mark num">1</span><span class="opt-text">Hard<small>One life, the dhol on fire</small></span></label>
+          </li>
+        </ul>
+      </fieldset>
+      <div class="g-actions">
+        <button class="btn btn-primary btn-block" type="button" data-to="playing">Start the ride</button>
+      </div>
+    </section>
+
+    <section class="view" data-view="playing" data-label="In game">
+      <div class="play-field">
+        <p class="placeholder">The game itself runs here as built. Only the controls on top of it change.</p>
+        <img src="img/horse-run.webp" alt="" width="321" height="900" />
+        <div class="hud">
+          <span class="hud-chip"><span class="hud-score num" id="score">1,184</span></span>
+          <span class="hud-chip" aria-label="2 lives left"><span class="lives"><i></i><i></i></span></span>
+          <button class="hud-chip hud-pause" type="button" data-to="paused" aria-label="Pause">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6v12M15 6v12" /></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="paused" data-label="Paused">
+      <div class="play-field">
+        <img src="img/horse-run.webp" alt="" width="321" height="900" />
+        <div class="hud">
+          <span class="hud-chip"><span class="hud-score num">1,184</span></span>
+          <span class="hud-chip" aria-label="2 lives left"><span class="lives"><i></i><i></i></span></span>
+          <span class="hud-chip hud-pause" aria-hidden="true"></span>
+        </div>
+      </div>
+      <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="paused-title">
+        <div class="sheet-inner">
+          <h2 id="paused-title">Paused</h2>
+          <p>The baraat waits for you.</p>
+          <div class="g-actions">
+            <button class="btn btn-primary btn-block" type="button" data-to="playing">Resume</button>
+            <button class="btn btn-quiet btn-block" type="button" data-to="over">End this run</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" data-view="over" data-label="Run over">
+      <div class="quiet">
+        <p class="big-num champ num">1,392</p>
+        <p class="flag">New best</p>
+        <h1 style="margin-top: 18px">You reached the mandap</h1>
+        <p>1,392 metres on Medium. Your best counts on the Baraat Rush leaderboard.</p>
+        <div class="g-actions">
+          <button class="btn btn-primary btn-block" type="button" data-to="playing">Ride again</button>
+          <button class="btn btn-quiet btn-block" type="button" data-to="menu">Change difficulty</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="g-foot">
+    <details class="proto">
+      <summary><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>Prototype states</summary>
+      <p class="proto-note">Sample data. Jump to any screen.</p>
+      <div class="proto-actions"></div>
+    </details>
+  </footer>
+
+  <script src="games.js"></script>
+  <script>
+    document.querySelectorAll('[data-to]').forEach((b) => b.addEventListener('click', () => Game.show(b.dataset.to)));
+  </script>
+</body>
+</html>

@@ -2,16 +2,11 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import GuestBackdrop from '@/components/GuestBackdrop';
+import GameHeader, { check } from '@/components/GameHeader';
 import type { TriviaQuestion } from './page';
 
 type Colors = { primary: string; accent: string; secondary: string; logo?: string };
 type Result = { correct: boolean; points: number; correct_answer: string };
-
-const SIDES = [
-  { value: 'bride', label: 'Bride', img: '/b_or_g/bride.svg', glasses: '/b_or_g/bride-glasses.svg' },
-  { value: 'groom', label: 'Groom', img: '/b_or_g/groom.svg', glasses: '/b_or_g/groom-glasses.svg' },
-] as const;
 
 export default function ShowdownGame({
   base,
@@ -19,7 +14,7 @@ export default function ShowdownGame({
   title,
   questions,
   answeredIds,
-  colors,
+  names,
 }: {
   base: string;
   gameId: string;
@@ -28,6 +23,7 @@ export default function ShowdownGame({
   questions: TriviaQuestion[];
   answeredIds: string[];
   colors: Colors;
+  names: { bride: string; groom: string };
 }) {
   const answered = useMemo(() => new Set(answeredIds), [answeredIds]);
   const firstUnanswered = questions.findIndex((q) => !answered.has(q.id));
@@ -38,9 +34,13 @@ export default function ShowdownGame({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const bg = { backgroundImage: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.primary})` };
   const done = index >= questions.length;
   const q = done ? null : questions[index];
+  const sides = [
+    { value: 'bride', name: names.bride, role: 'the bride' },
+    { value: 'groom', name: names.groom, role: 'the groom' },
+  ];
+  const nameFor = (side: string) => (side === 'groom' ? names.groom : names.bride);
 
   async function choose(side: string) {
     if (busy || result || !q) return;
@@ -77,125 +77,127 @@ export default function ShowdownGame({
     setIndex((i) => i + 1);
   }
 
+  const header = (
+    <GameHeader
+      base={base}
+      title={title}
+      right={
+        <>
+          <b className="num">{earned}</b> pts
+        </>
+      }
+    />
+  );
+
   if (questions.length === 0) {
     return (
-      <Shell bg={bg} accent={colors.accent}>
-        <p className="text-lg">No questions yet — check back soon! 🎭</p>
-        <Link href={`${base}/play`} className="wc-btn mt-4 inline-block rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
-          ← Back to games
-        </Link>
-      </Shell>
+      <>
+        {header}
+        <main className="g-stage">
+          <div className="quiet">
+            <h1>No questions yet</h1>
+            <p>The couple is still writing them. Check back in a little while.</p>
+            <div className="g-actions">
+              <Link href={`${base}/play`} className="btn btn-quiet btn-block">
+                Back to games
+              </Link>
+            </div>
+          </div>
+        </main>
+      </>
     );
   }
 
   if (done) {
     return (
-      <Shell bg={bg} accent={colors.accent}>
-        <div className="wc-bob text-6xl">🏆</div>
-        <h1 className="wc-rise font-serif text-3xl font-bold">Showdown complete!</h1>
-        <p className="wc-rise text-white/90" style={{ animationDelay: '.1s' }}>
-          You earned <span className="font-bold" style={{ color: colors.accent }}>{earned}</span> points.
-        </p>
-        <div className="wc-rise mt-2 flex gap-3" style={{ animationDelay: '.2s' }}>
-          <Link href={`${base}/game/${gameId}/leaderboard`} className="wc-btn rounded-full bg-white px-6 py-3 font-semibold" style={{ color: colors.secondary }}>
-            🏆 Leaderboard
-          </Link>
-          <Link href={`${base}/play`} className="wc-btn rounded-full bg-white/20 px-6 py-3 font-semibold text-white backdrop-blur">
-            More games
-          </Link>
-        </div>
-      </Shell>
+      <>
+        {header}
+        <main className="g-stage">
+          <div className="quiet">
+            <p className="big-num champ num">{earned}</p>
+            <h1 style={{ marginTop: 14 }}>Showdown complete</h1>
+            <p>Points from this session count towards tonight&apos;s leaderboard.</p>
+            <div className="g-actions">
+              <Link href={`${base}/game/${gameId}/leaderboard`} className="btn btn-primary btn-block">
+                See the leaderboard
+              </Link>
+              <Link href={`${base}/play`} className="btn btn-quiet btn-block">
+                More games
+              </Link>
+            </div>
+          </div>
+        </main>
+      </>
     );
   }
 
   return (
-    <Shell bg={bg} accent={colors.accent}>
-      <div className="w-full max-w-md">
-        <div className="mb-4 flex items-center justify-between text-sm text-white/80">
-          <span className="font-semibold">🎭 {title}</span>
-          <span className="rounded-full bg-white/15 px-2.5 py-0.5 backdrop-blur">
-            {index + 1} / {questions.length}
-          </span>
-        </div>
-
-        <div className="wc-pop rounded-3xl bg-white p-6 text-gray-900 shadow-2xl">
-          <p className="mb-1 text-center text-sm font-semibold uppercase tracking-wide text-fuchsia-500">
-            Who&apos;s most likely?
+    <>
+      {header}
+      <main className="g-stage">
+        <section className="g-col">
+          <p className="g-meta">
+            <span className="num">
+              Question {index + 1} of {questions.length}
+            </span>
+            <span>Who&apos;s more likely?</span>
           </p>
-          <h2 className="mb-6 text-center text-xl font-semibold">{q!.prompt}</h2>
+          <h1 className="g-prompt">{q!.prompt}</h1>
 
-          <div className="grid grid-cols-2 gap-3">
-            {SIDES.map((s) => {
+          <div className="sides">
+            {sides.map((s) => {
               const isChosen = selected === s.value;
               const isCorrect = Boolean(result) && s.value === result!.correct_answer;
               const isWrong = Boolean(result) && isChosen && !result!.correct;
-              const dim = Boolean(result) && !isCorrect; // fade the non-answer once revealed
-              let cls = 'border-gray-200 bg-white hover:border-fuchsia-300';
-              if (isCorrect) cls = 'border-green-500 bg-green-50 text-green-800';
-              else if (isWrong) cls = 'border-red-400 bg-red-50 text-red-700';
-              else if (result) cls = 'border-gray-200 bg-white';
+              let cls = 'side-card';
+              if (isCorrect) cls += ' is-right';
+              else if (isWrong) cls += ' is-wrong';
+              else if (result) cls += ' is-dim';
+              else if (isChosen) cls += ' is-picked';
               return (
-                <button
-                  key={s.value}
-                  disabled={Boolean(result) || busy}
-                  onClick={() => choose(s.value)}
-                  className={`flex flex-col items-center gap-2 rounded-2xl border-2 pb-4 pt-3 font-semibold transition ${cls} ${
-                    isCorrect ? 'wc-winner' : ''
-                  } ${dim ? 'opacity-45 grayscale' : ''}`}
-                >
-                  <div className="relative aspect-square w-full">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={s.img} alt={s.label} className="h-full w-full object-contain" draggable={false} />
-                    {isCorrect && (
-                      // Same 750×750 canvas as the character, so full-size overlay lands on the face.
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={s.glasses}
-                        alt=""
-                        aria-hidden
-                        className="wc-glasses pointer-events-none absolute inset-0 h-full w-full object-contain"
-                        draggable={false}
-                      />
-                    )}
-                  </div>
-                  <span>
-                    {isCorrect ? '✓ ' : isWrong ? '✕ ' : ''}
-                    {s.label}
-                  </span>
+                <button key={s.value} type="button" className={cls} disabled={Boolean(result) || busy} onClick={() => choose(s.value)}>
+                  {isCorrect && <span className="badge">{check}</span>}
+                  {isWrong && <span className="yours">Your pick</span>}
+                  <span className="side-name">{s.name}</span>
+                  <span className="side-role">{s.role}</span>
                 </button>
               );
             })}
           </div>
 
-          {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
+          {!result && !error && (
+            <p className="g-hint" aria-live="polite">
+              {busy ? 'Locked in.' : 'Tap a name. The couple’s own answer is the right one.'}
+            </p>
+          )}
+          {error && (
+            <p className="g-error" role="alert">
+              {error}
+            </p>
+          )}
 
           {result && (
-            <div className="mt-5 flex items-center justify-between">
-              <span className="font-semibold" style={{ color: result.correct ? '#16a34a' : '#6b7280' }}>
-                {result.correct ? `🎉 +${result.points} points!` : 'Not this time 😅'}
-              </span>
-              <button
-                onClick={next}
-                className="wc-btn rounded-full px-6 py-2.5 font-semibold text-white shadow-md"
-                style={{ background: colors.primary }}
-              >
-                {index + 1 === questions.length ? 'Finish' : 'Next →'}
+            <div className="result" aria-live="polite">
+              {result.correct ? (
+                <p className="result-head">
+                  You know them well <span className="result-pts">+{result.points}</span>
+                </p>
+              ) : (
+                <p className="result-head">Not this time</p>
+              )}
+              <p className="result-note">It&apos;s {nameFor(result.correct_answer)}, says the couple.</p>
+            </div>
+          )}
+
+          {result && (
+            <div className="g-actions">
+              <button type="button" className="btn btn-primary btn-block" onClick={next}>
+                {index + 1 === questions.length ? 'Finish' : 'Next question'}
               </button>
             </div>
           )}
-        </div>
-
-        <div className="mt-4 text-center text-sm text-white/70">Session points: {earned}</div>
-      </div>
-    </Shell>
-  );
-}
-
-function Shell({ bg, accent, children }: { bg: React.CSSProperties; accent: string; children: React.ReactNode }) {
-  return (
-    <main style={bg} className="wc-aurora relative flex min-h-dvh flex-col items-center justify-center gap-4 overflow-hidden px-5 py-10 text-center text-white">
-      <GuestBackdrop accent={accent} />
-      <div className="relative z-10 flex w-full flex-col items-center gap-4">{children}</div>
-    </main>
+        </section>
+      </main>
+    </>
   );
 }

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#120c0a" />
+  <title>Photo Hunt · Aanya &amp; Vihaan</title>
+  <link rel="preload" href="../shared/fonts/albert-sans.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="games.css" />
+</head>
+<body class="game">
+  <header class="g-top">
+    <a class="g-back" href="../game-hub/index.html"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>Games</a>
+    <p class="g-name">Photo Hunt</p>
+    <p class="g-pts"><b class="num" id="pts">150</b> pts</p>
+  </header>
+
+  <main class="g-stage">
+
+    <section class="view" data-view="list" data-label="Task list">
+      <h1 class="g-prompt">Catch these moments tonight</h1>
+      <p class="g-hint">Find each one, take a photo, send it in. 50 points a moment.</p>
+      <div class="progress">
+        <p class="progress-row"><span><b class="num" id="found">3</b> of 9 found</span><span class="num">50 pts each</span></p>
+        <div class="progress-bar" aria-hidden="true"><i id="bar" style="--done: 33%"></i></div>
+      </div>
+      <ul class="tasks" id="tasks"></ul>
+    </section>
+
+    <section class="view" data-view="send" data-label="Sending a photo">
+      <p class="g-meta"><span>Photo for</span></p>
+      <h1 class="g-prompt" id="send-task">Dhol player</h1>
+      <div class="shot" id="shot">Your photo appears here</div>
+      <div class="g-actions">
+        <button class="btn btn-primary btn-block" type="button" id="send">Send to the host</button>
+        <label class="btn btn-quiet btn-block" style="position: relative">
+          Take it again
+          <input type="file" accept="image/*" capture="environment" id="retake" style="position: absolute; opacity: 0; width: 1px; height: 1px" />
+        </label>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="g-foot">
+    <details class="proto">
+      <summary><svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>Prototype states</summary>
+      <p class="proto-note">Sample data. Not yet playable in the live app; this is the proposed guest screen.</p>
+      <div class="proto-actions"></div>
+    </details>
+  </footer>
+
+  <script src="games.js"></script>
+  <script src="photo-hunt.js"></script>
+</body>
+</html>

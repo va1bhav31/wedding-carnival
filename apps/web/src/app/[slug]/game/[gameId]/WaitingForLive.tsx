@@ -7,13 +7,12 @@
 // polls a same-origin status endpoint and refreshes the route the instant
 // this game goes live, landing them straight in the game.
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function WaitingForLive({ base, gameId }: { base: string; gameId: string }) {
+export default function WaitingForLive({ base, gameId, title }: { base: string; gameId: string; title: string }) {
   const router = useRouter();
-  const [pulse, setPulse] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,7 +27,6 @@ export default function WaitingForLive({ base, gameId }: { base: string; gameId:
       }
     };
     const id = setInterval(check, 4000);
-    const pulseId = setInterval(() => setPulse((p) => !p), 900);
     const onVisible = () => {
       if (document.visibilityState === 'visible') check();
     };
@@ -38,28 +36,23 @@ export default function WaitingForLive({ base, gameId }: { base: string; gameId:
     return () => {
       cancelled = true;
       clearInterval(id);
-      clearInterval(pulseId);
       document.removeEventListener('visibilitychange', onVisible);
       window.removeEventListener('focus', check);
     };
   }, [base, gameId, router]);
 
   return (
-    <div>
-      <div className="mb-3 flex items-center justify-center gap-2 text-sm font-semibold text-white/80">
-        <span
-          className="h-2 w-2 rounded-full bg-white transition-opacity"
-          style={{ opacity: pulse ? 1 : 0.35 }}
-        />
-        Waiting for the host
-      </div>
-      <p className="text-lg">This game isn&apos;t open yet.</p>
-      <p className="mt-1 text-sm text-white/70">
-        It&apos;ll jump in automatically the moment the host starts it, no need to refresh.
+    <div className="quiet">
+      <div className="ev-spinner" aria-hidden="true" />
+      <h1>Not open yet</h1>
+      <p>
+        The host hasn&apos;t started {title} yet. This page opens it by itself the moment they do, no need to refresh.
       </p>
-      <Link href={`${base}/play`} className="mt-4 inline-block rounded-full bg-white px-6 py-3 font-semibold text-gray-900">
-        ← Back to games
-      </Link>
+      <div className="g-actions">
+        <Link href={`${base}/play`} className="btn btn-quiet btn-block">
+          Back to games
+        </Link>
+      </div>
     </div>
   );
 }

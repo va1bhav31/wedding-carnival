@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import GuestBackdrop from '@/components/GuestBackdrop';
+import GameHeader, { check } from '@/components/GameHeader';
 
 type Colors = { primary: string; accent: string; secondary: string; logo?: string };
 type LiveState = { active_question_id?: string; started_at?: string; duration_ms?: number; next_at?: string };
@@ -13,7 +13,6 @@ export default function FastestFinger({
   base,
   gameId,
   title,
-  colors,
   initialLiveState,
 }: {
   base: string;
@@ -31,7 +30,6 @@ export default function FastestFinger({
   const [earned, setEarned] = useState(0);
   const loadedFor = useRef<string | null>(null);
 
-  const bg = { backgroundImage: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary}, ${colors.primary})` };
 
   // Poll our OWN server for the live question. The server does the Supabase
   // read/write, so the phone never depends on a realtime WebSocket or a direct
@@ -154,118 +152,153 @@ export default function FastestFinger({
   const secs = Math.ceil(timeLeft / 1000);
   const timeUp = Boolean(question) && timeLeft <= 0;
   const correctSeq = result?.correct_answer ?? [];
+  const total = live.duration_ms ?? 20000;
+  const n = question?.options.length ?? 0;
+  const board = `${base}/game/${gameId}/leaderboard`;
+
+  const hint = result
+    ? 'Round over.'
+    : answered
+      ? 'Locked in. Waiting for the reveal.'
+      : timeUp
+        ? 'Time’s up.'
+        : order.length
+          ? `${order.length} of ${n} placed`
+          : 'Tap them in order, first to last.';
 
   return (
-    <main style={bg} className="wc-aurora relative flex min-h-dvh flex-col items-center justify-center gap-5 overflow-hidden px-5 py-10 text-center text-white">
-      <GuestBackdrop accent={colors.accent} />
-      <div className="relative z-10 flex items-center gap-2 text-sm font-semibold text-white/80">
-        <span className="h-2 w-2 animate-pulse rounded-full" style={{ background: colors.accent }} />
-        ⚡ {title}
+    <>
+      <GameHeader
+        base={base}
+        title={title}
+        right={
+          <>
+            <b className="num">{earned}</b> pts
+          </>
+        }
+      />
+      <div className="g-timer" aria-hidden="true">
+        <i style={{ transform: `scaleX(${question && !answered && !result ? Math.max(0, timeLeft / total) : 0})` }} />
       </div>
 
-      {!question && nextIn > 0 ? (
-        <div className="wc-pop relative z-10 max-w-sm">
-          <span
-            className="inline-grid h-20 w-20 place-items-center rounded-full text-3xl font-bold text-gray-900"
-            style={{ background: colors.accent }}
-          >
-            {Math.ceil(nextIn / 1000)}
-          </span>
-          <p className="mt-4 text-lg font-semibold text-white/95">Get ready — next question coming up!</p>
-          <p className="mt-1 text-sm text-white/60">Fingers on the screen 🏃</p>
-        </div>
-      ) : !question ? (
-        <div className="wc-pop relative z-10 max-w-sm">
-          <div className="wc-bob mb-3 text-5xl">⏳</div>
-          <p className="text-lg text-white/90">Waiting for the host to launch the next question…</p>
-          <p className="mt-1 text-sm text-white/60">Get ready — tap the options into the right order, fast! 🏃</p>
-        </div>
-      ) : (
-        <div className="relative z-10 w-full max-w-md">
-          {/* timer */}
-          <div className="mb-3 text-center">
-            <span
-              className="inline-grid h-14 w-14 place-items-center rounded-full text-2xl font-bold text-gray-900"
-              style={{ background: timeUp ? '#e5e7eb' : colors.accent }}
-            >
-              {timeUp ? '⏰' : secs}
-            </span>
+      <main className="g-stage">
+        {!question && nextIn > 0 ? (
+          <div className="quiet">
+            <div className="count num" aria-live="polite">
+              {Math.ceil(nextIn / 1000)}
+            </div>
+            <h2>Next question</h2>
+            <p>Finger ready. Tap the answers into the right order.</p>
           </div>
-
-          <div className="wc-pop rounded-3xl bg-white p-6 text-gray-900 shadow-2xl">
-            <h2 className="mb-2 text-xl font-semibold">{question.prompt}</h2>
-            <p className="mb-5 text-sm text-gray-500">
-              {result
-                ? 'Round over'
-                : answered
-                  ? 'Answer locked in ⏳'
-                  : `Tap in the correct order (${order.length}/${question.options.length})`}
+        ) : !question ? (
+          <div className="quiet">
+            <div className="ev-spinner" aria-hidden="true" />
+            <h1>Waiting for the host</h1>
+            <p>The next question appears here the moment it&apos;s launched. Keep this screen open.</p>
+            <div className="g-actions">
+              <Link href={board} className="btn btn-quiet btn-block">
+                Leaderboard
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <section className="g-col">
+            <p className="g-meta">
+              <span>Tap in order</span>
+              <span className={`secs num${secs <= 5 ? ' low' : ''}`}>{timeUp || answered || result ? '' : `${secs}s`}</span>
+            </p>
+            <h1 className="g-prompt">{question.prompt}</h1>
+            <p className="g-hint" aria-live="polite">
+              {hint}
             </p>
 
-            <div className="grid gap-3">
+            <ol className="opts">
               {question.options.map((opt) => {
-                const pickedAt = order.indexOf(opt); // -1 if not yet tapped
+                const pickedAt = order.indexOf(opt);
                 const isPicked = pickedAt !== -1;
-                // After the result, colour by whether the option sits in the right slot.
                 const correctSlot = correctSeq.indexOf(opt);
-                const inRightPlace = result && pickedAt === correctSlot;
+                const inRightPlace = Boolean(result) && isPicked && pickedAt === correctSlot;
 
-                let cls = 'border-gray-200 bg-white hover:border-fuchsia-300';
-                if (result) cls = inRightPlace ? 'border-green-500 bg-green-50 text-green-800' : 'border-red-300 bg-red-50 text-red-700';
-                else if (isPicked) cls = 'border-fuchsia-400 bg-fuchsia-50 text-fuchsia-800';
-                else if (answered || timeUp) cls = 'border-gray-200 bg-white opacity-60';
+                let cls = 'opt';
+                let tag: string | null = null;
+                if (result) {
+                  if (!isPicked) cls += ' is-dim';
+                  else if (inRightPlace) {
+                    cls += ' is-right';
+                    tag = 'Right place';
+                  } else {
+                    cls += ' is-wrong';
+                    if (correctSlot !== -1) tag = `Goes ${correctSlot + 1}`;
+                  }
+                } else if (isPicked) cls += ' is-picked';
+                else if (answered || timeUp) cls += ' is-dim';
 
                 return (
-                  <button
-                    key={opt}
-                    disabled={isPicked || answered || timeUp}
-                    onClick={() => tap(opt)}
-                    className={`flex items-center gap-3 rounded-2xl border-2 px-4 py-3.5 text-left font-medium transition ${cls}`}
-                  >
-                    <span
-                      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-bold"
-                      style={{
-                        background: isPicked || result ? colors.primary : '#f3f4f6',
-                        color: isPicked || result ? '#fff' : '#9ca3af',
-                      }}
+                  <li key={opt}>
+                    <button
+                      type="button"
+                      className={cls}
+                      disabled={isPicked || answered || timeUp || Boolean(result)}
+                      onClick={() => tap(opt)}
+                      aria-label={isPicked ? `${opt}, placed ${pickedAt + 1}` : opt}
                     >
-                      {isPicked ? pickedAt + 1 : '·'}
-                    </span>
-                    {opt}
-                  </button>
+                      <span className="mark num">{inRightPlace ? check : isPicked ? pickedAt + 1 : ''}</span>
+                      <span>{opt}</span>
+                      {tag && <span className="tag">{tag}</span>}
+                    </button>
+                  </li>
                 );
               })}
-            </div>
+            </ol>
 
-            {/* Undo, only while still building the sequence */}
             {!answered && !result && order.length > 0 && (
-              <button onClick={undo} className="mt-4 text-sm font-medium text-gray-500 hover:text-gray-800">
-                ↩ Undo last
+              <button type="button" className="undo" onClick={undo}>
+                <svg className="ico" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M9 7L5 11l4 4" />
+                  <path d="M5 11h9a5 5 0 0 1 0 10h-2" />
+                </svg>
+                Undo last
               </button>
             )}
 
             {result && (
-              <div className="mt-4">
-                <p className="font-semibold" style={{ color: result.correct ? '#16a34a' : '#6b7280' }}>
-                  {result.correct ? `🎉 Correct order! +${result.points} points` : 'Not the right order 😅'}
-                </p>
-                {!result.correct && correctSeq.length > 0 && (
-                  <p className="mt-1 text-sm text-gray-500">
-                    Correct: {correctSeq.join(' → ')}
+              <div className="result" aria-live="polite">
+                {result.correct ? (
+                  <p className="result-head">
+                    Correct order <span className="result-pts">+{result.points}</span>
                   </p>
+                ) : (
+                  <>
+                    <p className="result-head">Not quite</p>
+                    {correctSeq.length > 0 && (
+                      <>
+                        <p className="result-note">The right order</p>
+                        <ol className="seq">
+                          {correctSeq.map((c) => (
+                            <li key={c}>{c}</li>
+                          ))}
+                        </ol>
+                      </>
+                    )}
+                  </>
                 )}
               </div>
             )}
-            {answered && !result && <p className="mt-4 text-sm text-gray-500">Answer locked in ⏳</p>}
-            {timeUp && !answered && <p className="mt-4 text-sm text-gray-500">Time&apos;s up! ⏰</p>}
-          </div>
-        </div>
-      )}
+            {timeUp && !answered && !result && (
+              <div className="result" aria-live="polite">
+                <p className="result-head">Time&apos;s up</p>
+                <p className="result-note">Stay here, the next question comes to you.</p>
+              </div>
+            )}
 
-      <div className="relative z-10 text-sm text-white/70">Your points this round: {earned}</div>
-      <Link href={`${base}/game/${gameId}/leaderboard`} className="wc-btn relative z-10 rounded-full bg-white/20 px-6 py-2.5 text-sm font-semibold text-white backdrop-blur">
-        🏆 Leaderboard
-      </Link>
-    </main>
+            <div className="g-actions">
+              <Link href={board} className="btn btn-quiet btn-block">
+                Leaderboard
+              </Link>
+            </div>
+          </section>
+        )}
+      </main>
+    </>
   );
 }

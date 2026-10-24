@@ -4,21 +4,20 @@
 // staring at "Soon" badges had no way to know the moment the host flipped a
 // game live short of manually reloading the page. This polls the same
 // same-origin status endpoint the game-page waiting screen uses and updates
-// the Play/Soon badges live, in place.
+// the list live, in place.
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import GameIcon, { GAME_ICON } from '@/components/GameIcon';
 
-const GAME_META: Record<string, { label: string }> = {
-  bride_groom_showdown: { label: 'Bride vs Groom Showdown' },
-  couple_trivia: { label: 'Couple Trivia' },
-  photo_hunt: { label: 'Photo Hunt' },
-  scratch_win: { label: 'Scratch & Win' },
-  bride_groom_battle: { label: 'Bride vs Groom Battle' },
-  fastest_finger: { label: 'Fastest Finger First' },
-  spin_wheel_dare: { label: 'Spin the Wheel Dare' },
-  baraat_rush: { label: 'Baraat Rush' },
+const GAME_META: Record<string, { label: string; how: string }> = {
+  fastest_finger: { label: 'Fastest Finger First', how: 'Tap four answers into the right order, fastest wins.' },
+  bride_groom_showdown: { label: 'Bride vs Groom Showdown', how: 'Guess who the couple says is more likely.' },
+  couple_trivia: { label: 'Couple Trivia', how: 'How well do you know them?' },
+  scratch_win: { label: 'Scratch & Win', how: 'One card each. Two hampers are hidden in the pile.' },
+  baraat_rush: { label: 'Baraat Rush', how: 'Ride the baraat to the mandap and dodge the chaos.' },
+  photo_hunt: { label: 'Photo Hunt', how: 'Catch the moments on the list.' },
+  bride_groom_battle: { label: 'Bride vs Groom Battle', how: 'An arcade game for your side.' },
+  spin_wheel_dare: { label: 'Spin the Wheel Dare', how: 'Team dares, run by the host.' },
 };
 
 const PLAYABLE = new Set(['couple_trivia', 'fastest_finger', 'bride_groom_showdown', 'scratch_win', 'baraat_rush']);
@@ -26,17 +25,14 @@ const SCORED = new Set(['couple_trivia', 'fastest_finger', 'bride_groom_showdown
 
 type Game = { id: string; game_type: string; title: string | null; status: string };
 
-export default function PlayGamesList({
-  base,
-  initialGames,
-  primary,
-  secondary,
-}: {
-  base: string;
-  initialGames: Game[];
-  primary: string;
-  secondary: string;
-}) {
+const lock = (
+  <svg className="ico" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="5" y="11" width="14" height="9" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </svg>
+);
+
+export default function PlayGamesList({ base, initialGames }: { base: string; initialGames: Game[] }) {
   const [games, setGames] = useState(initialGames);
 
   useEffect(() => {
@@ -78,63 +74,89 @@ export default function PlayGamesList({
     };
   }, [base]);
 
-  if (games.length === 0) {
-    return (
-      <div className="wc-pop rounded-2xl bg-white/15 p-8 text-center text-white/80 backdrop-blur">
-        🎪 Games are being set up — check back in a moment!
-      </div>
-    );
-  }
+  const nameOf = (g: Game) => g.title || GAME_META[g.game_type]?.label || g.game_type;
+  const canPlay = (g: Game) => g.status === 'live' && PLAYABLE.has(g.game_type);
+  const featured = games.find(canPlay);
 
   return (
-    <ul className="grid gap-3">
-      {games.map((g, i) => {
-        const meta = GAME_META[g.game_type] ?? { label: g.game_type };
-        const canPlay = g.status === 'live' && PLAYABLE.has(g.game_type);
-        const rowCls = 'wc-card flex items-center justify-between gap-3 rounded-2xl bg-white p-4 text-gray-900 shadow-xl';
-        const inner = (
+    <>
+      <section className="now" aria-live="polite" aria-labelledby="now-title">
+        {featured ? (
           <>
-            <span className="flex min-w-0 items-center gap-3 font-semibold">
-              <span
-                className="grid h-11 w-11 shrink-0 place-items-center rounded-xl shadow-inner"
-                style={{ background: `linear-gradient(135deg, ${primary}22, ${secondary}22)`, color: secondary }}
-              >
-                <GameIcon type={GAME_ICON[g.game_type] ?? 'sparkle'} className="h-6 w-6" />
-              </span>
-              <span className="truncate">{g.title || meta.label}</span>
-            </span>
-            <span
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold transition-colors ${
-                canPlay ? 'text-white shadow-sm' : 'bg-gray-100 text-gray-400'
-              }`}
-              style={canPlay ? { background: `linear-gradient(135deg, ${primary}, ${secondary})` } : undefined}
-            >
-              {canPlay ? 'Play ▶' : 'Soon'}
-            </span>
+            <h1 className="now-title" id="now-title">
+              {nameOf(featured)}
+            </h1>
+            <p className="now-status">
+              <span className="live-dot" aria-hidden="true" />
+              Live now. {GAME_META[featured.game_type]?.how}
+            </p>
+            <Link href={`${base}/game/${featured.id}`} className="btn btn-primary btn-block">
+              Play now
+            </Link>
           </>
-        );
-        return (
-          <li key={g.id} className="wc-rise flex items-center gap-2" style={{ animationDelay: `${0.15 + i * 0.06}s` }}>
-            {canPlay ? (
-              <Link href={`${base}/game/${g.id}`} className={`${rowCls} flex-1`}>
-                {inner}
-              </Link>
-            ) : (
-              <div className={`${rowCls} flex-1 opacity-90`}>{inner}</div>
-            )}
-            {SCORED.has(g.game_type) && (
-              <Link
-                href={`${base}/game/${g.id}/leaderboard`}
-                className="wc-btn grid h-11 w-11 shrink-0 place-items-center rounded-full bg-white/20 text-white shadow-lg ring-1 ring-white/20 backdrop-blur"
-                aria-label={`${g.title || meta.label} leaderboard`}
-                title="Leaderboard"
-              >
-                <GameIcon type="trophy" className="h-5 w-5" />
-              </Link>
-            )}
-          </li>
-        );
-      })}
-    </ul>
+        ) : (
+          <>
+            <h1 className="now-title" id="now-title">
+              Nothing live just yet
+            </h1>
+            <p className="now-status">The host starts each game during the functions. This page updates by itself.</p>
+          </>
+        )}
+      </section>
+
+      {games.length > 0 && (
+        <section className="section" aria-labelledby="all-title">
+          <h2 className="section-title" id="all-title">
+            All games
+          </h2>
+          <ul className="game-list">
+            {games.map((g) => {
+              const live = canPlay(g);
+              const state = g.status === 'live' ? 'live' : g.status === 'ended' ? 'ended' : 'locked';
+              return (
+                <li key={g.id} className="game-row" data-state={state}>
+                  <div>
+                    <h3 className="game-name">
+                      {live ? (
+                        <Link className="game-link" href={`${base}/game/${g.id}`}>
+                          {nameOf(g)}
+                        </Link>
+                      ) : (
+                        nameOf(g)
+                      )}
+                    </h3>
+                    {SCORED.has(g.game_type) && (
+                      <p className="game-meta">
+                        <Link href={`${base}/game/${g.id}/leaderboard`}>Leaderboard</Link>
+                      </p>
+                    )}
+                  </div>
+                  <p className="game-state">
+                    {live ? (
+                      <>
+                        <span className="live-dot" aria-hidden="true" />
+                        Play
+                      </>
+                    ) : state === 'live' ? (
+                      <>
+                        <span className="live-dot" aria-hidden="true" />
+                        Happening now
+                      </>
+                    ) : state === 'ended' ? (
+                      'Finished'
+                    ) : (
+                      <>
+                        {lock}
+                        Not open yet
+                      </>
+                    )}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+    </>
   );
 }

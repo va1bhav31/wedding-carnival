@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#120c0a" />
+  <title>Aanya &amp; Vihaan · Game Hub</title>
+  <link rel="preload" href="../shared/fonts/albert-sans.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="../shared/fonts/pinyon-script.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header class="hero hero--plain" id="top">
+
+    <nav class="topbar" aria-label="Wedding">
+      <p class="couple">Aanya &amp; Vihaan</p>
+      <a class="me-pill" href="#standings">
+        <span>Riya</span>
+        <span class="dot-sep" aria-hidden="true"></span>
+        <span class="num">No. 7</span>
+      </a>
+    </nav>
+
+    <section class="now" aria-live="polite" aria-labelledby="now-title">
+      <h1 class="now-title" id="now-title">Fastest Finger First</h1>
+      <p class="now-status">
+        <span class="live-dot" aria-hidden="true"></span>
+        <span id="now-status">Live now · <span class="num">142</span> playing · next question in <span class="num" id="countdown">0:12</span></span>
+      </p>
+      <p class="now-how" id="now-how">Tap the four ceremonies in the order they happen. Quickest right answer takes the round.</p>
+      <a class="btn-play" href="../games/fastest-finger.html#question" id="play">Play now</a>
+    </section>
+  </header>
+
+  <main class="page">
+
+    <section class="section" aria-labelledby="later-title">
+      <h2 class="section-title" id="later-title">Later tonight</h2>
+      <ul class="game-list">
+        <li class="game-row" id="row-showdown" data-state="next">
+          <div class="game-main">
+            <h3 class="game-name"><a class="game-link" href="../games/showdown.html">Bride vs Groom Showdown</a></h3>
+            <p class="game-meta">Right after the couple's dance</p>
+          </div>
+          <p class="game-state">Up next</p>
+        </li>
+        <li class="game-row" data-state="locked">
+          <div class="game-main">
+            <h3 class="game-name"><a class="game-link" href="../games/baraat-rush.html">Baraat Rush</a></h3>
+            <p class="game-meta">Opens tomorrow at the baraat</p>
+          </div>
+          <p class="game-state">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+            <span>Tomorrow</span>
+          </p>
+        </li>
+        <li class="game-row" data-state="locked">
+          <div class="game-main">
+            <h3 class="game-name"><a class="game-link" href="../games/scratch.html">Scratch &amp; Win</a></h3>
+            <p class="game-meta">Opens at the reception</p>
+          </div>
+          <p class="game-state">
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>
+            <span>Saturday</span>
+          </p>
+        </li>
+        <li class="game-row" data-state="done">
+          <div class="game-main">
+            <h3 class="game-name"><a class="game-link" href="../games/trivia.html#done">Couple Trivia</a></h3>
+            <p class="game-meta">Played at the Haldi</p>
+          </div>
+          <p class="game-state">You scored <span class="num">300</span></p>
+        </li>
+      </ul>
+    </section>
+
+    <section class="section" id="standings" aria-labelledby="board-title">
+      <h2 class="section-title" id="board-title">Leaderboard</h2>
+
+      <div class="teams" role="img" aria-label="Team Bride 18,420 points, Team Groom 17,960 points">
+        <div class="teams-row">
+          <p class="team bride"><span class="team-name">Team Bride</span><span class="team-pts num">18,420</span></p>
+          <p class="team groom"><span class="team-name">Team Groom</span><span class="team-pts num">17,960</span></p>
+        </div>
+        <div class="teams-bar" aria-hidden="true">
+          <span class="bar-bride" style="flex: 18420"></span>
+          <span class="bar-groom" style="flex: 17960"></span>
+        </div>
+      </div>
+
+      <ol class="board">
+        <li class="podium"><span class="pos num">1</span><span class="who">Kabir M.</span><span class="pts num">2,480</span></li>
+        <li class="podium"><span class="pos num">2</span><span class="who">Ananya P.</span><span class="pts num">2,310</span></li>
+        <li class="podium"><span class="pos num">3</span><span class="who">Dev R.</span><span class="pts num">2,150</span></li>
+        <li><span class="pos num">4</span><span class="who">Meher S.</span><span class="pts num">1,720</span></li>
+        <li><span class="pos num">5</span><span class="who">Rohan K.</span><span class="pts num">1,410</span></li>
+        <li><span class="pos num">6</span><span class="who">Isha B.</span><span class="pts num">1,300</span></li>
+        <li class="me" aria-current="true"><span class="pos num">7</span><span class="who">Riya <span class="you">· you</span></span><span class="pts num">1,050</span></li>
+        <li><span class="pos num">8</span><span class="who">Arjun T.</span><span class="pts num">990</span></li>
+      </ol>
+      <p class="board-rest">and <span class="num">134</span> more guests playing</p>
+    </section>
+
+    <section class="section" aria-labelledby="weekend-title">
+      <h2 class="section-title" id="weekend-title">The weekend</h2>
+      <ol class="schedule">
+        <li data-state="done">
+          <span class="when"><span class="day">Thu</span><span class="num">11:00</span></span>
+          <span class="what">Haldi</span>
+          <span class="state">Done</span>
+        </li>
+        <li data-state="now">
+          <span class="when"><span class="day">Thu</span><span class="num">19:30</span></span>
+          <span class="what">Sangeet</span>
+          <span class="state"><span class="live-dot" aria-hidden="true"></span>Now</span>
+        </li>
+        <li data-state="later">
+          <span class="when"><span class="day">Fri</span><span class="num">18:00</span></span>
+          <span class="what">Baraat &amp; Wedding</span>
+          <span class="state">Tomorrow</span>
+        </li>
+        <li data-state="later">
+          <span class="when"><span class="day">Sat</span><span class="num">20:00</span></span>
+          <span class="what">Reception</span>
+          <span class="state">Final night</span>
+        </li>
+      </ol>
+    </section>
+
+    <footer class="foot">
+      <p class="wordmark">Wedding Carnival</p>
+      <p class="foot-note">Prototype with sample data.</p>
+      <details class="proto">
+        <summary>
+          <svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+          Prototype controls
+        </summary>
+        <p class="proto-note">These fake what the host does from their panel.</p>
+        <div class="proto-actions">
+          <button type="button" id="goLive">Host starts the Showdown</button>
+          <button type="button" id="reset">Reset</button>
+        </div>
+      </details>
+    </footer>
+  </main>
+
+  <a class="dock" href="../games/fastest-finger.html#question" id="dock" aria-label="Play the live game">
+    <span class="live-dot" aria-hidden="true"></span>
+    <span class="dock-name" id="dock-name">Fastest Finger First</span>
+    <span class="dock-cta">Play</span>
+  </a>
+
+  <script src="hub.js"></script>
+</body>
+</html>
