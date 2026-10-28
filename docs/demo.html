@@ -1,364 +1,228 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Wedding Carnival™: Turn Guests Into Players</title>
-  <meta name="description" content="An interactive wedding entertainment platform that transforms guests into players, competitors and memory-makers." />
-  <link rel="icon" href="logo.jpeg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,800;0,900;1,600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
-
-  <!-- reusable inline SVG icon symbols (no emojis) -->
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <defs>
-      <symbol id="i-trivia" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.7c0 1.7-2.4 2.3-2.4 2.3"/><path d="M12 15h.01"/></symbol>
-      <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11l-1 8.5L19.5 10H13z"/></symbol>
-      <symbol id="i-vs" viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="16" r="3"/><path d="M5.5 20.5 18.5 3.5"/></symbol>
-      <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/><path d="M12 8S10.5 3 8 3a2.5 2.5 0 0 0 0 5zM12 8s1.5-5 4-5a2.5 2.5 0 0 1 0 5z"/></symbol>
-      <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M4 7h3a2 2 0 1 1 4 0h3v3a2 2 0 1 1 0 4v3h-3a2 2 0 1 0-4 0H4v-3a2 2 0 1 0 0-4z"/></symbol>
-      <symbol id="i-wheel" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></symbol>
-      <symbol id="i-map" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="2.5"/></symbol>
-      <symbol id="i-camera" viewBox="0 0 24 24"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L19 6h0a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="12.5" r="3.5"/></symbol>
-      <symbol id="i-ticket" viewBox="0 0 24 24"><path d="M4 8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2 2 2 0 0 0 0 4 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2 2 2 0 0 0 0-4z"/><path d="M14 6v12" stroke-dasharray="1.5 2.5"/></symbol>
-      <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5v1a3 3 0 0 0 3 3M16 6h3v1a3 3 0 0 1-3 3M10 13.5V16H8v3h8v-3h-2v-2.5"/></symbol>
-      <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.5-9.2-8.6C1 8 2.6 4.5 6 4.5c2 0 3.2 1.2 4 2.3.8-1.1 2-2.3 4-2.3 3.4 0 5 3.5 3.2 6.9C19 15.5 12 20 12 20z"/></symbol>
-      <symbol id="i-ring" viewBox="0 0 24 24"><circle cx="12" cy="14" r="6"/><path d="M9 6l3-3 3 3-3 3z"/></symbol>
-      <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/></symbol>
-      <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z"/></symbol>
-      <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
-      <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 6"/></symbol>
-      <symbol id="i-tent" viewBox="0 0 24 24"><path d="M12 3v3M12 6C7 6 3 11 3 20h18C21 11 17 6 12 6z"/><path d="M12 6c-2 4-2 10-2 14M12 6c2 4 2 10 2 14"/></symbol>
-      <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 5.5a3 3 0 0 1 0 5.8M21 20a6 6 0 0 0-4-5.6"/></symbol>
-      <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 17l-5.2 2.6 1-5.8L3.5 9.7l5.9-.9z"/></symbol>
-      <symbol id="i-pin" viewBox="0 0 24 24"><path d="M6 3v18M6 4h11l-2.5 3L17 10H6"/></symbol>
-    </defs>
-  </svg>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2c2723" />
+  <title>Wedding Carnival · Every guest plays</title>
+  <meta name="description" content="Live games on every guest's phone from one QR code. No app. Built in your names, your colours and your story." />
+  <link rel="icon" href="shared/img/logo.png" />
+  <link rel="preload" href="shared/fonts/shrikhand-400.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="shared/fonts/mukta-800.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="shared/site.css" />
+  <link rel="stylesheet" href="home.css" />
 </head>
 <body>
-  <div class="cursor-glow" id="cursorGlow"></div>
 
-  <!-- ===== NAV ===== -->
-  <header class="nav">
-    <a class="brand" href="#top">
-      <img src="logo.jpeg" alt="Wedding Carnival" class="brand-logo" />
-      <span class="brand-text">Wedding<em>Carnival</em></span>
-    </a>
-    <nav class="nav-links">
-      <a href="#games">Games</a>
-      <a href="#live">Live</a>
-      <a href="#packages">Packages</a>
-      <a href="mailto:info@weddingcarnival.live?subject=Book%20Wedding%20Carnival" class="nav-cta">Book Now</a>
-    </nav>
+  <header class="marquee">
+    <div class="wrap marquee-row">
+      <a class="plaque" href="#top" aria-label="Wedding Carnival, back to top"><img src="shared/img/logo.png" alt="Wedding Carnival" width="720" height="389" /></a>
+      <nav class="nav" aria-label="Main">
+        <a href="#trailer">The show</a>
+        <a href="#programme">Programme</a>
+        <a href="#packages">Packages</a>
+        <a class="btn btn-yellow book" href="mailto:info@weddingcarnival.live?subject=Book%20Wedding%20Carnival">Book your show</a>
+      </nav>
+    </div>
+    <div class="bulbs chase" aria-hidden="true"></div>
   </header>
 
-  <!-- ===== HERO ===== -->
-  <section class="hero" id="top">
-    <div class="hero-bg"><b></b><b></b><b></b></div>
-    <div class="hero-copy">
-      <div class="badge pop"><span class="dot"></span> Interactive Wedding Entertainment</div>
-      <h1 class="hero-title">
-        Turn wedding guests into
-        <span class="rotator">
-          <span>players.</span><span>competitors.</span><span>memory-makers.</span>
-        </span>
-      </h1>
-      <p class="hero-sub">
-        One QR code, a dozen games. Live trivia, head-to-head battles, scratch cards and treasure
-        hunts, with a leaderboard that keeps the whole party buzzing.
+  <main id="top">
+
+    <section class="hoarding on-pink hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <h1 class="painted depth-yellow hero-title" id="hero-title">Every guest plays.</h1>
+          <p class="painted billing" aria-live="polite"><span data-bride>Aanya</span> <span class="amp">&amp;</span> <span data-groom>Vihaan</span>&rsquo;s wedding, starring every guest.</p>
+          <p class="hero-lede">Live games on every phone from one QR code. No app, no sign-up. We build it in your names, your colours and your story.</p>
+
+          <form class="slots" onsubmit="return false" aria-label="Try your names">
+            <div class="slot"><label for="in-bride">Bride&rsquo;s name</label><input id="in-bride" maxlength="18" autocomplete="off" placeholder="Aanya" /></div>
+            <span class="amp" aria-hidden="true">&amp;</span>
+            <div class="slot"><label for="in-groom">Groom&rsquo;s name</label><input id="in-groom" maxlength="18" autocomplete="off" placeholder="Vihaan" /></div>
+          </form>
+
+          <div class="hero-actions">
+            <a class="btn btn-ink book" href="mailto:info@weddingcarnival.live?subject=Book%20Wedding%20Carnival">Book your show</a>
+            <a class="hero-link" href="#trailer">Play a scene first</a>
+          </div>
+        </div>
+
+        <div class="stars" aria-hidden="true">
+          <span class="disc"></span>
+          <span class="stamp thump hero-stamp">Now booking</span>
+          <img class="bride" src="shared/img/bride.webp" alt="" width="720" height="720" />
+          <img class="groom" src="shared/img/groom.webp" alt="" width="720" height="720" />
+        </div>
+      </div>
+      <p class="wrap credits hero-credits">
+        A <b>Wedding Carnival</b> production &middot; Fastest Finger First &middot; Bride vs Groom Showdown &middot; Couple Trivia &middot; Scratch &amp; Win &middot; Baraat Rush &middot; Live leaderboard &middot; Built for your wedding, by us
       </p>
-      <div class="hero-actions">
-        <a href="#demo" class="btn btn-primary magnetic"><svg class="ico"><use href="#i-play"/></svg> Try the Live Demo</a>
-        <a href="#games" class="btn btn-ghost">Explore the Games</a>
-      </div>
-    </div>
+    </section>
 
-    <div class="hero-phone">
-      <div class="phone float">
-        <div class="phone-notch"></div>
-        <div class="phone-screen">
-          <div class="ps-top">
-            <img src="logo.jpeg" alt="" class="ps-logo"/>
-            <div>
-              <div class="ps-couple">Aanya &amp; Vihaan</div>
-              <div class="ps-tag"><span class="live"></span> Live now · 214 playing</div>
-            </div>
+    <section class="section" id="trailer" aria-labelledby="trailer-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 class="painted on-dark" id="trailer-title">Play a scene</h2>
+          <p class="lede">This is what your guests see on their phones. Pick a name.</p>
+        </div>
+
+        <div class="hoarding on-yellow scene">
+          <p class="scene-q painted depth-white" id="scene-q">Who takes longer to get ready?</p>
+          <div class="scene-sides">
+            <button type="button" class="scene-side" data-side="bride">
+              <span class="scene-face">
+                <img src="shared/img/bride.webp" alt="" width="720" height="720" />
+                <img class="glasses" src="shared/img/bride-glasses.svg" alt="" width="750" height="750" />
+              </span>
+              <span class="scene-name painted" data-bride>Aanya</span>
+              <span class="scene-role">the bride</span>
+            </button>
+            <button type="button" class="scene-side" data-side="groom">
+              <span class="scene-face">
+                <img src="shared/img/groom.webp" alt="" width="720" height="720" />
+                <img class="glasses" src="shared/img/groom-glasses.svg" alt="" width="750" height="750" />
+              </span>
+              <span class="scene-name painted" data-groom>Vihaan</span>
+              <span class="scene-role">the groom</span>
+            </button>
           </div>
-          <div class="ps-card ps-q">
-            <span class="ps-pill"><svg class="ico"><use href="#i-bolt"/></svg> Fastest Finger</span>
-            <p>Who said “I love you” first?</p>
-            <div class="ps-opts">
-              <button class="ps-opt correct">Aanya</button>
-              <button class="ps-opt">Vihaan</button>
-            </div>
-            <div class="ps-timer"><i></i></div>
-          </div>
-          <div class="ps-lead">
-            <div class="ps-row"><span><span class="ps-rank">1</span>Riya</span><b>1,240</b></div>
-            <div class="ps-row"><span><span class="ps-rank">2</span>Kabir</span><b>1,180</b></div>
-            <div class="ps-row me"><span><span class="ps-rank">3</span>You</span><b>1,050</b></div>
-          </div>
+          <div class="scene-result" id="scene-result" aria-live="polite" hidden></div>
         </div>
+        <p class="caption scene-caption">Sample scene and sample crowd. At a real wedding, the couple&rsquo;s own answers decide who&rsquo;s right.</p>
       </div>
-      <div class="orbit o1"><svg class="ico"><use href="#i-trophy"/></svg></div>
-      <div class="orbit o2"><svg class="ico"><use href="#i-heart"/></svg></div>
-      <div class="orbit o3"><svg class="ico"><use href="#i-ring"/></svg></div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ===== MARQUEE ===== -->
-  <div class="marquee">
-    <div class="marquee-track" id="marquee"></div>
-  </div>
-
-  <!-- ===== GAMES (bento) ===== -->
-  <section class="section games" id="games">
-    <div class="section-head reveal">
-      <span class="eyebrow"><svg class="ico"><use href="#i-star"/></svg> The Arcade</span>
-      <h2>A dozen ways to get the whole party playing</h2>
-      <p>Every wedding runs the same powerful platform. Only the branding, questions and rewards change.</p>
-    </div>
-
-    <div class="bento">
-      <article class="gcard wide reveal" style="--c1:#F4C20D;--c2:#FB4FA8">
-        <span class="gc-tag">Live · Signature</span>
-        <div class="gc-ico"><svg class="ico"><use href="#i-bolt"/></svg></div>
-        <h3>Fastest Finger First</h3>
-        <p>KBC-style live quiz. The host launches a question and every phone races the clock. Fastest correct answer tops the board.</p>
-        <div class="gc-orb"></div><div class="gc-shine"></div>
-      </article>
-
-      <article class="gcard reveal" style="--c1:#FB4FA8;--c2:#8B3FB0">
-        <span class="gc-tag">Vote</span>
-        <div class="gc-ico"><svg class="ico"><use href="#i-vs"/></svg></div>
-        <h3>Bride vs Groom</h3>
-        <p>“Who’s most likely?” Guests guess, results flash live.</p>
-        <div class="gc-shine"></div>
-      </article>
-
-      <article class="gcard reveal" style="--c1:#8B3FB0;--c2:#D98FDD">
-        <div class="gc-ico"><svg class="ico"><use href="#i-trivia"/></svg></div>
-        <h3>Couple Trivia</h3>
-        <p>How well do guests really know the couple?</p>
-        <div class="gc-shine"></div>
-      </article>
-
-      <article class="gcard reveal" style="--c1:#F4C20D;--c2:#D62E7E">
-        <div class="gc-ico"><svg class="ico"><use href="#i-gift"/></svg></div>
-        <h3>Scratch &amp; Win</h3>
-        <p>Digital scratch cards, blessings, and 2 lucky hampers.</p>
-        <div class="gc-shine"></div>
-      </article>
-
-      <article class="gcard tall reveal" style="--c1:#D98FDD;--c2:#8B3FB0">
-        <span class="gc-tag">Arcade</span>
-        <div class="gc-ico"><svg class="ico"><use href="#i-map"/></svg></div>
-        <h3>Baraat Rush &amp; Treasure Hunt</h3>
-        <p>Arcade adventures across the venue, QR checkpoints, clues, and a naagin-dance power-up nobody sees coming.</p>
-        <img src="assets/baraat-horse.webp" alt="" class="gc-art" />
-        <div class="gc-orb"></div><div class="gc-shine"></div>
-      </article>
-
-      <article class="gcard reveal" style="--c1:#FB4FA8;--c2:#F4C20D">
-        <div class="gc-ico"><svg class="ico"><use href="#i-wheel"/></svg></div>
-        <h3>Spin the Wheel</h3>
-        <p>Host spins, a hidden dare drops, teams race to finish.</p>
-        <div class="gc-shine"></div>
-      </article>
-
-      <article class="gcard reveal" style="--c1:#8B3FB0;--c2:#FB4FA8">
-        <div class="gc-ico"><svg class="ico"><use href="#i-camera"/></svg></div>
-        <h3>Photo Hunt</h3>
-        <p>“Selfie with someone over 60.” Upload, get scored.</p>
-        <div class="gc-shine"></div>
-      </article>
-
-      <article class="gcard wide reveal" style="--c1:#F4C20D;--c2:#8B3FB0">
-        <span class="gc-tag">Keepsake</span>
-        <div class="gc-ico"><svg class="ico"><use href="#i-heart"/></svg></div>
-        <h3>Memory Garden</h3>
-        <p>Every guest plants one flower, a photo and a blessing, into a living garden that blooms across the celebration and lives on forever.</p>
-        <div class="gc-orb"></div><div class="gc-shine"></div>
-      </article>
-    </div>
-  </section>
-
-  <!-- ===== LIVE DEMOS ===== -->
-  <section class="section live" id="live">
-    <div class="section-head reveal">
-      <span class="eyebrow"><svg class="ico"><use href="#i-sparkle"/></svg> Live &amp; Real-Time</span>
-      <h2>The party plays together, at the same time</h2>
-      <p>Try the demos below. This is exactly what guests see on their phones.</p>
-    </div>
-
-    <div class="live-grid">
-      <div class="panel reveal" id="fffDemo">
-        <div class="panel-head"><span class="dot-live"></span> Fastest Finger First</div>
-        <h3 class="vote-q">Arrange these in the correct order</h3>
-        <div class="fff-timer"><i id="fffBar"></i></div>
-        <div class="fff-grid" id="fffGrid">
-          <button class="fff-opt" type="button"><span class="fff-badge">·</span><span class="fff-label"></span></button>
-          <button class="fff-opt" type="button"><span class="fff-badge">·</span><span class="fff-label"></span></button>
-          <button class="fff-opt" type="button"><span class="fff-badge">·</span><span class="fff-label"></span></button>
-          <button class="fff-opt" type="button"><span class="fff-badge">·</span><span class="fff-label"></span></button>
+    <section class="section programme-section" id="programme" aria-labelledby="programme-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 class="painted on-dark" id="programme-title">Tonight&rsquo;s programme</h2>
+          <p class="lede">Five live games, set into your functions. You choose which ones run, and when.</p>
         </div>
-        <p class="fff-note" id="fffNote">Tap in order, fastest guest wins</p>
+        <ol class="programme">
+          <li>
+            <span class="when num">Sangeet &middot; 20:30</span>
+            <span class="what"><span class="painted show-name">Fastest Finger First</span><span class="stamp show-stamp">Signature</span></span>
+            <span class="desc">The host launches a question; every phone races the clock to tap four answers into order. Quickest right answer tops the board.</span>
+          </li>
+          <li>
+            <span class="when num">Sangeet &middot; 21:15</span>
+            <span class="what"><span class="painted show-name">Bride vs Groom Showdown</span></span>
+            <span class="desc">&ldquo;Who&rsquo;s more likely to&hellip;?&rdquo; Guests pick a side. The couple&rsquo;s own answers decide who&rsquo;s right.</span>
+          </li>
+          <li>
+            <span class="when num">Haldi &middot; 11:00</span>
+            <span class="what"><span class="painted show-name">Couple Trivia</span></span>
+            <span class="desc">How well does everyone really know the two of you? Questions written from your own stories.</span>
+          </li>
+          <li>
+            <span class="when num">Reception &middot; 20:00</span>
+            <span class="what"><span class="painted show-name">Scratch &amp; Win</span></span>
+            <span class="desc">One card for every guest. A few hide real prizes; the rest hold a blessing from the couple.</span>
+          </li>
+          <li>
+            <span class="when num">All weekend</span>
+            <span class="what"><span class="painted show-name">Baraat Rush</span></span>
+            <span class="desc">An arcade runner: ride the groom&rsquo;s horse through the baraat and dodge the chaos. Best score wins.</span>
+          </li>
+        </ol>
+        <p class="caption programme-note">Sample timings. Also in the works: Photo Hunt, Spin the Wheel and Bride vs Groom Battle.</p>
       </div>
+    </section>
 
-      <div class="panel reveal" id="demo">
-        <div class="panel-head"><span class="dot-live"></span> Bride vs Groom Showdown</div>
-        <h3 class="vote-q">Who takes longer to get ready?</h3>
-        <div class="showdown-grid">
-          <button class="showdown-side" type="button" data-side="bride">
-            <span class="showdown-art">
-              <img src="assets/bride.svg" alt="Bride" />
-              <img src="assets/bride-glasses.svg" alt="" class="showdown-glasses" aria-hidden="true" />
-            </span>
-            Bride
-          </button>
-          <button class="showdown-side" type="button" data-side="groom">
-            <span class="showdown-art">
-              <img src="assets/groom.svg" alt="Groom" />
-              <img src="assets/groom-glasses.svg" alt="" class="showdown-glasses" aria-hidden="true" />
-            </span>
-            Groom
-          </button>
+    <section class="section" id="how" aria-labelledby="how-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 class="painted on-dark" id="how-title">How the show runs</h2>
+          <p class="lede">Three steps. You only do the first one.</p>
         </div>
-        <div class="vbar"><span class="vbar-label">Bride <b id="brideVal">62%</b></span><div class="vbar-track"><i id="brideBar" style="width:62%"></i></div></div>
-        <div class="vbar groom"><span class="vbar-label">Groom <b id="groomVal">38%</b></span><div class="vbar-track"><i id="groomBar" style="width:38%"></i></div></div>
-        <p class="vote-count"><b id="voteCount">1,204</b> guests voted</p>
+        <ol class="tickets">
+          <li class="ticket">
+            <div class="ticket-top"><span class="ticket-no painted">1</span><h3>You tell us, we build it</h3></div>
+            <hr class="tear" />
+            <p>Send your names, photos, colours and the stories behind your trivia. We set up your own branded game hub on its own link.</p>
+          </li>
+          <li class="ticket">
+            <div class="ticket-top"><span class="ticket-no painted">2</span><h3>Guests scan, then play</h3></div>
+            <hr class="tear" />
+            <p>One QR code on the tables. Guests join with just a name, on any phone. No app to download.</p>
+          </li>
+          <li class="ticket">
+            <div class="ticket-top"><span class="ticket-no painted">3</span><h3>Your host runs the show</h3></div>
+            <hr class="tear" />
+            <p>Games go live from the host&rsquo;s phone at the right moment, and everyone watches the leaderboard move as they play.</p>
+          </li>
+        </ol>
       </div>
+    </section>
 
-      <div class="panel wide reveal">
-        <div class="panel-head">Baraat Rush</div>
-        <h3 class="vote-q">Ride the baraat, dodge the chaos</h3>
-        <div class="baraat-strip">
-          <div class="baraat-obstacle o1"><svg class="ico"><use href="#i-gift"/></svg></div>
-          <div class="baraat-obstacle o2"><svg class="ico"><use href="#i-wheel"/></svg></div>
-          <div class="baraat-obstacle o3"><svg class="ico"><use href="#i-camera"/></svg></div>
-          <img src="assets/baraat-horse.webp" alt="The Baraat Rush horse" class="baraat-horse" />
+    <section class="hoarding on-pink section" id="packages" aria-labelledby="packages-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 class="painted depth-yellow" id="packages-title">Pick your show</h2>
+          <p class="lede">Three packages. Every one is set up for you, in your names and colours.</p>
         </div>
-        <p class="baraat-note">An endless-runner arcade game, live in every wedding's game hub</p>
-      </div>
-
-      <div class="panel reveal">
-        <div class="panel-head">Couple Trivia</div>
-        <h3 class="vote-q">Where did they first meet?</h3>
-        <div class="trivia-opts" id="triviaOpts">
-          <button class="trivia-opt" type="button" data-correct="true">College orientation</button>
-          <button class="trivia-opt" type="button">A friend's wedding</button>
-          <button class="trivia-opt" type="button">The same office</button>
-          <button class="trivia-opt" type="button">A dating app</button>
-        </div>
-        <p class="trivia-note" id="triviaNote">Guess before your friends do</p>
-      </div>
-
-      <div class="panel reveal">
-        <div class="panel-head">Spin the Wheel</div>
-        <div class="wheel-wrap">
-          <div class="wheel-pointer"><svg class="ico"><use href="#i-play" transform="rotate(90 12 12)"/></svg></div>
-          <div class="wheel" id="wheel"><div class="wheel-center">SPIN</div></div>
-        </div>
-        <button class="btn btn-primary spin-btn magnetic" id="spinBtn"><svg class="ico"><use href="#i-wheel"/></svg> Spin to win</button>
-        <p class="spin-result" id="spinResult">Tap spin for your prize</p>
-      </div>
-
-      <div class="panel reveal">
-        <div class="panel-head"><span class="dot-live"></span> Live Leaderboard</div>
-        <ul class="leaderboard" id="leaderboard">
-          <li><span class="lb-rank">1</span><span class="lb-name">Riya S.</span><b class="lb-score">1240</b></li>
-          <li><span class="lb-rank">2</span><span class="lb-name">Kabir M.</span><b class="lb-score">1180</b></li>
-          <li class="me"><span class="lb-rank">3</span><span class="lb-name">You</span><b class="lb-score">1050</b></li>
-          <li><span class="lb-rank">4</span><span class="lb-name">Ananya P.</span><b class="lb-score">990</b></li>
-          <li><span class="lb-rank">5</span><span class="lb-name">Dev R.</span><b class="lb-score">910</b></li>
-        </ul>
-        <p class="lb-note">Updates in real time as guests play</p>
-      </div>
-
-      <div class="panel reveal">
-        <div class="panel-head">Scratch &amp; Win</div>
-        <div class="scratch" id="scratch">
-          <div class="scratch-prize"><svg class="ico"><use href="#i-gift"/></svg><b>Gift Hamper!</b></div>
-          <canvas id="scratchCanvas"></canvas>
-        </div>
-        <p class="scratch-note">Scratch the card above to reveal your prize</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== GUEST WALL ===== -->
-  <section class="section">
-    <div class="section-head reveal">
-      <h2>Wishes and chaos, live on the big screen</h2>
-    </div>
-    <div class="wall-grid">
-      <div class="wish reveal">“Best wedding game ever, I'm winning.” <em>- Riya</em></div>
-      <div class="wish reveal">“Forever and always, you two.” <em>- Mom</em></div>
-      <div class="wish reveal">“Groom is DEFINITELY more dramatic.” <em>- Kabir</em></div>
-      <div class="wish reveal">“Found someone from 4 cities away!” <em>- Dev</em></div>
-      <div class="wish reveal">“Scratch card gave me bonus points.” <em>- Ananya</em></div>
-      <div class="wish reveal">“This or that: beach over mountains.” <em>- Sara</em></div>
-    </div>
-  </section>
-
-  <!-- ===== PACKAGES ===== -->
-  <section class="section" id="packages">
-    <div class="section-head reveal">
-      <h2>Three packages. One unforgettable party.</h2>
-    </div>
-    <div class="packages">
-      <div class="pkg reveal">
-        <h3>Essential</h3>
-        <div class="pkg-tag">Get the party started</div>
-        <ul>
-          <li><svg class="ico"><use href="#i-check"/></svg>Home screen &amp; profiles</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Global leaderboard</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Couple Trivia</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Fastest Finger First</li>
+        <ul class="packages">
+          <li class="ticket package">
+            <div class="ticket-top"><h3 class="painted package-name">Essential</h3><p>Get the party started</p></div>
+            <hr class="tear" />
+            <ul class="feat">
+              <li>Home screen and guest profiles</li>
+              <li>Live leaderboard</li>
+              <li>Couple Trivia</li>
+              <li>Fastest Finger First</li>
+            </ul>
+            <a class="btn btn-line" href="mailto:info@weddingcarnival.live?subject=Book%20Essential">Book Essential</a>
+          </li>
+          <li class="ticket package featured">
+            <div class="ticket-top"><h3 class="painted package-name">Premium</h3><p>Everything in Essential, plus</p><span class="stamp package-stamp">Most popular</span></div>
+            <hr class="tear" />
+            <ul class="feat">
+              <li>Bride vs Groom Battle</li>
+              <li>Scratch &amp; Win</li>
+              <li>Emoji Decoder</li>
+              <li>Memory Garden</li>
+              <li>Lucky Draw</li>
+            </ul>
+            <a class="btn btn-ink" href="mailto:info@weddingcarnival.live?subject=Book%20Premium">Book Premium</a>
+          </li>
+          <li class="ticket package">
+            <div class="ticket-top"><h3 class="painted package-name">Signature</h3><p>Everything in Premium, plus</p></div>
+            <hr class="tear" />
+            <ul class="feat">
+              <li>Wedding Bingo</li>
+              <li>Photo and Treasure Hunt</li>
+              <li>Achievement system</li>
+              <li>Custom illustrations</li>
+              <li>Fully branded experience</li>
+            </ul>
+            <a class="btn btn-line" href="mailto:info@weddingcarnival.live?subject=Book%20Signature">Book Signature</a>
+          </li>
         </ul>
       </div>
-      <div class="pkg featured reveal">
-        <div class="pkg-flag">Most popular</div>
-        <h3>Premium</h3>
-        <div class="pkg-tag">Everything in Essential, plus</div>
-        <ul>
-          <li><svg class="ico"><use href="#i-check"/></svg>Bride vs Groom Battle</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Scratch &amp; Win</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Emoji Decoder</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Memory Garden</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Lucky Draw</li>
-        </ul>
+    </section>
+
+    <section class="hoarding on-yellow section closing" aria-labelledby="close-title">
+      <div class="wrap closing-inner">
+        <h2 class="painted depth-pink closing-title" id="close-title">Your wedding. Now showing.</h2>
+        <p class="lede">Tell us your date and city. We&rsquo;ll build the rest.</p>
+        <div class="hero-actions">
+          <a class="btn btn-ink book" href="mailto:info@weddingcarnival.live?subject=Book%20Wedding%20Carnival">Book your show</a>
+          <a class="hero-link" href="mailto:info@weddingcarnival.live">info@weddingcarnival.live</a>
+        </div>
       </div>
-      <div class="pkg reveal">
-        <h3>Signature</h3>
-        <div class="pkg-tag">Everything in Premium, plus</div>
-        <ul>
-          <li><svg class="ico"><use href="#i-check"/></svg>Wedding Bingo</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Photo &amp; Treasure Hunt</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Achievement system</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Custom illustrations</li>
-          <li><svg class="ico"><use href="#i-check"/></svg>Fully branded experience</li>
-        </ul>
-      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-foot">
+    <div class="bulbs dim" aria-hidden="true"></div>
+    <div class="wrap foot-row">
+      <span class="plaque"><img src="shared/img/logo.png" alt="Wedding Carnival" width="720" height="389" /></span>
+      <p>Every guest plays. &copy; 2026 Wedding Carnival</p>
     </div>
-  </section>
-
-  <!-- ===== CTA ===== -->
-  <section class="cta-band reveal">
-    <h2>Ready to make your wedding the one everyone talks about?</h2>
-    <p>Custom-branded, mobile-first, zero downloads. Just scan and play.</p>
-    <a href="mailto:info@weddingcarnival.live?subject=Book%20Wedding%20Carnival" class="btn btn-light magnetic"><svg class="ico"><use href="#i-tent"/></svg> Book Now</a>
-  </section>
-
-  <!-- ===== FOOTER ===== -->
-  <footer class="footer">
-    <img src="logo.jpeg" alt="Wedding Carnival" class="footer-logo"/>
-    <p>WeddingCarnival.live. Transforming guests into players, competitors and memory-makers.</p>
-    <small>© 2026 Wedding Carnival™ · Demo preview</small>
   </footer>
 
-  <script src="script.js"></script>
+  <script src="home.js"></script>
 </body>
 </html>

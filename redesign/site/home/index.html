@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2c2723" />
+  <title>Wedding Carnival · Every guest plays</title>
+  <meta name="description" content="Live games on every guest's phone from one QR code. No app. Built in your names, your colours and your story." />
+  <link rel="icon" href="../shared/img/logo.png" />
+  <link rel="preload" href="../shared/fonts/shrikhand-400.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="../shared/fonts/mukta-800.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="../shared/site.css" />
+  <link rel="stylesheet" href="home.css" />
+</head>
+<body>
+
+  <header class="marquee">
+    <div class="wrap marquee-row">
+      <a class="plaque" href="#top" aria-label="Wedding Carnival, back to top"><img src="../shared/img/logo.png" alt="Wedding Carnival" width="720" height="389" /></a>
+      <nav class="nav" aria-label="Main">
+        <a href="#trailer">The show</a>
+        <a href="#programme">Programme</a>
+        <a href="#packages">Packages</a>
+        <a class="btn btn-yellow book" href="mailto:info@weddingcarnival.live?subject=Book%20Wedding%20Carnival">Book your show</a>
+      </nav>
+    </div>
+    <div class="bulbs chase" aria-hidden="true"></div>
+  </header>
+
+  <main id="top">
+
+    <section class="hoarding on-pink hero" aria-labelledby="hero-title">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <h1 class="painted depth-yellow hero-title" id="hero-title">Every guest plays.</h1>
+          <p class="painted billing" aria-live="polite"><span data-bride>Aanya</span> <span class="amp">&amp;</span> <span data-groom>Vihaan</span>&rsquo;s wedding, starring every guest.</p>
+          <p class="hero-lede">Live games on every phone from one QR code. No app, no sign-up. We build it in your names, your colours and your story.</p>
+
+          <form class="slots" onsubmit="return false" aria-label="Try your names">
+            <div class="slot"><label for="in-bride">Bride&rsquo;s name</label><input id="in-bride" maxlength="18" autocomplete="off" placeholder="Aanya" /></div>
+            <span class="amp" aria-hidden="true">&amp;</span>
+            <div class="slot"><label for="in-groom">Groom&rsquo;s name</label><input id="in-groom" maxlength="18" autocomplete="off" placeholder="Vihaan" /></div>
+          </form>
+
+          <div class="hero-actions">
+            <a class="btn btn-ink book" href="mailto:info@weddingcarnival.live?subject=Book%20Wedding%20Carnival">Book your show</a>
+            <a class="hero-link" href="#trailer">Play a scene first</a>
+          </div>
+        </div>
+
+        <div class="stars" aria-hidden="true">
+          <span class="disc"></span>
+          <span class="stamp thump hero-stamp">Now booking</span>
+          <img class="bride" src="../shared/img/bride.webp" alt="" width="720" height="720" />
+          <img class="groom" src="../shared/img/groom.webp" alt="" width="720" height="720" />
+        </div>
+      </div>
+      <p class="wrap credits hero-credits">
+        A <b>Wedding Carnival</b> production &middot; Fastest Finger First &middot; Bride vs Groom Showdown &middot; Couple Trivia &middot; Scratch &amp; Win &middot; Baraat Rush &middot; Live leaderboard &middot; Built for your wedding, by us
+      </p>
+    </section>
+
+    <section class="section" id="trailer" aria-labelledby="trailer-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 class="painted on-dark" id="trailer-title">Play a scene</h2>
+          <p class="lede">This is what your guests see on their phones. Pick a name.</p>
+        </div>
+
+        <div class="hoarding on-yellow scene">
+          <p class="scene-q painted depth-white" id="scene-q">Who takes longer to get ready?</p>
+          <div class="scene-sides">
+            <button type="button" class="scene-side" data-side="bride">
+              <span class="scene-face">
+                <img src="../shared/img/bride.webp" alt="" width="720" height="720" />
+                <img class="glasses" src="../shared/img/bride-glasses.svg" alt="" width="750" height="750" />
+              </span>
+              <span class="scene-name painted" data-bride>Aanya</span>
+              <span class="scene-role">the bride</span>
+            </button>
+            <button type="button" class="scene-side" data-side="groom">
+              <span class="scene-face">
+                <img src="../shared/img/groom.webp" alt="" width="720" height="720" />
+                <img class="glasses" src="../shared/img/groom-glasses.svg" alt="" width="750" height="750" />
+              </span>
+              <span class="scene-name painted" data-groom>Vihaan</span>
+              <span class="scene-role">the groom</span>
+            </button>
+          </div>
+          <div class="scene-result" id="scene-result" aria-live="polite" hidden></div>
+        </div>
+        <p class="caption scene-caption">Sample scene and sample crowd. At a real wedding, the couple&rsquo;s own answers decide who&rsquo;s right.</p>
+      </div>
+    </section>
+
+    <section class="section programme-section" id="programme" aria-labelledby="programme-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 class="painted on-dark" id="programme-title">Tonight&rsquo;s programme</h2>
+          <p class="lede">Five live games, set into your functions. You choose which ones run, and when.</p>
+        </div>
+        <ol class="programme">
+          <li>
+            <span class="when num">Sangeet &middot; 20:30</span>
+            <span class="what"><span class="painted show-name">Fastest Finger First</span><span class="stamp show-stamp">Signature</span></span>
+            <span class="desc">The host launches a question; every phone races the clock to tap four answers into order. Quickest right answer tops the board.</span>
+          </li>
+          <li>
+            <span class="when num">Sangeet &middot; 21:15</span>
+            <span class="what"><span class="painted show-name">Bride vs Groom Showdown</span></span>
+            <span class="desc">&ldquo;Who&rsquo;s more likely to&hellip;?&rdquo; Guests pick a side. The couple&rsquo;s own answers decide who&rsquo;s right.</span>
+          </li>
+          <li>
+            <span class="when num">Haldi &middot; 11:00</span>
+            <span class="what"><span class="painted show-name">Couple Trivia</span></span>
+            <span class="desc">How well does everyone really know the two of you? Questions written from your own stories.</span>
+          </li>
+          <li>
+            <span class="when num">Reception &middot; 20:00</span>
+            <span class="what"><span class="painted show-name">Scratch &amp; Win</span></span>
+            <span class="desc">One card for every guest. A few hide real prizes; the rest hold a blessing from the couple.</span>
+          </li>
+          <li>
+            <span class="when num">All weekend</span>
+            <span class="what"><span class="painted show-name">Baraat Rush</span></span>
+            <span class="desc">An arcade runner: ride the groom&rsquo;s horse through the baraat and dodge the chaos. Best score wins.</span>
+          </li>
+        </ol>
+        <p class="caption programme-note">Sample timings. Also in the works: Photo Hunt, Spin the Wheel and Bride vs Groom Battle.</p>
+      </div>
+    </section>
+
+    <section class="section" id="how" aria-labelledby="how-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 class="painted on-dark" id="how-title">How the show runs</h2>
+          <p class="lede">Three steps. You only do the first one.</p>
+        </div>
+        <ol class="tickets">
+          <li class="ticket">
+            <div class="ticket-top"><span class="ticket-no painted">1</span><h3>You tell us, we build it</h3></div>
+            <hr class="tear" />
+            <p>Send your names, photos, colours and the stories behind your trivia. We set up your own branded game hub on its own link.</p>
+          </li>
+          <li class="ticket">
+            <div class="ticket-top"><span class="ticket-no painted">2</span><h3>Guests scan, then play</h3></div>
+            <hr class="tear" />
+            <p>One QR code on the tables. Guests join with just a name, on any phone. No app to download.</p>
+          </li>
+          <li class="ticket">
+            <div class="ticket-top"><span class="ticket-no painted">3</span><h3>Your host runs the show</h3></div>
+            <hr class="tear" />
+            <p>Games go live from the host&rsquo;s phone at the right moment, and everyone watches the leaderboard move as they play.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="hoarding on-pink section" id="packages" aria-labelledby="packages-title">
+      <div class="wrap">
+        <div class="section-head">
+          <h2 class="painted depth-yellow" id="packages-title">Pick your show</h2>
+          <p class="lede">Three packages. Every one is set up for you, in your names and colours.</p>
+        </div>
+        <ul class="packages">
+          <li class="ticket package">
+            <div class="ticket-top"><h3 class="painted package-name">Essential</h3><p>Get the party started</p></div>
+            <hr class="tear" />
+            <ul class="feat">
+              <li>Home screen and guest profiles</li>
+              <li>Live leaderboard</li>
+              <li>Couple Trivia</li>
+              <li>Fastest Finger First</li>
+            </ul>
+            <a class="btn btn-line" href="mailto:info@weddingcarnival.live?subject=Book%20Essential">Book Essential</a>
+          </li>
+          <li class="ticket package featured">
+            <div class="ticket-top"><h3 class="painted package-name">Premium</h3><p>Everything in Essential, plus</p><span class="stamp package-stamp">Most popular</span></div>
+            <hr class="tear" />
+            <ul class="feat">
+              <li>Bride vs Groom Battle</li>
+              <li>Scratch &amp; Win</li>
+              <li>Emoji Decoder</li>
+              <li>Memory Garden</li>
+              <li>Lucky Draw</li>
+            </ul>
+            <a class="btn btn-ink" href="mailto:info@weddingcarnival.live?subject=Book%20Premium">Book Premium</a>
+          </li>
+          <li class="ticket package">
+            <div class="ticket-top"><h3 class="painted package-name">Signature</h3><p>Everything in Premium, plus</p></div>
+            <hr class="tear" />
+            <ul class="feat">
+              <li>Wedding Bingo</li>
+              <li>Photo and Treasure Hunt</li>
+              <li>Achievement system</li>
+              <li>Custom illustrations</li>
+              <li>Fully branded experience</li>
+            </ul>
+            <a class="btn btn-line" href="mailto:info@weddingcarnival.live?subject=Book%20Signature">Book Signature</a>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="hoarding on-yellow section closing" aria-labelledby="close-title">
+      <div class="wrap closing-inner">
+        <h2 class="painted depth-pink closing-title" id="close-title">Your wedding. Now showing.</h2>
+        <p class="lede">Tell us your date and city. We&rsquo;ll build the rest.</p>
+        <div class="hero-actions">
+          <a class="btn btn-ink book" href="mailto:info@weddingcarnival.live?subject=Book%20Wedding%20Carnival">Book your show</a>
+          <a class="hero-link" href="mailto:info@weddingcarnival.live">info@weddingcarnival.live</a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-foot">
+    <div class="bulbs dim" aria-hidden="true"></div>
+    <div class="wrap foot-row">
+      <span class="plaque"><img src="../shared/img/logo.png" alt="Wedding Carnival" width="720" height="389" /></span>
+      <p>Every guest plays. &copy; 2026 Wedding Carnival</p>
+    </div>
+  </footer>
+
+  <script src="home.js"></script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+/* Wedding Carnival site — the hand-painted cinema hoarding world.
+   Palette is the logo's: charcoal, pink, yellow, white. Ornament is two units
+   only: the marquee bulb row and the ticket stub (notches + tear line). */
+
+@font-face { font-family: 'Shrikhand'; src: url('fonts/shrikhand-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Mukta'; src: url('fonts/mukta-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Mukta'; src: url('fonts/mukta-600.woff2') format('woff2'); font-weight: 600; font-display: swap; }
+@font-face { font-family: 'Mukta'; src: url('fonts/mukta-800.woff2') format('woff2'); font-weight: 800; font-display: swap; }
+
+:root {
+  --ink: #2c2723;
+  --ink-soft: #4a433d;
+  --pink: #ff66c4;
+  --yellow: #fff800;
+  --white: #ffffff;
+  --paper: #fffdf6;
+  --on-ink-soft: #d9d3cd;
+  --display: 'Shrikhand', 'Georgia', serif;
+  --text: 'Mukta', system-ui, sans-serif;
+  --wrap: 1200px;
+  --gutter: clamp(18px, 4vw, 40px);
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* { box-sizing: border-box; }
+html { background: var(--ink); color: var(--white); -webkit-text-size-adjust: 100%; scroll-padding-top: 84px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+body { margin: 0; font-family: var(--text); font-size: 1.125rem; line-height: 1.5; }
+h1, h2, h3, p { margin: 0; }
+p, li { text-wrap: pretty; }
+[hidden] { display: none !important; }
+::selection { background: var(--yellow); color: var(--ink); }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+.wrap { width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 0 var(--gutter); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+a:focus-visible, button:focus-visible, input:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 3px;
+}
+.on-yellow a:focus-visible, .on-yellow button:focus-visible, .on-yellow input:focus-visible,
+.on-pink a:focus-visible, .on-pink button:focus-visible, .on-pink input:focus-visible { outline-color: var(--ink); }
+
+/* ---------- Painted lettering ---------- */
+.painted {
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: 0.005em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.painted.depth-yellow {
+  text-shadow: 1px 1px 0 var(--yellow), 2px 2px 0 var(--yellow), 3px 3px 0 var(--yellow),
+    4px 4px 0 var(--yellow), 5px 5px 0 var(--yellow), 6px 6px 0 var(--yellow);
+}
+.painted.depth-white {
+  text-shadow: 1px 1px 0 var(--white), 2px 2px 0 var(--white), 3px 3px 0 var(--white),
+    4px 4px 0 var(--white), 5px 5px 0 var(--white);
+}
+.painted.depth-pink {
+  text-shadow: 1px 1px 0 var(--pink), 2px 2px 0 var(--pink), 3px 3px 0 var(--pink),
+    4px 4px 0 var(--pink), 5px 5px 0 var(--pink), 6px 6px 0 var(--pink);
+}
+.painted.on-dark { color: var(--white); text-shadow: 1px 1px 0 var(--pink), 2px 2px 0 var(--pink), 3px 3px 0 var(--pink), 4px 4px 0 var(--pink); }
+
+/* ---------- Ornament unit 1: the marquee bulb row ---------- */
+.bulbs {
+  height: 14px;
+  background:
+    radial-gradient(circle at 50% 50%, var(--yellow) 0 4px, transparent 4.5px) 0 0 / 24px 14px repeat-x;
+}
+.bulbs.dim { background-image: radial-gradient(circle at 50% 50%, rgb(255 248 0 / 0.35) 0 4px, transparent 4.5px); }
+@media (prefers-reduced-motion: no-preference) {
+  .bulbs.chase { animation: chase 1.6s steps(2) infinite; }
+}
+@keyframes chase { to { background-position: 24px 0; } }
+
+/* ---------- Ornament unit 2: the ticket stub ---------- */
+.ticket {
+  position: relative;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 6px;
+}
+.ticket::before, .ticket::after {
+  content: ''; position: absolute; top: var(--tear, 64px);
+  width: 22px; height: 22px; margin-top: -11px; border-radius: 50%;
+  background: var(--ticket-hole, var(--ink));
+}
+.ticket::before { left: -11px; }
+.ticket::after { right: -11px; }
+.tear { border: 0; border-top: 2px dashed rgb(44 39 35 / 0.35); margin: 0; }
+
+/* ---------- Stamped marks (state is a mark, not a hue) ---------- */
+.stamp {
+  display: inline-block;
+  padding: 9px 14px 7px;
+  border: 3px solid currentColor;
+  border-radius: 4px;
+  font-family: var(--text); font-weight: 800; font-size: 0.875rem;
+  letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.1;
+  transform: rotate(-5deg);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .stamp.thump { animation: thump 520ms var(--ease) 300ms both; }
+}
+@keyframes thump { from { transform: rotate(-12deg) scale(1.9); opacity: 0; } 60% { opacity: 1; } to { transform: rotate(-5deg) scale(1); opacity: 1; } }
+
+/* ---------- Actions ---------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 56px; padding: 0 30px;
+  border-radius: 999px; border: 3px solid transparent;
+  font-family: var(--text); font-weight: 800; font-size: 1.125rem; letter-spacing: 0.01em;
+  text-decoration: none; cursor: pointer;
+  transition: transform 140ms var(--ease), background-color 160ms var(--ease), color 160ms var(--ease);
+}
+.btn:active { transform: translateY(1px) scale(0.985); }
+.btn-ink { background: var(--ink); color: var(--yellow); }
+.btn-ink:hover { background: #3a332e; }
+.btn-yellow { background: var(--yellow); color: var(--ink); }
+.btn-yellow:hover { background: #fffb5c; }
+.btn-line { background: transparent; color: inherit; border-color: currentColor; }
+.btn .ico { width: 20px; height: 20px; }
+.ico { flex: none; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* ---------- Marquee bar (site header) ---------- */
+.marquee {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--ink);
+}
+.marquee-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  min-height: 78px;
+}
+.plaque {
+  display: inline-flex; align-items: center;
+  background: var(--white); border-radius: 6px;
+  padding: 6px 12px;
+}
+.plaque img { height: 46px; width: auto; display: block; }
+.nav { display: flex; align-items: center; gap: clamp(14px, 2.4vw, 30px); }
+.nav a:not(.btn) { color: var(--white); text-decoration: none; font-weight: 600; font-size: 1.0625rem; }
+.nav a:not(.btn):hover { color: var(--yellow); }
+.nav .btn { min-height: 46px; padding: 0 20px; font-size: 1rem; }
+@media (max-width: 760px) {
+  .nav a:not(.btn) { display: none; }
+}
+
+/* ---------- Hoarding (painted field) ---------- */
+.hoarding { position: relative; overflow: clip; }
+.hoarding.on-pink { background: var(--pink); color: var(--ink); }
+.hoarding.on-yellow { background: var(--yellow); color: var(--ink); }
+.credits {
+  font-weight: 600; font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.credits b { font-weight: 800; }
+
+/* Name slots: the visitor's own names re-letter the billing */
+.slots { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+.slot {
+  display: grid; gap: 4px;
+}
+.slot label { font-weight: 600; font-size: 0.9375rem; }
+.slot input {
+  width: 11.5rem; min-height: 52px; padding: 0 16px;
+  border: 3px solid var(--ink); border-radius: 12px;
+  background: var(--white); color: var(--ink);
+  font-family: var(--text); font-weight: 800; font-size: 1.125rem;
+}
+.slot input::placeholder { color: #6d655e; font-weight: 600; }
+.slots .amp { font-family: var(--display); font-size: 2rem; align-self: end; padding-bottom: 6px; }
+
+/* Stars on a flat painted disc */
+.stars { position: relative; aspect-ratio: 1; }
+.stars .disc { position: absolute; inset: 6%; border-radius: 50%; background: var(--yellow); }
+.stars img { position: absolute; width: 58%; height: auto; }
+.stars .bride { left: 2%; bottom: 6%; }
+.stars .groom { right: 2%; bottom: 10%; }
+
+/* ---------- Generic section rhythm ---------- */
+.section { padding: clamp(72px, 10vw, 128px) 0; }
+.section-head { display: grid; gap: 14px; max-width: 46rem; margin-bottom: clamp(32px, 5vw, 56px); }
+.section-head h2 { font-size: clamp(2.5rem, 6.4vw, 4.75rem); }
+.lede { font-size: 1.25rem; color: var(--on-ink-soft); max-width: 40rem; }
+.on-pink .lede, .on-yellow .lede { color: var(--ink); }
+.caption { font-size: 0.9375rem; color: var(--on-ink-soft); }
+.on-pink .caption, .on-yellow .caption { color: var(--ink-soft); }

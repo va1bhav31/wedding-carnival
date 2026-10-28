@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2c2723" />
+  <title>Wedding Carnival · Coming this wedding season</title>
+  <meta name="description" content="Live games on every guest's phone from one QR code. Coming this wedding season." />
+  <link rel="icon" href="../shared/img/logo.png" />
+  <link rel="preload" href="../shared/fonts/shrikhand-400.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="../shared/site.css" />
+  <style>
+    body { min-height: 100dvh; display: flex; flex-direction: column; }
+    .marquee { position: relative; }
+    .teaser { flex: 1; display: flex; flex-direction: column; }
+    .teaser-grid {
+      flex: 1;
+      display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+      gap: clamp(20px, 4vw, 56px); align-items: center;
+      padding-top: clamp(40px, 7vw, 80px); padding-bottom: clamp(28px, 4vw, 40px);
+    }
+    .teaser-copy { position: relative; display: grid; gap: 22px; justify-items: start; }
+    .teaser-stamp { color: var(--ink); background: var(--white); }
+    .teaser-title { font-size: clamp(3.75rem, 11vw, 8.5rem); }
+    .teaser-lede { font-size: 1.25rem; font-weight: 600; max-width: 32rem; }
+    .attractions { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 0; font-weight: 800; font-size: 1.0625rem; }
+    .attractions li:not(:last-child)::after { content: '\00b7'; padding: 0 10px; }
+    .teaser-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; }
+    .peek { color: var(--ink); font-weight: 800; font-size: 1.0625rem; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 5px; }
+    .silhouettes { position: relative; aspect-ratio: 1; max-width: 460px; width: 100%; justify-self: center; }
+    .silhouettes .disc { position: absolute; inset: 6%; border-radius: 50%; background: var(--pink); }
+    .silhouettes img { position: absolute; width: 58%; height: auto; filter: brightness(0); }
+    .silhouettes .bride { left: 2%; bottom: 6%; }
+    .silhouettes .groom { right: 2%; bottom: 10%; }
+    .starring { position: absolute; left: 50%; bottom: -6px; transform: translateX(-50%); white-space: nowrap; font-size: clamp(1.5rem, 3.4vw, 2.25rem); }
+    .teaser-credits { padding-top: 16px; padding-bottom: 22px; border-top: 3px solid var(--ink); }
+    .foot { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; padding-top: 18px; padding-bottom: calc(18px + env(safe-area-inset-bottom)); color: var(--on-ink-soft); font-size: 0.9375rem; }
+    @media (max-width: 860px) {
+      .teaser-grid { grid-template-columns: 1fr; }
+      .silhouettes { max-width: 280px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="marquee">
+    <div class="wrap marquee-row">
+      <span class="plaque"><img src="../shared/img/logo.png" alt="Wedding Carnival" width="720" height="389" /></span>
+      <a class="btn btn-yellow" href="../home/index.html" style="min-height: 46px; padding: 0 20px; font-size: 1rem">Sneak peek</a>
+    </div>
+    <div class="bulbs chase" aria-hidden="true"></div>
+  </header>
+
+  <main class="hoarding on-yellow teaser">
+    <div class="wrap teaser-grid">
+      <div class="teaser-copy">
+        <h1 class="painted depth-pink teaser-title">Every guest plays.</h1>
+        <p class="stamp thump teaser-stamp">Coming this wedding season</p>
+        <p class="teaser-lede">Live games on every guest&rsquo;s phone from one QR code. No app. Built in the couple&rsquo;s names, colours and stories.</p>
+        <ul class="attractions" aria-label="Coming attractions">
+          <li>Fastest Finger First</li>
+          <li>Bride vs Groom Showdown</li>
+          <li>Couple Trivia</li>
+          <li>Scratch &amp; Win</li>
+          <li>Baraat Rush</li>
+        </ul>
+        <div class="teaser-actions">
+          <a class="btn btn-ink" href="mailto:info@weddingcarnival.live?subject=Tell%20me%20when%20Wedding%20Carnival%20opens">Tell me when it opens</a>
+          <a class="peek" href="../home/index.html">Take a sneak peek</a>
+        </div>
+      </div>
+
+      <div class="silhouettes" aria-hidden="true">
+        <span class="disc"></span>
+        <img class="bride" src="../shared/img/bride.webp" alt="" width="720" height="720" />
+        <img class="groom" src="../shared/img/groom.webp" alt="" width="720" height="720" />
+        <p class="painted depth-white starring">Starring: you</p>
+      </div>
+    </div>
+    <p class="wrap credits teaser-credits">A <b>Wedding Carnival</b> production &middot; One QR code &middot; No app &middot; Live on every phone</p>
+  </main>
+
+  <footer class="wrap foot">
+    <span>&copy; 2026 Wedding Carnival</span>
+    <a href="mailto:info@weddingcarnival.live" style="color: inherit">info@weddingcarnival.live</a>
+  </footer>
+</body>
+</html>
