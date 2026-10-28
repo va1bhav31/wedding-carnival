@@ -1021,30 +1021,30 @@ export default function BaraatRush({
         const pad = 12;
         ctx.textBaseline = 'middle';
         // score pill
-        ctx.fillStyle = 'rgba(18,12,10,.66)';
+        ctx.fillStyle = 'rgba(44,39,35,.74)';
         rr(ctx, pad, pad, 132, 40, 20);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(244,236,225,.22)';
+        ctx.strokeStyle = 'rgba(255,255,255,.24)';
         ctx.lineWidth = 1.5;
         rr(ctx, pad, pad, 132, 40, 20);
         ctx.stroke();
-        ctx.fillStyle = '#f4ece1';
+        ctx.fillStyle = '#ffffff';
         ctx.font = `500 20px ${hudFontRef.current}`;
         ctx.textAlign = 'left';
         ctx.fillText(`${Math.round(g.score)}`, pad + 16, pad + 21);
         ctx.font = `600 11px ${hudFontRef.current}`;
-        ctx.fillStyle = 'rgba(184,169,154,1)';
+        ctx.fillStyle = '#bdb6b0';
         ctx.fillText('SCORE', pad + 84, pad + 21);
         // coins pill
         const cw = 96;
-        ctx.fillStyle = 'rgba(18,12,10,.66)';
+        ctx.fillStyle = 'rgba(44,39,35,.74)';
         rr(ctx, W - pad - cw, pad, cw, 40, 20);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(244,236,225,.22)';
+        ctx.strokeStyle = 'rgba(255,255,255,.24)';
         rr(ctx, W - pad - cw, pad, cw, 40, 20);
         ctx.stroke();
         drawCoin(W - pad - cw + 22, pad + 30, 20, g.t, 0.3);
-        ctx.fillStyle = '#f4ece1';
+        ctx.fillStyle = '#ffffff';
         ctx.font = `500 18px ${hudFontRef.current}`;
         ctx.textAlign = 'left';
         ctx.fillText(`${g.coins}`, W - pad - cw + 42, pad + 21);
@@ -1053,7 +1053,7 @@ export default function BaraatRush({
           const hx = W - pad - 20 - i * 26;
           const hy = pad + 62;
           ctx.globalAlpha = i < g.lives ? 1 : 0.22;
-          ctx.fillStyle = '#d8b57a';
+          ctx.fillStyle = '#fff800';
           ctx.beginPath();
           ctx.moveTo(hx, hy + 7);
           ctx.bezierCurveTo(hx - 12, hy - 3, hx - 6, hy - 12, hx, hy - 4);
@@ -1071,7 +1071,7 @@ export default function BaraatRush({
         if (g.hintT > 0 && g.phase === 'playing') {
           const a = Math.min(1, g.hintT);
           ctx.globalAlpha = a * (0.7 + 0.3 * Math.sin(now * 0.006));
-          ctx.fillStyle = '#f4ece1';
+          ctx.fillStyle = '#ffffff';
           ctx.font = `600 15px ${hudFontRef.current}`;
           ctx.textAlign = 'center';
           ctx.fillText('Swipe to move, swipe up to jump', cx, H * 0.94);

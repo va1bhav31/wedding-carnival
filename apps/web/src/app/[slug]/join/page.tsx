@@ -22,7 +22,7 @@ export default async function JoinPage({ params }: { params: Promise<{ slug: str
     <>
       <header className="topbar">
         <p className="couple">
-          {bride} &amp; {groom}
+          {bride} <span className="amp">&amp;</span> {groom}
         </p>
       </header>
       <main className="page" style={{ paddingTop: 40 }}>

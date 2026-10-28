@@ -26,7 +26,7 @@ export default async function GuestHome({ params }: { params: Promise<{ slug: st
       {!isLive && <LiveWatcher base={base} />}
       <main className="page welcome" style={{ paddingTop: 48 }}>
         <h1 className="welcome-names">
-          {bride} &amp; {groom}
+          {bride} <span className="amp">&amp;</span> {groom}
         </h1>
 
         {w.welcome_message && <p className="welcome-msg">{w.welcome_message}</p>}

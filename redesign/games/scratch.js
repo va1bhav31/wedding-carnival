@@ -13,7 +13,7 @@
   // The foil: a fine champagne grain drawn once per card.
   function paintFoil(ctx, w, h) {
     ctx.globalCompositeOperation = 'source-over';
-    ctx.fillStyle = '#c9a76d';
+    ctx.fillStyle = '#f2e900';
     ctx.fillRect(0, 0, w, h);
     const img = ctx.getImageData(0, 0, w, h);
     const d = img.data;
@@ -22,7 +22,7 @@
       d[i] += n; d[i + 1] += n * 0.9; d[i + 2] += n * 0.7;
     }
     ctx.putImageData(img, 0, 0);
-    ctx.fillStyle = 'rgba(42, 26, 18, 0.78)';
+    ctx.fillStyle = 'rgba(44, 39, 35, 0.86)';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.font = `${Math.round(h * 0.17)}px 'Pinyon Script', Georgia, serif`;

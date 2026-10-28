@@ -42,7 +42,7 @@ export default async function PlayHub({ params }: { params: Promise<{ slug: stri
     <>
       <header className="topbar">
         <p className="couple">
-          {bride} &amp; {groom}
+          {bride} <span className="amp">&amp;</span> {groom}
         </p>
         <Link className="me-pill" href={`${base}/leaderboard`}>
           <span>{displayName}</span>

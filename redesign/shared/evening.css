@@ -14,18 +14,19 @@
 }
 
 :root {
-  --ground: #120c0a;
-  --raised: #1d1512;
-  --ivory: #f4ece1;
-  --ivory-soft: rgb(244 236 225 / 0.8);
-  --mute: #b8a99a;
-  --hair: rgb(244 236 225 / 0.12);
-  --line: rgb(244 236 225 / 0.22);
-  --champagne: #d8b57a;
-  --champagne-wash: rgb(216 181 122 / 0.08);
-  --rose: #c97b84;
-  --sage: #8fa89a;
-
+  /* Pinned palette: pink #FF66C4 (action, selection), yellow #FFF800 (live, scoring), black #2C2723, white. */
+  --ground: #2c2723;
+  --raised: #37312c;
+  --ivory: #ffffff;
+  --ivory-soft: rgb(255 255 255 / 0.82);
+  --mute: #bdb6b0;
+  --hair: rgb(255 255 255 / 0.12);
+  --line: rgb(255 255 255 / 0.24);
+  --champagne: #ff66c4;
+  --champagne-wash: rgb(255 102 196 / 0.12);
+  --yellow: #fff800;
+  --rose: #ff66c4;
+  --sage: #fff800;
   --sans: 'Albert Sans', system-ui, sans-serif;
   --script: 'Pinyon Script', Georgia, 'Times New Roman', serif;
   --gutter: 20px;
@@ -38,7 +39,7 @@ html {
   background: var(--ground);
   color: var(--ivory);
   -webkit-text-size-adjust: 100%;
-  scrollbar-color: #4a3a32 var(--ground);
+  scrollbar-color: #5a514a var(--ground);
   scrollbar-width: thin;
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -46,7 +47,7 @@ html {
 }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--ground); }
-::-webkit-scrollbar-thumb { background: #4a3a32; border-radius: 8px; }
+::-webkit-scrollbar-thumb { background: #5a514a; border-radius: 8px; }
 ::selection { background: var(--champagne); color: var(--ground); }
 
 body {
@@ -96,8 +97,8 @@ a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-v
   transition: background-color 200ms var(--ease), border-color 200ms var(--ease), transform 120ms var(--ease);
 }
 .btn:active { transform: scale(0.985); }
-.btn-primary { background: var(--ivory); color: var(--ground); }
-.btn-primary:hover { background: #fff; }
+.btn-primary { background: var(--champagne); color: var(--ground); }
+.btn-primary:hover { background: #ff85d0; }
 .btn-quiet { background: transparent; color: var(--ivory); border-color: var(--line); }
 .btn-quiet:hover { border-color: var(--ivory); }
 .btn-block { display: flex; width: 100%; }
@@ -120,7 +121,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-v
   font: inherit; font-size: 0.9375rem; font-weight: 500;
   color: var(--ivory);
   background: transparent;
-  border: 1px solid rgb(244 236 225 / 0.3);
+  border: 1px solid rgb(255 255 255 / 0.3);
   border-radius: 999px;
   padding: 0 18px;
   min-height: 44px;
@@ -131,3 +132,7 @@ a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-v
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
 }
+
+/* Yellow carries "live" and "scoring" only; pink (--champagne) carries action and selection. */
+.live-dot { background: var(--yellow); }
+a:focus-visible, button:focus-visible, summary:focus-visible, [tabindex]:focus-visible { outline-color: var(--yellow); }

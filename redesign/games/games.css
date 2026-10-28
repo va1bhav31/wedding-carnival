@@ -81,7 +81,7 @@ body.game {
   cursor: pointer;
   transition: border-color 200ms var(--ease), background-color 200ms var(--ease), opacity 200ms var(--ease);
 }
-.opt:hover:not([disabled]) { border-color: rgb(244 236 225 / 0.5); }
+.opt:hover:not([disabled]) { border-color: rgb(255 255 255 / 0.5); }
 .opt[disabled] { cursor: default; }
 .opt .mark {
   width: 32px; height: 32px; flex: none;
@@ -99,8 +99,8 @@ body.game {
 .opt.is-right { border-color: var(--champagne); background: var(--champagne-wash); }
 .opt.is-right .mark { background: var(--champagne); border-color: var(--champagne); color: var(--ground); }
 .opt.is-right .tag { color: var(--champagne); }
-.opt.is-wrong { border-style: dashed; border-color: rgb(244 236 225 / 0.45); }
-.opt.is-wrong .mark { color: var(--ivory); border-color: rgb(244 236 225 / 0.45); }
+.opt.is-wrong { border-style: dashed; border-color: rgb(255 255 255 / 0.45); }
+.opt.is-wrong .mark { color: var(--ivory); border-color: rgb(255 255 255 / 0.45); }
 .opt.is-dim { opacity: 0.45; }
 
 .undo {
@@ -188,7 +188,7 @@ body.game {
 .board .podium .who { font-size: 1.1875rem; font-weight: 500; }
 .board .me {
   margin: 8px -14px; padding: 13px 14px;
-  border: 1px solid rgb(216 181 122 / 0.45);
+  border: 1px solid rgb(255 102 196 / 0.45);
   border-radius: 14px;
   background: var(--champagne-wash);
 }
@@ -218,7 +218,7 @@ body.game {
   cursor: pointer;
   transition: border-color 200ms var(--ease), background-color 200ms var(--ease), opacity 200ms var(--ease);
 }
-.side:hover:not([disabled]) { border-color: rgb(244 236 225 / 0.5); }
+.side:hover:not([disabled]) { border-color: rgb(255 255 255 / 0.5); }
 .side[disabled] { cursor: default; }
 .side-name { font-family: var(--script); font-size: clamp(2.5rem, 12vw, 3.25rem); line-height: 1.1; }
 .side-role { font-size: 0.9375rem; color: var(--mute); }
@@ -233,7 +233,7 @@ body.game {
 .side .yours { position: absolute; top: 14px; left: 0; right: 0; text-align: center; font-size: 0.8125rem; color: var(--mute); }
 .side.is-picked { border-color: var(--champagne); background: var(--champagne-wash); }
 .side.is-right { border-color: var(--champagne); background: var(--champagne-wash); }
-.side.is-wrong { border-style: dashed; border-color: rgb(244 236 225 / 0.45); }
+.side.is-wrong { border-style: dashed; border-color: rgb(255 255 255 / 0.45); }
 .side.is-dim { opacity: 0.45; }
 
 /* ---------- Scratch & Win ---------- */
@@ -281,7 +281,7 @@ body.game {
 
 .play-field {
   position: fixed; inset: 0; z-index: 6;
-  background: #1a1210;
+  background: #231f1c;
   display: flex; align-items: flex-end; justify-content: center;
   overflow: hidden;
 }
@@ -299,13 +299,13 @@ body.game {
   display: inline-flex; align-items: center; gap: 8px;
   min-height: 44px; padding: 0 16px;
   border-radius: 999px;
-  background: rgb(18 12 10 / 0.62);
+  background: rgb(44 39 35 / 0.62);
   color: var(--ivory);
 }
 .hud-score { font-size: 1.375rem; font-weight: 500; letter-spacing: -0.01em; }
 .lives { display: inline-flex; gap: 6px; }
 .lives i { width: 9px; height: 9px; border-radius: 50%; background: var(--champagne); }
-.lives i.lost { background: transparent; box-shadow: inset 0 0 0 1px rgb(244 236 225 / 0.5); }
+.lives i.lost { background: transparent; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.5); }
 .hud-pause {
   width: 44px; height: 44px; padding: 0;
   justify-content: center;
@@ -315,7 +315,7 @@ body.game {
 .sheet {
   position: fixed; inset: 0; z-index: 7;
   display: grid; place-items: center;
-  background: rgb(18 12 10 / 0.72);
+  background: rgb(44 39 35 / 0.72);
   padding: 24px;
 }
 .sheet-inner { width: 100%; max-width: 380px; text-align: center; }
@@ -383,3 +383,9 @@ body.game {
 .dare-title { font-weight: 500; font-size: clamp(2.25rem, 10vw, 3rem); line-height: 1.08; letter-spacing: -0.02em; text-wrap: balance; }
 .dare-desc { margin-top: 14px; font-size: 1.1875rem; line-height: 1.45; max-width: 30ch; }
 .dare-who { margin-top: 18px; color: var(--mute); font-size: 0.9375rem; }
+
+/* Live and scoring moments in yellow */
+.g-timer i, .lives i { background: var(--yellow); }
+.g-meta .secs.low, .result-pts, .big-num.champ, .board .podium:first-child .pos { color: var(--yellow); }
+.count, .flag { border-color: var(--yellow); color: var(--yellow); }
+.ring { border-top-color: var(--champagne); }

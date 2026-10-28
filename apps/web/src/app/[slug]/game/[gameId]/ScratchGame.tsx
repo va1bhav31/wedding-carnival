@@ -86,7 +86,7 @@ export default function ScratchGame({
       canvas.height = Math.round(r.height * dpr);
       const { width: w, height: h } = canvas;
       ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = '#c9a76d';
+      ctx.fillStyle = '#f2e900';
       ctx.fillRect(0, 0, w, h);
       const img = ctx.getImageData(0, 0, w, h);
       const d = img.data;
@@ -98,7 +98,7 @@ export default function ScratchGame({
       }
       ctx.putImageData(img, 0, 0);
       const family = getComputedStyle(wrap).getPropertyValue('--ev-font-script').trim();
-      ctx.fillStyle = 'rgba(42, 26, 18, 0.78)';
+      ctx.fillStyle = 'rgba(44, 39, 35, 0.86)';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.font = `${Math.round(h * 0.17)}px ${family || 'Georgia'}, Georgia, serif`;
