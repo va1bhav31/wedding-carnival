@@ -68,9 +68,9 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .bulbs {
   height: 14px;
   background:
-    radial-gradient(circle at 50% 50%, var(--yellow) 0 4px, transparent 4.5px) 0 0 / 24px 14px repeat-x;
+    radial-gradient(circle at 50% 50%, #fffbd2 0 1.6px, var(--yellow) 2.6px 4px, transparent 4.6px) 0 0 / 24px 14px repeat-x;
 }
-.bulbs.dim { background-image: radial-gradient(circle at 50% 50%, rgb(255 248 0 / 0.35) 0 4px, transparent 4.5px); }
+.bulbs.dim { background-image: radial-gradient(circle at 50% 50%, rgb(255 255 255 / 0.26) 0 4px, transparent 4.5px); }
 @media (prefers-reduced-motion: no-preference) {
   .bulbs.chase { animation: chase 1.6s steps(2) infinite; }
 }

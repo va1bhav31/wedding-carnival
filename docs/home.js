@@ -37,13 +37,13 @@
       const side = b.dataset.side;
       if (side === COUPLE_SAYS) {
         b.classList.add('is-right');
-        b.insertAdjacentHTML('beforeend', '<span class="stamp verdict">The couple says</span>');
+        b.insertAdjacentHTML('beforeend', '<span class="stamp verdict">Right answer</span>');
       } else {
         b.classList.add('is-other');
       }
       if (side === pick) {
         b.classList.add('is-picked');
-        b.insertAdjacentHTML('afterbegin', '<span class="your-pick">Your pick</span>');
+        b.insertAdjacentHTML('beforeend', '<span class="stamp your-pick">Your pick</span>');
       }
     });
     const who = names[COUPLE_SAYS];

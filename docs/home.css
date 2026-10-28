@@ -1,12 +1,24 @@
 /* ---------- Hero hoarding ---------- */
-.hero { padding: clamp(36px, 6vw, 72px) 0 0; }
+/* The hero is a framed board on the night street; lit bulbs trace its edge. */
+.hero {
+  --bulb: radial-gradient(circle, #fffbd2 0 1.6px, var(--yellow) 2.6px 4px, transparent 4.6px);
+  padding: 0 22px 22px;
+  /* The header's bulb row is the top edge; the board's sides and foot carry
+     whole bulbs only (space-repeat), so none are cut at the corners. */
+  background:
+    var(--bulb) 0 calc(100% - 4px) / 24px 14px space no-repeat,
+    var(--bulb) 4px 0 / 14px 24px no-repeat space,
+    var(--bulb) calc(100% - 4px) 0 / 14px 24px no-repeat space,
+    var(--ink);
+}
+.board { position: relative; border-radius: 4px; padding-top: clamp(32px, 5vw, 64px); }
 .hero-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.7fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(24px, 4vw, 56px);
   align-items: center;
 }
-.hero-copy { position: relative; display: grid; gap: 18px; }
+.hero-copy { position: relative; z-index: 1; display: grid; gap: 18px; max-width: 700px; }
 .hero-stamp {
   position: absolute; top: 4%; left: 0; z-index: 2;
   color: var(--ink); background: var(--white);
@@ -22,11 +34,12 @@
   padding-top: 18px; padding-bottom: 26px;
   border-top: 3px solid var(--ink);
 }
-.stars { max-width: 520px; width: 100%; justify-self: center; }
+/* Stars billed at hoarding scale, cropped by the board's right edge. */
+.board .stars { position: absolute; right: -5%; top: 46%; transform: translateY(-50%); width: min(50%, 720px); }
 
 @media (max-width: 860px) {
   .hero-grid { grid-template-columns: 1fr; }
-  .stars { max-width: 300px; margin-top: 8px; }
+  .board .stars { position: relative; right: auto; top: auto; transform: none; width: 118%; margin: 24px 0 -14% 4%; }
 }
 @media (max-width: 480px) {
   .slot input { width: 100%; }
@@ -65,15 +78,13 @@
 }
 .scene-name { font-size: clamp(1.875rem, 4.6vw, 2.75rem); }
 .scene-role { font-weight: 600; color: var(--ink-soft); }
-.scene-side.is-picked { background: var(--white); outline: 4px solid var(--ink); outline-offset: 3px; }
+.scene-side.is-picked { outline: 4px solid var(--ink); outline-offset: 3px; }
 .scene-side.is-right { background: var(--pink); }
 .scene-side.is-right .scene-role { color: var(--ink); }
-.scene-side.is-other { opacity: 0.55; }
-.scene-side .your-pick {
-  position: absolute; top: 12px; left: 12px;
-  font-weight: 800; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.06em;
-}
-.scene-side .verdict { position: absolute; top: 10px; right: 10px; background: var(--paper); color: var(--ink); }
+/* Marks sit under the name, never on the faces. */
+.scene-side .your-pick, .scene-side .verdict { margin-top: 10px; }
+.scene-side .verdict { background: var(--paper); color: var(--ink); }
+.scene-side .your-pick { color: var(--ink); background: var(--yellow); }
 .scene-result {
   margin: clamp(22px, 3vw, 32px) auto 0; max-width: 760px;
   display: grid; gap: 14px; text-align: center;
@@ -131,7 +142,7 @@
 .package.featured { outline: 4px solid var(--ink); outline-offset: -4px; }
 
 /* ---------- Closing ---------- */
-.closing-inner { display: grid; gap: 22px; justify-items: start; }
+.closing-inner { display: grid; gap: 22px; }
 .closing-title { font-size: clamp(3rem, 8vw, 6.5rem); max-width: 14ch; }
 
 /* ---------- Footer ---------- */
