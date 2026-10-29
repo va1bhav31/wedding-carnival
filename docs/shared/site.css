@@ -187,4 +187,5 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 .lede { font-size: 1.25rem; color: var(--on-ink-soft); max-width: 40rem; }
 .on-pink .lede, .on-yellow .lede { color: var(--ink); }
 .caption { font-size: 0.9375rem; color: var(--on-ink-soft); }
-.on-pink .caption, .on-yellow .caption { color: var(--ink-soft); }
+.on-yellow .caption { color: var(--ink-soft); }
+.on-pink .caption { color: var(--ink); }

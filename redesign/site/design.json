@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-29T00:00:00Z",
+  "title": "Design System: Wedding Carnival (marketing site)",
+  "scope": "Public marketing site only (redesign/site, published from docs/). Not the guest game app in apps/web.",
+  "extensions": {
+    "colorMeta": {
+      "ink": { "role": "neutral", "displayName": "Night-Street Charcoal", "canonical": "oklch(27.7% 0.010 61.0)", "tonalRamp": ["#0e0a07", "#292420", "#46413d", "#66605b", "#87817c", "#aaa49f", "#cec8c2", "#f4ede8"] },
+      "ink-soft": { "role": "neutral", "displayName": "Soft Charcoal", "canonical": "oklch(38.8% 0.014 63.0)", "tonalRamp": ["#0f0a06", "#2a241e", "#47413b", "#676059", "#89817a", "#aca39c", "#d0c7c0", "#f5ede5"] },
+      "pink": { "role": "primary", "displayName": "Hoarding Pink", "canonical": "oklch(73.1% 0.210 345.7)", "tonalRamp": ["#36001c", "#5d003a", "#840059", "#ab007a", "#d33b9d", "#fc63c1", "#ff89e6", "#ffafff"] },
+      "yellow": { "role": "secondary", "displayName": "Marquee Yellow", "canonical": "oklch(95.4% 0.205 107.6)", "tonalRamp": ["#180700", "#342300", "#514300", "#716400", "#928700", "#b4ab00", "#d8d000", "#fef700"] },
+      "white": { "role": "neutral", "displayName": "Set White", "canonical": "oklch(100% 0 0)", "tonalRamp": ["#0b0b0b", "#252525", "#424242", "#616161", "#828282", "#a5a5a5", "#c9c9c9", "#eeeeee"] },
+      "paper": { "role": "neutral", "displayName": "Ticket Paper", "canonical": "oklch(99.4% 0.009 93.6)", "tonalRamp": ["#0c0b07", "#262520", "#44423c", "#63615b", "#84827c", "#a7a59e", "#cbc9c2", "#f0eee7"] },
+      "on-ink-soft": { "role": "neutral", "displayName": "Street-Lamp Grey", "canonical": "oklch(87.0% 0.011 67.7)", "tonalRamp": ["#0e0a07", "#292420", "#46413c", "#65605b", "#87817c", "#aaa49e", "#cec8c2", "#f3ede7"] },
+      "bulb-core": { "role": "neutral", "displayName": "Bulb Filament", "canonical": "oklch(98.1% 0.053 102.7)", "tonalRamp": ["#100b00", "#2a2602", "#474320", "#67633f", "#88845f", "#aba780", "#cfcba4", "#f5f1c8"] },
+      "ink-hover": { "role": "neutral", "displayName": "Wet-Paint Charcoal", "canonical": "#3a332e" },
+      "yellow-hover": { "role": "secondary", "displayName": "Highlighter Yellow", "canonical": "#fffb5c" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "One painted hero title per field, charcoal Shrikhand with the stepped shade." },
+      "headline": { "displayName": "Headline", "purpose": "Section titles and the scene question." },
+      "title": { "displayName": "Title", "purpose": "Star billing line, show names, package names, scene name plates." },
+      "title-set": { "displayName": "Set Title", "purpose": "Ticket headings and the scene result line, in Mukta 800." },
+      "lede": { "displayName": "Lede", "purpose": "Section ledes; weight 600 on painted fields." },
+      "body": { "displayName": "Body", "purpose": "All running copy." },
+      "label": { "displayName": "Label", "purpose": "Captions, slot labels, the credits block." },
+      "stamp": { "displayName": "Stamp", "purpose": "Stamped marks only; the only uppercase in the system." }
+    },
+    "shadows": [
+      { "name": "painted-shade-yellow", "value": "1px 1px 0 #fff800, 2px 2px 0 #fff800, 3px 3px 0 #fff800, 4px 4px 0 #fff800, 5px 5px 0 #fff800, 6px 6px 0 #fff800", "purpose": "text-shadow under charcoal Shrikhand on the pink field." },
+      { "name": "painted-shade-white", "value": "1px 1px 0 #fff, 2px 2px 0 #fff, 3px 3px 0 #fff, 4px 4px 0 #fff, 5px 5px 0 #fff", "purpose": "text-shadow under charcoal Shrikhand on the yellow field." },
+      { "name": "painted-shade-pink", "value": "1px 1px 0 #ff66c4, 2px 2px 0 #ff66c4, 3px 3px 0 #ff66c4, 4px 4px 0 #ff66c4, 5px 5px 0 #ff66c4, 6px 6px 0 #ff66c4", "purpose": "text-shadow under charcoal Shrikhand on yellow when the field needs heat (closing, cover)." },
+      { "name": "painted-on-dark", "value": "1px 1px 0 #ff66c4, 2px 2px 0 #ff66c4, 3px 3px 0 #ff66c4, 4px 4px 0 #ff66c4", "purpose": "text-shadow under white Shrikhand section titles on charcoal." },
+      { "name": "painted-numeral", "value": "2px 2px 0 #ff66c4, 3px 3px 0 #ff66c4", "purpose": "Small painted numerals on ticket stubs." }
+    ],
+    "motion": [
+      { "name": "ease", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "All state transitions and the stamp thump." },
+      { "name": "bulb-chase", "value": "1.6s steps(2) infinite, background-position 24px", "purpose": "Header bulb row only; disabled under reduced motion." },
+      { "name": "stamp-thump", "value": "520ms ease 300ms both; from rotate(-12deg) scale(1.9) opacity 0 to rotate(-5deg) scale(1)", "purpose": "Stamps land once on reveal; reduced motion shows them landed." },
+      { "name": "glasses-drop", "value": "transform 620ms cubic-bezier(0.22, 1, 0.36, 1), opacity 120ms linear", "purpose": "Pixel sunglasses drop onto the right-answer portrait in the scene." },
+      { "name": "press", "value": "transform 140ms; translateY(1px) scale(0.985)", "purpose": "Pill press feedback." }
+    ],
+    "breakpoints": [
+      { "name": "slots-stack", "value": "480px" },
+      { "name": "programme-stack", "value": "700px" },
+      { "name": "nav-collapse", "value": "760px" },
+      { "name": "hero-stack", "value": "860px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Charcoal Pill",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "The booking action on pink and yellow fields; mailto to info@weddingcarnival.live.",
+      "html": "<div class=\"ds-field-pink\"><a class=\"ds-btn ds-btn-ink\" href=\"mailto:info@weddingcarnival.live\">Book your show</a></div>",
+      "css": ".ds-field-pink { background: #ff66c4; padding: 24px; } .ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 30px; border-radius: 999px; border: 3px solid transparent; font-family: 'Mukta', system-ui, sans-serif; font-weight: 800; font-size: 1.125rem; letter-spacing: 0.01em; text-decoration: none; cursor: pointer; transition: transform 140ms cubic-bezier(0.16,1,0.3,1), background-color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-btn:active { transform: translateY(1px) scale(0.985); } .ds-btn-ink { background: #2c2723; color: #fff800; } .ds-btn-ink:hover { background: #3a332e; } .ds-field-pink .ds-btn:focus-visible { outline: 3px solid #2c2723; outline-offset: 3px; }"
+    },
+    {
+      "name": "Yellow Pill",
+      "kind": "button",
+      "refersTo": "button-yellow",
+      "description": "The booking action on the charcoal street (header).",
+      "html": "<div class=\"ds-street\"><a class=\"ds-btn-y\" href=\"mailto:info@weddingcarnival.live\">Book your show</a></div>",
+      "css": ".ds-street { background: #2c2723; padding: 24px; } .ds-btn-y { display: inline-flex; align-items: center; min-height: 46px; padding: 0 20px; border-radius: 999px; border: 3px solid transparent; background: #fff800; color: #2c2723; font-family: 'Mukta', system-ui, sans-serif; font-weight: 800; font-size: 1rem; text-decoration: none; transition: transform 140ms cubic-bezier(0.16,1,0.3,1), background-color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-y:hover { background: #fffb5c; } .ds-btn-y:active { transform: translateY(1px) scale(0.985); } .ds-btn-y:focus-visible { outline: 3px solid #fff800; outline-offset: 3px; }"
+    },
+    {
+      "name": "Line Pill",
+      "kind": "button",
+      "refersTo": "button-line",
+      "description": "Secondary package booking on paper tickets.",
+      "html": "<a class=\"ds-btn-line\" href=\"mailto:info@weddingcarnival.live\">Book Essential</a>",
+      "css": ".ds-btn-line { display: inline-flex; align-items: center; min-height: 56px; padding: 0 30px; border-radius: 999px; border: 3px solid currentColor; background: transparent; color: #2c2723; font-family: 'Mukta', system-ui, sans-serif; font-weight: 800; font-size: 1.125rem; text-decoration: none; transition: transform 140ms cubic-bezier(0.16,1,0.3,1); } .ds-btn-line:active { transform: translateY(1px) scale(0.985); } .ds-btn-line:focus-visible { outline: 3px solid #2c2723; outline-offset: 3px; }"
+    },
+    {
+      "name": "Name Slot",
+      "kind": "input",
+      "refersTo": "name-slot",
+      "description": "Typing a name re-letters the billing, the scene and the booking email subject live.",
+      "html": "<div class=\"ds-field-pink\"><label class=\"ds-slot\"><span>Bride’s name</span><input placeholder=\"Aanya\" maxlength=\"18\" /></label></div>",
+      "css": ".ds-field-pink { background: #ff66c4; padding: 24px; } .ds-slot { display: grid; gap: 4px; color: #2c2723; font-family: 'Mukta', system-ui, sans-serif; font-weight: 600; font-size: 0.9375rem; } .ds-slot input { width: 11.5rem; min-height: 52px; padding: 0 16px; border: 3px solid #2c2723; border-radius: 12px; background: #fff; color: #2c2723; font-family: inherit; font-weight: 800; font-size: 1.125rem; } .ds-slot input::placeholder { color: #6d655e; font-weight: 600; } .ds-slot input:focus-visible { outline: 3px solid #2c2723; outline-offset: 3px; }"
+    },
+    {
+      "name": "Marquee Bar",
+      "kind": "nav",
+      "refersTo": "plaque",
+      "description": "Sticky charcoal header: logo plaque, white links, yellow pill, chasing bulb row beneath.",
+      "html": "<header class=\"ds-marquee\"><div class=\"ds-row\"><span class=\"ds-plaque\">WC</span><nav class=\"ds-nav\"><a href=\"#\">The show</a><a href=\"#\">Programme</a><a href=\"#\">Packages</a></nav></div><div class=\"ds-bulbs\"></div></header>",
+      "css": ".ds-marquee { background: #2c2723; font-family: 'Mukta', system-ui, sans-serif; } .ds-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 78px; padding: 0 24px; } .ds-plaque { display: inline-flex; background: #fff; border-radius: 6px; padding: 6px 12px; color: #2c2723; font-weight: 800; } .ds-nav { display: flex; gap: 24px; } .ds-nav a { color: #fff; text-decoration: none; font-weight: 600; font-size: 1.0625rem; } .ds-nav a:hover { color: #fff800; } .ds-nav a:focus-visible { outline: 3px solid #fff800; outline-offset: 3px; } .ds-bulbs { height: 14px; background: radial-gradient(circle at 50% 50%, #fffbd2 0 1.6px, #fff800 2.6px 4px, transparent 4.6px) 0 0 / 24px 14px repeat-x; } @media (prefers-reduced-motion: no-preference) { .ds-bulbs { animation: ds-chase 1.6s steps(2) infinite; } } @keyframes ds-chase { to { background-position: 24px 0; } }"
+    },
+    {
+      "name": "Ticket Stub",
+      "kind": "card",
+      "refersTo": "ticket",
+      "description": "Paper ticket with side notches at a dashed tear line; steps and packages.",
+      "html": "<div class=\"ds-street\"><div class=\"ds-ticket\"><div class=\"ds-top\"><span class=\"ds-no\">1</span><h3>You tell us, we build it</h3></div><hr class=\"ds-tear\" /><p>Send your names, photos, colours and stories.</p></div></div>",
+      "css": ".ds-street { background: #2c2723; padding: 32px; } .ds-ticket { position: relative; max-width: 340px; background: #fffdf6; color: #2c2723; border-radius: 6px; padding: 26px 26px 30px; display: grid; gap: 16px; font-family: 'Mukta', system-ui, sans-serif; } .ds-ticket::before, .ds-ticket::after { content: ''; position: absolute; top: 88px; width: 22px; height: 22px; margin-top: -11px; border-radius: 50%; background: #2c2723; } .ds-ticket::before { left: -11px; } .ds-ticket::after { right: -11px; } .ds-top { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 14px; min-height: 62px; } .ds-no { font-family: 'Shrikhand', Georgia, serif; font-size: 3.25rem; line-height: 1; color: #2c2723; text-shadow: 2px 2px 0 #ff66c4, 3px 3px 0 #ff66c4; } .ds-ticket h3 { margin: 0; font-size: 1.375rem; font-weight: 800; line-height: 1.2; } .ds-tear { border: 0; border-top: 2px dashed rgb(44 39 35 / 0.35); margin: 0; } .ds-ticket p { margin: 0; color: #4a433d; }"
+    },
+    {
+      "name": "Stamped Mark",
+      "kind": "chip",
+      "refersTo": "stamp",
+      "description": "State and billing mark; thumps down once, holds still under reduced motion.",
+      "html": "<div class=\"ds-field-yellow\"><span class=\"ds-stamp\">Your pick</span> <span class=\"ds-stamp ds-stamp-white\">Now booking</span></div>",
+      "css": ".ds-field-yellow { background: #fff800; padding: 32px; display: flex; gap: 24px; } .ds-stamp { display: inline-block; padding: 9px 14px 7px; border: 3px solid currentColor; border-radius: 4px; color: #2c2723; background: #fff800; font-family: 'Mukta', system-ui, sans-serif; font-weight: 800; font-size: 0.875rem; letter-spacing: 0.08em; text-transform: uppercase; line-height: 1.1; transform: rotate(-5deg); } .ds-stamp-white { background: #fff; } @media (prefers-reduced-motion: no-preference) { .ds-stamp { animation: ds-thump 520ms cubic-bezier(0.16,1,0.3,1) 300ms both; } } @keyframes ds-thump { from { transform: rotate(-12deg) scale(1.9); opacity: 0; } 60% { opacity: 1; } to { transform: rotate(-5deg) scale(1); opacity: 1; } }"
+    },
+    {
+      "name": "Painted Title",
+      "kind": "custom",
+      "refersTo": "display",
+      "description": "Charcoal Shrikhand with the flat stepped painted shade, matched to its field.",
+      "html": "<div class=\"ds-field-pink\"><h1 class=\"ds-painted\">Every guest plays.</h1></div>",
+      "css": ".ds-field-pink { background: #ff66c4; padding: 32px; } .ds-painted { margin: 0; font-family: 'Shrikhand', Georgia, serif; font-weight: 400; font-size: 4rem; line-height: 0.98; letter-spacing: 0.005em; color: #2c2723; text-shadow: 1px 1px 0 #fff800, 2px 2px 0 #fff800, 3px 3px 0 #fff800, 4px 4px 0 #fff800, 5px 5px 0 #fff800, 6px 6px 0 #fff800; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Hand-Painted Hoarding",
+    "overview": "The site is a single-screen cinema's hoarding on a night street, and the couple's wedding is the picture it bills. A warm charcoal street surrounds flat, hand-painted fields of pink and yellow; titles are sign-painter lettering with a stepped painted shade; the stars are the bride and groom, billed at hoarding scale and cropped by the board's edge. Everything is flat paint: no gradients on surfaces, no photography, no glass.\n\nThe world is loud in colour and quiet in ornament. Exactly two repeatable units decorate it, the marquee bulb row and the ticket stub, and state is never carried by a hue change alone: it is stamped on. The visitor's own names re-letter the billing, so the hoarding is always about them.\n\nDensity is low and poster-like: one statement per field, ranked by field size, generous section rhythm on the charcoal between fields.",
+    "keyCharacteristics": [
+      "Logo palette only: charcoal, pink, yellow, white, plus paper for tickets.",
+      "Shrikhand for painted titles, Mukta for everything read.",
+      "Two ornament units only: bulb row and ticket stub.",
+      "State is a stamped mark that thumps down once.",
+      "The visitor's names re-letter the surface live.",
+      "Every booking action is an email to info@weddingcarnival.live."
+    ],
+    "rules": [
+      { "name": "The Logo Palette Rule", "body": "The palette is the logo's charcoal, pink and yellow, with white and paper. No new hues, no tints of pink or yellow as surfaces, no gradients across a field.", "section": "colors" },
+      { "name": "The Full-Ink-On-Pink Rule", "body": "On the pink field, read copy is full charcoal. Soft Charcoal is for paper and yellow only (it falls under 4.5:1 on pink).", "section": "colors" },
+      { "name": "The Painted Shade Rule", "body": "Shrikhand titles are charcoal with a flat, stepped shade of 1px offsets down-right: 6 steps of yellow on pink, 5 of white on yellow, 6 of pink on yellow when the field needs heat. On charcoal the lettering turns white with 4 steps of pink. Small painted numerals take 2 steps. Never a blurred shadow, never a gradient fill.", "section": "typography" },
+      { "name": "The Read-In-Mukta Rule", "body": "Anything a visitor reads to understand (ledes, steps, features, captions, buttons, labels) is Mukta. Shrikhand is for what is billed, not explained.", "section": "typography" },
+      { "name": "The Flat Paint Rule", "body": "No box-shadow, no blur, no glass. The only offset is the hard stepped text shade on painted lettering, which is the sign painter's own device.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do letter every billed title in charcoal Shrikhand with the stepped shade matched to its field (yellow on pink, white or pink on yellow, white-with-pink on charcoal).",
+      "Do carry state with a stamp (Mukta 800 uppercase, 3px border, -5deg) that thumps once; hold it still under reduced motion.",
+      "Do draw ornament from the bulb row and the ticket stub only; keep frame bulbs whole with background-repeat: space.",
+      "Do use the charcoal pill with yellow text on pink and yellow fields, and the yellow pill on charcoal; point every booking action at info@weddingcarnival.live.",
+      "Do let the visitor's names re-letter the billing, the scene and the email subject.",
+      "Do caption every sample element (names, scene, crowd split, timings) as sample.",
+      "Do keep read copy full charcoal on pink."
+    ],
+    "donts": [
+      "Don't add hues outside the logo palette, or gradients, blurs or box-shadows on any surface.",
+      "Don't introduce a third ornament unit, or emoji and font-glyph symbols in place of drawn marks.",
+      "Don't signal state by colour alone; a pink card without its stamp is not a right answer.",
+      "Don't set read copy in Shrikhand, or uppercase anything that isn't a stamp.",
+      "Don't add testimonials, press logos or claims the business can't back.",
+      "Don't loop motion loudly: the bulbs chase, the stamps land once, and that is all."
+    ]
+  }
+}
