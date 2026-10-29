@@ -37,8 +37,8 @@ export default function ShowdownGame({
   const done = index >= questions.length;
   const q = done ? null : questions[index];
   const sides = [
-    { value: 'bride', name: names.bride, role: 'the bride' },
-    { value: 'groom', name: names.groom, role: 'the groom' },
+    { value: 'bride', name: names.bride, role: 'the bride', img: '/b_or_g/bride.webp', glasses: '/b_or_g/bride-glasses.svg' },
+    { value: 'groom', name: names.groom, role: 'the groom', img: '/b_or_g/groom.webp', glasses: '/b_or_g/groom-glasses.svg' },
   ];
   const nameFor = (side: string) => (side === 'groom' ? names.groom : names.bride);
 
@@ -158,6 +158,15 @@ export default function ShowdownGame({
                 <button key={s.value} type="button" className={cls} disabled={Boolean(result) || busy} onClick={() => choose(s.value)}>
                   {isCorrect && <span className="badge">{check}</span>}
                   {isWrong && <span className="yours">Your pick</span>}
+                  <span className="side-face">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={s.img} alt="" width={720} height={720} draggable={false} />
+                    {isCorrect && (
+                      // Same square canvas as the portrait, so the overlay lands on the eyes.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={s.glasses} alt="" aria-hidden className="side-glasses wc-glasses" draggable={false} />
+                    )}
+                  </span>
                   <span className="side-name">{s.name}</span>
                   <span className="side-role">{s.role}</span>
                 </button>

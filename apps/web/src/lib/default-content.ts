@@ -6,36 +6,40 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { GAME_CATALOG } from '@/lib/games-catalog';
 
 /* Bride vs Groom Showdown — "Who's most likely?"
-   NOTE: the correct side is couple-specific; defaults to 'bride' so the
-   operator flips the ones where the groom is the real answer. */
-const SHOWDOWN_QUESTIONS = [
-  'Who is messier?',
-  'Who stays up the latest?',
-  'Who is the better cook?',
-  'Who is more romantic?',
-  'Who is more likely to plan a surprise?',
-  'Who said "I Love You" first?',
-  'Who is the better dancer?',
-  'Who made the first move?',
-  'Who takes longer to get ready?',
-  'Who spends more money online?',
-  'Who is more dramatic?',
-  'Who apologizes first after a fight?',
-  'Who takes more selfies?',
-  'Who is more likely to forget an anniversary?',
-  'Who would survive a zombie apocalypse longer?',
+   The real answer is couple-specific, so the operator confirms each one per
+   wedding; the defaults are a believable mix rather than all one side. */
+const SHOWDOWN_QUESTIONS: Array<{ prompt: string; answer: 'bride' | 'groom' }> = [
+  { prompt: 'Who is messier?', answer: 'groom' },
+  { prompt: 'Who stays up the latest?', answer: 'bride' },
+  { prompt: 'Who is the better cook?', answer: 'groom' },
+  { prompt: 'Who is more romantic?', answer: 'bride' },
+  { prompt: 'Who is more likely to plan a surprise?', answer: 'groom' },
+  { prompt: 'Who said "I Love You" first?', answer: 'groom' },
+  { prompt: 'Who is the better dancer?', answer: 'bride' },
+  { prompt: 'Who made the first move?', answer: 'groom' },
+  { prompt: 'Who takes longer to get ready?', answer: 'bride' },
+  { prompt: 'Who spends more money online?', answer: 'bride' },
+  { prompt: 'Who is more dramatic?', answer: 'groom' },
+  { prompt: 'Who apologizes first after a fight?', answer: 'groom' },
+  { prompt: 'Who takes more selfies?', answer: 'bride' },
+  { prompt: 'Who is more likely to forget an anniversary?', answer: 'groom' },
+  { prompt: 'Who would survive a zombie apocalypse longer?', answer: 'bride' },
 ];
 
-/* Couple Trivia — couple-specific prompts; options are placeholders the
-   operator replaces with the couple's real answers. */
-const TRIVIA_PROMPTS = [
-  'Where did they first meet?',
-  'Who texted first?',
-  "What's the groom's favorite food?",
-  'Which country did they travel to together first?',
-  'What nickname does the bride have for him?',
-];
-const TRIVIA_PLACEHOLDER_OPTIONS = ['Option 1', 'Option 2', 'Option 3', 'Option 4'];
+/* Couple Trivia — realistic defaults the operator swaps for the couple's real
+   answers. "Who did X?" questions offer just the two names. */
+function triviaQuestions(bride: string, groom: string): Array<{ prompt: string; options: string[]; answer: string }> {
+  return [
+    { prompt: 'Where did they first meet?', options: ['At school', 'In college', 'At work', 'Through family'], answer: 'In college' },
+    { prompt: 'Who texted first?', options: [bride, groom], answer: bride },
+    { prompt: 'Who proposed?', options: [bride, groom], answer: groom },
+    { prompt: 'What was their first date?', options: ['Coffee at a café', 'Dinner out', 'A movie', 'A long drive'], answer: 'Coffee at a café' },
+    { prompt: 'How long have they been together?', options: ['Less than 2 years', '2 to 4 years', '5 to 7 years', 'More than 7 years'], answer: '2 to 4 years' },
+    { prompt: 'Where did they go on their first trip together?', options: ['Goa', 'Manali', 'Jaipur', 'Rishikesh'], answer: 'Goa' },
+    { prompt: "What's the groom's favourite food?", options: ['Biryani', 'Butter chicken', 'Chole bhature', 'Pizza'], answer: 'Biryani' },
+    { prompt: 'Who is the bigger foodie?', options: [bride, groom], answer: bride },
+  ];
+}
 
 /* Fastest Finger First — KBC "arrange in correct order" questions.
    `order` is the correct sequence (stored hidden in correct_answer); guests
@@ -138,6 +142,14 @@ export async function seedDefaultContent(
   supabase: SupabaseClient,
   weddingId: string
 ): Promise<void> {
+  const { data: couple } = await supabase
+    .from('weddings')
+    .select('bride_name, groom_name, couple_name_1, couple_name_2')
+    .eq('id', weddingId)
+    .maybeSingle();
+  const bride = couple?.bride_name || couple?.couple_name_1 || 'The bride';
+  const groom = couple?.groom_name || couple?.couple_name_2 || 'The groom';
+
   // 1. Ensure one wedding_games row per catalog game (skip any that exist).
   const { error: upsertErr } = await supabase
     .from('wedding_games')
@@ -182,25 +194,25 @@ export async function seedDefaultContent(
   const questions = [
     ...(showdownHas
       ? []
-      : SHOWDOWN_QUESTIONS.map((prompt, i) => ({
+      : SHOWDOWN_QUESTIONS.map(({ prompt, answer }, i) => ({
           wedding_id: weddingId,
           wedding_game_id: idOf('bride_groom_showdown'),
           question_type: 'binary_side',
           prompt,
           options: ['bride', 'groom'],
-          correct_answer: 'bride', // couple-specific — operator flips per wedding
+          correct_answer: answer, // couple-specific — operator confirms per wedding
           points: 100,
           display_order: i,
         }))),
     ...(triviaHas
       ? []
-      : TRIVIA_PROMPTS.map((prompt, i) => ({
+      : triviaQuestions(bride, groom).map(({ prompt, options, answer }, i) => ({
           wedding_id: weddingId,
           wedding_game_id: idOf('couple_trivia'),
           question_type: 'mcq',
           prompt,
-          options: TRIVIA_PLACEHOLDER_OPTIONS,
-          correct_answer: TRIVIA_PLACEHOLDER_OPTIONS[0], // placeholder — replace with real answers
+          options,
+          correct_answer: answer, // realistic default — operator replaces with the couple's real answer
           points: 100,
           display_order: i,
         }))),
